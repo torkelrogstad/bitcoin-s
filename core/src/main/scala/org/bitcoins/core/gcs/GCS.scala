@@ -1,13 +1,14 @@
 package org.bitcoins.core.gcs
 
-import org.bitcoins.core.number.{UInt32, UInt64, UInt8}
+import org.bitcoins.core.number.{ UInt32, UInt64, UInt8 }
 import org.bitcoins.core.protocol.NetworkElement
 import org.bitcoins.core.util.Factory
 import org.bouncycastle.crypto.macs.SipHash
 import org.bouncycastle.crypto.params.KeyParameter
-import scodec.bits.{BitVector, ByteVector}
+import scodec.bits.{ BitVector, ByteVector }
 
-import scala.util.{Failure, Try}
+import scala.annotation.tailrec
+import scala.util.{ Failure, Try }
 
 /**
  * Represents a Golomb-Coded Sets which is used as the data structure for Light Client's in BIP158
@@ -16,48 +17,28 @@ import scala.util.{Failure, Try}
  */
 sealed abstract class GCS extends NetworkElement {
 
-  /** The number of items in the set */
-  def n: UInt32
-
-  /** The encoding is also parameterized by P, the bit length of the remainder code. */
-  def p: UInt8
-
-  def modulusP: UInt64
-
-  def modulusNP: UInt64
-
-  def filterData: ByteVector
-
   override def bytes: ByteVector = ???
 
 }
 
 object GCS extends Factory[GCS] {
-  private case class GCSImpl(
-    n: UInt32,
-    p: UInt8,
-    modulusP: UInt64,
-    modulusNP: UInt64,
-    filterData: ByteVector) extends GCS
+  private case class GCSImpl() extends GCS
 
   override def fromBytes(bytes: ByteVector): GCS = {
     ???
   }
 
-  def apply(
-    n: UInt32,
-    p: UInt8,
-    modulusP: UInt64,
-    modulusNP: UInt64,
-    filterData: ByteVector): GCS = {
-    GCSImpl(n, p, modulusP, modulusNP, filterData)
-  }
-
   /**
    * Mimics this function for building a GCSFilter
    * [[https://github.com/Roasbeef/btcutil/blob/b5d74480bb5b02a15a9266cbeae37ecf9dd6ffca/gcs/gcs.go#L56]]
+   *
+   * @param p the bit parameter of the Golomb-Rice coding
+   * @param key the 128-bit key used to randomize the SipHash outputs
+   * @param data items encoded in the GCS
+   * @param m the target false positive rate
+   * @return
    */
-  def build(p: UInt8, key: ByteVector, data: Vector[ByteVector]): Try[GCS] = {
+  def build(p: UInt8, key: ByteVector, data: Vector[ByteVector], m: UInt64): Try[GCS] = {
     if (data.isEmpty) {
       Failure(new IllegalArgumentException(s"Cannot create a GCS filter with an empty data set"))
     } else if (data.length > UInt32.max.toInt) {
@@ -68,50 +49,119 @@ object GCS extends Factory[GCS] {
       Failure(new IllegalArgumentException(s"Cannot create a GCS filter because the key was the wrong size, got ${key.size}"))
     } else {
 
-      val modP = UInt64(1 << p.toInt)
-
-      val modNP = UInt64(data.length) * modP
-
-      val keyParam = new KeyParameter(key.toArray)
-
-      val builder = Vector.newBuilder[UInt64]
-      val hashedValuesBuilder = data.foldLeft(builder) {
-        case (values, v) =>
-
-          val sh = new SipHash()
-
-          sh.init(keyParam)
-
-          sh.update(v.toArray, 0, v.length.toInt)
-
-          val digest = new Array[Byte](8)
-
-          sh.doFinal(digest, 0)
-
-          val u64 = UInt64.fromBytes(ByteVector(digest))
-
-          //no modulo operator on UInt64 yet so have to use this hack
-          val e = UInt64(u64.toBigInt % (modNP.toBigInt))
-
-
-          values.+=(e)
-      }
-
-      val hashedValues: Vector[UInt64] = hashedValuesBuilder.result()
+      val hashedValues: Vector[UInt64] = constructHashedSet(data, key, m)
 
       val sorted = hashedValues.sortWith(_ <= _)
 
       val bitVector = buildBitVector(
-        values = hashedValues,
-        lastValue = UInt64.zero,
-        remainder = UInt64.zero
-      )
+        values = sorted,
+        p = p)
 
+      ???
     }
   }
 
-  private def buildBitVector(values: Vector[UInt64], lastValue: UInt64, remainder: UInt64): BitVector = {
+  private def constructHashedSet(data: Vector[ByteVector], key: ByteVector, m: UInt64): Vector[UInt64] = {
+    val builder = Vector.newBuilder[UInt64]
 
+    val n = UInt64(data.length)
+    val f = m * n
+    val hashedValuesBuilder = data.foldLeft(builder) {
+      case (values, v) =>
+        val u64 = hashToRange(v, f, key)
+        values.+=(u64)
+    }
+    hashedValuesBuilder.result()
+  }
+
+  private def hashToRange(item: ByteVector, f: UInt64, key: ByteVector): UInt64 = {
+    //return (siphash(k, item) * F) >> 64
+    val sh = new SipHash()
+
+    val keyParam = new KeyParameter(key.toArray)
+
+    sh.init(keyParam)
+
+    sh.update(item.toArray, 0, item.length.toInt)
+
+    val digest = new Array[Byte](8)
+
+    sh.doFinal(digest, 0)
+
+    val u64 = UInt64.fromBytes(ByteVector(digest))
+
+    val bigInt = (u64.toBigInt * f.toBigInt) >> 64
+
+    UInt64(bigInt)
+  }
+
+  private def buildBitVector(values: Vector[UInt64], p: UInt8): BitVector = {
+    @tailrec
+    def loop(remaining: Vector[UInt64], accum: BitVector, lastValue: UInt64): BitVector = {
+      if (remaining.isEmpty) {
+        accum
+      } else {
+        val item = remaining.head
+        val delta = item - lastValue
+        val encoded = GCS.encode(delta, p)
+        loop(remaining.tail, accum ++ encoded, item)
+      }
+    }
+    loop(values, BitVector.empty, UInt64(p.toInt))
+  }
+
+  def encode(delta: UInt64, p: UInt8): BitVector = {
+    logger.debug(s"Encoding GCS")
+    val q = delta >> p.toInt
+
+    @tailrec
+    def loop(a: UInt64, accum: BitVector): BitVector = {
+      if (a <= UInt64.zero) {
+        accum
+      } else {
+        loop(a - UInt64.one, accum.:+(true))
+      }
+    }
+
+    val set = loop(q, BitVector.empty)
+
+    val append0 = set :+ (false)
+
+    val x = delta
+
+    //write_bits_big_endian(stream, n, k)</code>
+    // appends the <code>k</code> least significant bits of integer <code>n</code>
+    // to the end of the stream in big-endian bit order
+
+    //write_bits_big_endian(stream, x, P)
+
+    val end = x.bytes.takeRight(p.toInt)
+
+    append0 ++ end.toBitVector
+  }
+
+  def decode(stream: BitVector, p: UInt8): UInt64 = {
+    logger.debug(s"Decoding GCS")
+    @tailrec
+    def loop(inc: UInt64, vec: BitVector): (UInt64, BitVector) = {
+      if (vec.nonEmpty && vec.head) {
+        loop(inc + UInt64.one, vec.tail)
+      } else {
+        (inc, vec)
+      }
+    }
+
+    val (q, noQuotient) = loop(UInt64.zero, stream)
+
+    // <code>read_bits_big_endian(stream, k)</code> reads the next available
+    // <code>k</code> bits from the stream and interprets them as the least
+    // significant bits of a big-endian integer
+    val r = UInt64.fromBytes(
+      bytes = noQuotient.take(p.toInt).reverse.toByteVector)
+
+    val x = (q << p.toInt) + r
+
+    x
   }
 
 }
