@@ -1,28 +1,16 @@
 package org.bitcoins.rpc.serializers
 
 import java.io.File
-import java.net.{ InetAddress, URI }
+import java.net.{InetAddress, URI}
 
-import org.bitcoins.core.crypto.{
-  DoubleSha256Digest,
-  ECPublicKey,
-  Sha256Hash160Digest
-}
-import org.bitcoins.core.currency.{ Bitcoins, Satoshis }
-import org.bitcoins.core.number.{ Int32, UInt32, UInt64 }
-import org.bitcoins.core.protocol.{
-  Address,
-  BitcoinAddress,
-  P2PKHAddress,
-  P2SHAddress
-}
-import org.bitcoins.core.protocol.blockchain.{ Block, BlockHeader, MerkleBlock }
-import org.bitcoins.core.protocol.script.{ ScriptPubKey, ScriptSignature }
-import org.bitcoins.core.protocol.transaction.{
-  Transaction,
-  TransactionInput,
-  TransactionOutPoint
-}
+import org.bitcoins.core.crypto.{DoubleSha256Digest, ECPublicKey, Sha256Hash160Digest}
+import org.bitcoins.core.currency.{Bitcoins, Satoshis}
+import org.bitcoins.core.number.{Int32, UInt32, UInt64}
+import org.bitcoins.core.protocol.{Address, BitcoinAddress, P2PKHAddress, P2SHAddress}
+import org.bitcoins.core.protocol.blockchain.{Block, BlockHeader, MerkleBlock}
+import org.bitcoins.core.protocol.script.{ScriptPubKey, ScriptSignature}
+import org.bitcoins.core.protocol.transaction.{Transaction, TransactionInput, TransactionOutPoint}
+import org.bitcoins.core.script.crypto.HashType
 import org.bitcoins.core.wallet.fee.BitcoinFeeUnit
 import org.bitcoins.rpc.jsonmodels._
 import org.bitcoins.rpc.serializers.JsonReaders._
@@ -82,7 +70,7 @@ object JsonSerializers {
       (__ \ "hex").read[String] and
       (__ \ "reqSigs").readNullable[Int] and
       (__ \ "type").read[String] and
-      (__ \ "addresses").readNullable[Vector[BitcoinAddress]])(RpcScriptPubKey)
+      (__ \ "addresses").readNullable[Vector[BitcoinAddress]]) (RpcScriptPubKey)
   implicit val rpcTransactionOutputReads: Reads[RpcTransactionOutput] =
     Json.reads[RpcTransactionOutput]
   implicit val rpcTransactionReads: Reads[RpcTransaction] =
@@ -93,7 +81,25 @@ object JsonSerializers {
       (__ \ "type").readNullable[String] and
       (__ \ "reqSigs").readNullable[Int] and
       (__ \ "addresses").readNullable[Vector[P2PKHAddress]] and
-      (__ \ "p2sh").read[P2SHAddress])(DecodeScriptResult)
+      (__ \ "p2sh").read[P2SHAddress]) (DecodeScriptResult)
+
+  implicit val decodePSBTResultReads: Reads[RpcPSBT] = Json.reads[RpcPSBT]
+  implicit val psbtInputReads: Reads[PSBTInput] = Json.reads[PSBTInput]
+  implicit val psbtScriptReads: Reads[PSBTScript] = Json.reads[PSBTScript]
+  implicit val witnessUtxoReads: Reads[WitnessUTXO] = Json.reads[WitnessUTXO]
+  implicit val psbtBip32DerivsReads: Reads[PSBTBip32Derivs] = Json.reads[PSBTBip32Derivs]
+  implicit val psbtBip32DerivsPubKeyReads: Reads[PSBTBip32DerivsPubKey] = Json.reads[PSBTBip32DerivsPubKey]
+
+  implicit val psbtScriptWithTypeReads: Reads[PSBTScriptWithType] =
+    ((__ \ "asm").read[String] and
+      (__ \ "hex").read[String] and
+      (__ \ "type").read[String]) (PSBTScriptWithType)
+
+  implicit val psbtScriptPubKeyReads: Reads[PSBTScriptPubKey] =
+    ((__ \ "asm").read[String] and
+      (__ \ "hex").read[String] and
+      (__ \ "type").read[String] and
+      (__ \ "address").read[String]) (PSBTScriptPubKey)
 
   implicit val fundRawTransactionResultReads: Reads[FundRawTransactionResult] =
     Json.reads[FundRawTransactionResult]
@@ -138,7 +144,7 @@ object JsonSerializers {
     (__ \ "inflight").read[Vector[Int]] and
     (__ \ "whitelisted").read[Boolean] and
     (__ \ "bytessent_per_msg").read[Map[String, Int]] and
-    (__ \ "bytesrecv_per_msg").read[Map[String, Int]])(Peer)
+    (__ \ "bytesrecv_per_msg").read[Map[String, Int]]) (Peer)
 
   implicit val nodeBanReads: Reads[NodeBan] = Json.reads[NodeBan]
 
@@ -202,7 +208,7 @@ object JsonSerializers {
       (__ \ "comment").readNullable[String] and
       (__ \ "to").readNullable[String] and
       (__ \ "details").read[Vector[TransactionDetails]] and
-      (__ \ "hex").read[Transaction])(GetTransactionResult)
+      (__ \ "hex").read[Transaction]) (GetTransactionResult)
 
   implicit val getWalletInfoResultReads: Reads[GetWalletInfoResult] =
     Json.reads[GetWalletInfoResult]
@@ -247,7 +253,7 @@ object JsonSerializers {
       (__ \ "timereceived").read[UInt32] and
       (__ \ "bip125-replaceable").read[String] and
       (__ \ "comment").readNullable[String] and
-      (__ \ "to").readNullable[String])(Payment)
+      (__ \ "to").readNullable[String]) (Payment)
   implicit val listSinceBlockResultReads: Reads[ListSinceBlockResult] =
     Json.reads[ListSinceBlockResult]
 
@@ -273,7 +279,7 @@ object JsonSerializers {
       (__ \ "to").readNullable[String] and
       (__ \ "otheraccount").readNullable[String] and
       (__ \ "bip125-replaceable").read[String] and
-      (__ \ "abandoned").readNullable[Boolean])(ListTransactionsResult)
+      (__ \ "abandoned").readNullable[Boolean]) (ListTransactionsResult)
 
   implicit val unspentOutputReads: Reads[UnspentOutput] =
     Json.reads[UnspentOutput]

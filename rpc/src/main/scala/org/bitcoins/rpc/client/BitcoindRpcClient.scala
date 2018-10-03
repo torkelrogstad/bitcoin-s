@@ -181,6 +181,12 @@ class BitcoindRpcClient(instance: BitcoindInstance)(
       List(JsString(transaction.hex)))
   }
 
+  def decodePSBT(tx: String): Future[RpcPSBT] = {
+    bitcoindCall[RpcPSBT](
+      "decodepsbt",
+      List(JsString(tx)))
+  }
+
   // TODO: add ScriptPubKey.asmHex
   def decodeScript(script: ScriptPubKey): Future[DecodeScriptResult] = {
     bitcoindCall[DecodeScriptResult](
