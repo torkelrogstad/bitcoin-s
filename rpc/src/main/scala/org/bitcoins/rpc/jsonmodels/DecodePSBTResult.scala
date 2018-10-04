@@ -16,7 +16,7 @@ case class PSBTInput(
   witness_utxo: Option[WitnessUTXO],
   redeem_script: Option[PSBTScriptWithType],
   witness_script: Option[PSBTScriptWithType],
-  final_scriptwitness: Seq[String],
+  final_scriptwitness: Option[Seq[String]],
   bip32_derivs: Option[PSBTBip32Derivs],
   sighash: Option[String]) extends DecodePSBTResult
 
