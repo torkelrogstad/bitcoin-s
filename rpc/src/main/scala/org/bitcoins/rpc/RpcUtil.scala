@@ -15,6 +15,8 @@ trait RpcUtil extends BitcoinSLogger {
     }
   }
 
+  private val MAX_TRIES = 50
+
   /**
    * The returned Future completes when condition becomes true
    * @param condition The condition being waited on
@@ -26,7 +28,7 @@ trait RpcUtil extends BitcoinSLogger {
   def retryUntilSatisfied(
     condition: => Boolean,
     duration: FiniteDuration = 100.milliseconds,
-    maxTries: Int = 50)(implicit system: ActorSystem): Future[Unit] = {
+    maxTries: Int = MAX_TRIES)(implicit system: ActorSystem): Future[Unit] = {
     retryUntilSatisfiedWithCounter(condition, duration, maxTries = maxTries)
   }
 
@@ -35,7 +37,7 @@ trait RpcUtil extends BitcoinSLogger {
     condition: => Boolean,
     duration: FiniteDuration = 100.milliseconds,
     counter: Int = 0,
-    maxTries: Int = 50)(implicit system: ActorSystem): Future[Unit] = {
+    maxTries: Int = MAX_TRIES)(implicit system: ActorSystem): Future[Unit] = {
     implicit val ec = system.dispatcher
     if (counter == maxTries) {
       Future.failed(new RuntimeException("Condition timed out"))
@@ -70,7 +72,7 @@ trait RpcUtil extends BitcoinSLogger {
   def awaitCondition(
     condition: => Boolean,
     duration: FiniteDuration = 100.milliseconds,
-    maxTries: Int = 50,
+    maxTries: Int = MAX_TRIES,
     overallTimeout: FiniteDuration = 1.hour)(implicit system: ActorSystem): Unit = {
     Await.result(retryUntilSatisfied(condition, duration, maxTries), overallTimeout)
   }
@@ -78,14 +80,14 @@ trait RpcUtil extends BitcoinSLogger {
   def awaitServer(
     server: BitcoindRpcClient,
     duration: FiniteDuration = 100.milliseconds,
-    maxTries: Int = 50)(implicit system: ActorSystem): Unit = {
+    maxTries: Int = MAX_TRIES)(implicit system: ActorSystem): Unit = {
     awaitCondition(server.isStarted, duration, maxTries)
   }
 
   def awaitServerShutdown(
     server: BitcoindRpcClient,
     duration: FiniteDuration = 300.milliseconds,
-    maxTries: Int = 50)(implicit system: ActorSystem): Unit = {
+    maxTries: Int = MAX_TRIES)(implicit system: ActorSystem): Unit = {
     awaitCondition(!server.isStarted, duration, maxTries)
   }
 }
