@@ -76,7 +76,8 @@ object GCS extends Factory[GCS] {
 
   private def hashToRange(item: ByteVector, f: UInt64, key: ByteVector): UInt64 = {
     //return (siphash(k, item) * F) >> 64
-    val sh = new SipHash()
+    //params are 2,4 according to BIP158
+    val sh = new SipHash(2, 4)
 
     val keyParam = new KeyParameter(key.toArray)
 
@@ -111,7 +112,6 @@ object GCS extends Factory[GCS] {
   }
 
   def encode(delta: UInt64, p: UInt8): BitVector = {
-    logger.debug(s"Encoding GCS")
     val q = delta >> p.toInt
 
     @tailrec
@@ -135,13 +135,12 @@ object GCS extends Factory[GCS] {
 
     //write_bits_big_endian(stream, x, P)
 
-    val end = x.bytes.takeRight(p.toInt)
+    val end = x.bytes.toBitVector.takeRight(p.toInt)
 
-    append0 ++ end.toBitVector
+    append0 ++ end
   }
 
   def decode(stream: BitVector, p: UInt8): UInt64 = {
-    logger.debug(s"Decoding GCS")
     @tailrec
     def loop(inc: UInt64, vec: BitVector): (UInt64, BitVector) = {
       if (vec.nonEmpty && vec.head) {
@@ -156,9 +155,22 @@ object GCS extends Factory[GCS] {
     // <code>read_bits_big_endian(stream, k)</code> reads the next available
     // <code>k</code> bits from the stream and interprets them as the least
     // significant bits of a big-endian integer
-    val r = UInt64.fromBytes(
-      bytes = noQuotient.take(p.toInt).reverse.toByteVector)
 
+    val rBytes = {
+      //toByteVector defaults to padding on the
+      //right most byte of the bytevector
+      //we want to pad on the most significant byte
+      val padding = if (p.toInt < 8) {
+        8
+      } else {
+        (p.toInt % 8) + p.toInt
+      }
+
+      noQuotient.takeRight(p.toInt)
+        .padLeft(padding).toByteVector
+    }
+
+    val r = UInt64.fromBytes(rBytes)
     val x = (q << p.toInt) + r
 
     x
