@@ -125,7 +125,7 @@ object GCS extends Factory[GCS] {
 
     val set = loop(q, BitVector.empty)
 
-    val append0 = set :+ (false)
+    val append0 = set.:+(false)
 
     val x = delta
 
@@ -166,8 +166,9 @@ object GCS extends Factory[GCS] {
         (p.toInt % 8) + p.toInt
       }
 
-      noQuotient.takeRight(p.toInt)
-        .padLeft(padding).toByteVector
+      val noPadding = noQuotient.takeRight(p.toInt)
+
+      noPadding.padLeft(padding).toByteVector
     }
 
     val r = UInt64.fromBytes(rBytes)
