@@ -154,6 +154,14 @@ class BitcoindRpcClient(instance: BitcoindInstance)(
     bitcoindCall[Unit]("clearbanned")
   }
 
+  def convertToPSBT(tx: Transaction,
+    permitSigData: Boolean = false, isWitness: Boolean = ???): Future[String] = {
+    bitcoindCall[String]("converttopsbt", List(Json.toJson(tx),
+      JsBoolean(permitSigData),
+      JsBoolean(isWitness)
+    ))
+  }
+
   def combineRawTransaction(txs: Vector[Transaction]): Future[Transaction] = {
     bitcoindCall[Transaction]("combinerawtransaction", List(Json.toJson(txs)))
   }
@@ -164,6 +172,16 @@ class BitcoindRpcClient(instance: BitcoindInstance)(
     bitcoindCall[MultiSigResult](
       "createmultisig",
       List(JsNumber(minSignatures), Json.toJson(keys.map(_.hex))))
+  }
+
+  def createPSBT(
+    inputs: Vector[TransactionInput],
+    outputs: Vector[Map[BitcoinAddress, Bitcoins]],
+    locktime: Int = 0,
+    replaceable: Boolean = false): Future[Transaction] = {
+    bitcoindCall[Transaction]("createpsbt", List(
+      Json.toJson(inputs),
+      Json.toJson(outputs), JsNumber(locktime), JsBoolean(replaceable)))
   }
 
   def createRawTransaction(
@@ -181,10 +199,10 @@ class BitcoindRpcClient(instance: BitcoindInstance)(
       List(JsString(transaction.hex)))
   }
 
-  def decodePSBT(tx: String): Future[RpcPSBT] = {
+  def decodePSBT(encoded: String): Future[RpcPSBT] = {
     bitcoindCall[RpcPSBT](
       "decodepsbt",
-      List(JsString(tx)))
+      List(JsString(encoded)))
   }
 
   // TODO: add ScriptPubKey.asmHex

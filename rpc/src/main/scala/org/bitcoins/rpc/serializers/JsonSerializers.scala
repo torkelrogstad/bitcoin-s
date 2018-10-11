@@ -84,13 +84,16 @@ object JsonSerializers {
       (__ \ "p2sh").read[P2SHAddress])(DecodeScriptResult)
 
   implicit val psbtBip32DerivsPubKeyReads: Reads[PSBTBip32DerivsPubKey] = Json.reads[PSBTBip32DerivsPubKey]
-  implicit val psbtBip32DerivsReads: Reads[PSBTBip32Derivs] = Json.reads[PSBTBip32Derivs]
+  implicit val psbtInputBip32DerivsReads: Reads[PSBTInputBip32Derivs] = Json.reads[PSBTInputBip32Derivs]
 
   implicit val psbtScriptPubKeyReads: Reads[PSBTScriptPubKey] =
     ((__ \ "asm").read[String] and
       (__ \ "hex").read[String] and
       (__ \ "type").read[String] and
       (__ \ "address").read[String])(PSBTScriptPubKey)
+
+  implicit val psbtOutputBip32DerivsReads: Reads[PSBTOutputBip32Derivs] = Json.reads[PSBTOutputBip32Derivs]
+  implicit val psbtOutputReads: Reads[PSBTOutput] = Json.reads[PSBTOutput]
 
   implicit val witnessUtxoReads: Reads[WitnessUTXO] = Json.reads[WitnessUTXO]
 
