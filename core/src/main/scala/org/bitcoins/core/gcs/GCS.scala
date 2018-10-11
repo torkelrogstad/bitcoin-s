@@ -8,7 +8,7 @@ import org.bouncycastle.crypto.params.KeyParameter
 import scodec.bits.{ BitVector, ByteVector }
 
 import scala.annotation.tailrec
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 /**
  * Represents a Golomb-Coded Sets which is used as the data structure for Light Client's in BIP158
@@ -16,16 +16,27 @@ import scala.util.{ Failure, Try }
  * [[https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki#GolombCoded_Sets]]
  */
 sealed abstract class GCS extends NetworkElement {
+  require(k.size == 128, s"The key used to randomize SipHash outputs must be 128 bits, got ${k.size}")
 
-  override def bytes: ByteVector = ???
+  /** The bit parameter for the GCS */
+  def p: UInt8
 
+  /** Target false positive rate */
+  def m: UInt64
+
+  /** The 128 bit key used to randomize siphash outputs */
+  def k: ByteVector
+
+  def contains(n: UInt32): Unit = {
+
+  }
 }
 
 object GCS extends Factory[GCS] {
-  private case class GCSImpl() extends GCS
+  private case class GCSImpl(p: UInt8, m: UInt64, k: ByteVector, bytes: ByteVector) extends GCS
 
-  override def fromBytes(bytes: ByteVector): GCS = {
-    ???
+  def apply(p: UInt8, m: UInt64, k: ByteVector, bytes: ByteVector): GCS = {
+    GCSImpl(p, m, k, bytes)
   }
 
   /**
@@ -38,7 +49,7 @@ object GCS extends Factory[GCS] {
    * @param m the target false positive rate
    * @return
    */
-  def build(p: UInt8, key: ByteVector, data: Vector[ByteVector], m: UInt64): Try[GCS] = {
+  def build(p: UInt8, m: UInt64, key: ByteVector, data: Vector[ByteVector]): Try[GCS] = {
     if (data.isEmpty) {
       Failure(new IllegalArgumentException(s"Cannot create a GCS filter with an empty data set"))
     } else if (data.length > UInt32.max.toInt) {
@@ -57,7 +68,15 @@ object GCS extends Factory[GCS] {
         values = sorted,
         p = p)
 
-      ???
+      //note, there is implicit padding happening here
+      //with the .toByteVector call, it pads to the nearest
+      //byte boundary
+      val gcs = GCS(
+        p = p,
+        m = m,
+        k = key,
+        bytes = bitVector.toByteVector)
+      Success(gcs)
     }
   }
 
