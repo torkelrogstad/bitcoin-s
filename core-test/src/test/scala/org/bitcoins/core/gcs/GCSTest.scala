@@ -1,13 +1,15 @@
 package org.bitcoins.core.gcs
 
-import org.bitcoins.core.gen.NumberGenerator
 import org.bitcoins.core.number.{ UInt64, UInt8 }
 import org.bitcoins.core.util.NumberUtil
-import org.scalacheck.{ Gen, Prop }
+import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.PropertyChecks
 import org.slf4j.LoggerFactory
+import play.api.libs.json.{ JsArray, JsValue, Json }
 import scodec.bits.BitVector
+
+import scala.io.Source
 
 class GCSTest extends FlatSpec with PropertyChecks {
 
@@ -213,6 +215,18 @@ class GCSTest extends FlatSpec with PropertyChecks {
           stream = encoded,
           p = p)
         decode == delta
+    }
+  }
+
+  it must "pass test cases in BIP158" in {
+    val source = Source.fromURL(getClass.getResource("/testnet-19.json"))
+
+    val json = Json.parse(source.mkString).validate[JsArray].get
+
+    //.tail to get rid of meta information
+    val testCases = json.value.tail.map { test =>
+      val array = test.validate[JsArray].get
+      GCSTestCase.fromJsArray(array)
     }
   }
 }

@@ -27,17 +27,20 @@ sealed abstract class GCS extends NetworkElement {
   /** The 128 bit key used to randomize siphash outputs */
   def k: ByteVector
 
-  def contains(n: UInt32): Unit = {
-
-  }
 }
 
 object GCS extends Factory[GCS] {
   private case class GCSImpl(p: UInt8, m: UInt64, k: ByteVector, bytes: ByteVector) extends GCS
 
+  //https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki#construction
+  val P: UInt8 = UInt8(19)
+  val M: UInt64 = UInt64(784931)
+
   def apply(p: UInt8, m: UInt64, k: ByteVector, bytes: ByteVector): GCS = {
     GCSImpl(p, m, k, bytes)
   }
+
+  override def fromBytes(bytes: ByteVector): GCS = ???
 
   /**
    * Mimics this function for building a GCSFilter
@@ -78,6 +81,14 @@ object GCS extends Factory[GCS] {
         bytes = bitVector.toByteVector)
       Success(gcs)
     }
+  }
+
+  /**
+   * Builds a GCS with the default parameters specified by BIP158
+   * [[https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki#construction]]
+   */
+  def build(key: ByteVector, data: Vector[ByteVector]): Try[GCS] = {
+    build(P, M, key, data)
   }
 
   private def constructHashedSet(data: Vector[ByteVector], key: ByteVector, m: UInt64): Vector[UInt64] = {
