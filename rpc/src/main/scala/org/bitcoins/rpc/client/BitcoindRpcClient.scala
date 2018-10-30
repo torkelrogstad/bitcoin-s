@@ -154,12 +154,13 @@ class BitcoindRpcClient(instance: BitcoindInstance)(
     bitcoindCall[Unit]("clearbanned")
   }
 
-  def convertToPSBT(tx: Transaction,
-    permitSigData: Boolean = false, isWitness: Boolean = ???): Future[String] = {
-    bitcoindCall[String]("converttopsbt", List(Json.toJson(tx),
+  def convertToPSBT(
+    tx: Transaction,
+    permitSigData: Boolean = false, isWitness: Boolean = false): Future[String] = {
+    bitcoindCall[String]("converttopsbt", List(
+      Json.toJson(tx),
       JsBoolean(permitSigData),
-      JsBoolean(isWitness)
-    ))
+      JsBoolean(isWitness)))
   }
 
   def combineRawTransaction(txs: Vector[Transaction]): Future[Transaction] = {
