@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.rpc.client.BitcoindRpcClient
 
+import scala.concurrent._
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{Await, Future, Promise}
 
 trait RpcUtil extends BitcoinSLogger {
 
