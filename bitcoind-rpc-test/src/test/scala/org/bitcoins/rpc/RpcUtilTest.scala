@@ -3,19 +3,27 @@ package org.bitcoins.rpc
 import java.io.File
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import org.bitcoins.rpc.client.BitcoindRpcClient
+import akka.testkit.TestKit
+import org.bitcoins.core.currency.Bitcoins
+import org.bitcoins.rpc.client.common.BitcoindRpcClient
+import org.bitcoins.rpc.client.common.RpcOpts.AddNodeArgument
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.{AsyncFlatSpec, BeforeAndAfterAll}
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
 
-  implicit val system = ActorSystem("RpcUtilTest_ActorSystem")
-  implicit val ec = system.dispatcher
+  private val accum = Vector.newBuilder[BitcoindRpcClient]
+
+  private lazy val clientsF =
+    BitcoindRpcTestUtil.createNodeTriple(clientAccum = accum)
+
+  implicit val system: ActorSystem =
+    ActorSystem("RpcUtilTest_ActorSystem", BitcoindRpcTestUtil.AKKA_CONFIG)
+  implicit val ec: ExecutionContext = system.dispatcher
 
   private def trueLater(delay: Int = 1000): Future[Boolean] = Future {
     Thread.sleep(delay)
@@ -30,7 +38,7 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
 
   private def boolLaterDoneAndTrue(
       trueLater: Future[Boolean]): () => Future[Boolean] = { () =>
-    boolLaterDoneAnd(true, trueLater)
+    boolLaterDoneAnd(bool = true, trueLater)
   }
 
   behavior of "RpcUtil"
@@ -61,41 +69,51 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
   it should "fail if there is a delay and duration is zero" in {
     val boolLater = trueLater(delay = 250)
     recoverToSucceededIf[TestFailedException] {
-      RpcUtil.retryUntilSatisfiedF(boolLaterDoneAndTrue(boolLater),
-                                   duration = 0.millis)
+      RpcUtil
+        .retryUntilSatisfiedF(boolLaterDoneAndTrue(boolLater),
+                              duration = 0.millis)
+        .map(_ => succeed)
     }
   }
 
   it should "succeed immediately if condition is true" in {
-    RpcUtil.awaitCondition(condition = () => true, 0.millis)
-    succeed
+    RpcUtil
+      .awaitCondition(condition = () => true, 0.millis)
+      .map(_ => succeed)
+
   }
 
   it should "timeout if condition is false" in {
-    assertThrows[TestFailedException] {
-      RpcUtil.awaitCondition(condition = () => false, duration = 0.millis)
+    recoverToSucceededIf[TestFailedException] {
+      RpcUtil
+        .awaitCondition(condition = () => false, duration = 0.millis)
+        .map(_ => succeed)
     }
   }
 
-  it should "block for a delay and then succeed" in {
+  it should "wait for a delay and then succeed" in {
     val boolLater = trueLater(delay = 250)
     val before: Long = System.currentTimeMillis
-    RpcUtil.awaitConditionF(boolLaterDoneAndTrue(boolLater))
-    val after: Long = System.currentTimeMillis
-    assert(after - before >= 250)
+    RpcUtil.awaitConditionF(boolLaterDoneAndTrue(boolLater)).flatMap { _ =>
+      val after: Long = System.currentTimeMillis
+      assert(after - before >= 250)
+    }
   }
 
   it should "timeout if there is a delay and duration is zero" in {
     val boolLater = trueLater(delay = 250)
-    assertThrows[TestFailedException] {
-      RpcUtil.awaitConditionF(boolLaterDoneAndTrue(boolLater),
-                              duration = 0.millis)
+    recoverToSucceededIf[TestFailedException] {
+      RpcUtil
+        .awaitConditionF(boolLaterDoneAndTrue(boolLater), duration = 0.millis)
+        .map(_ => succeed)
     }
   }
 
-  "BitcoindRpcUtil" should "create a temp bitcoin directory when creating a DaemonInstance, and then delete it" in {
-    val instance = BitcoindRpcTestUtil.instance(BitcoindRpcTestUtil.randomPort,
-                                                BitcoindRpcTestUtil.randomPort)
+  behavior of "BitcoindRpcUtil"
+
+  it should "create a temp bitcoin directory when creating a DaemonInstance, and then delete it" in {
+    val instance =
+      BitcoindRpcTestUtil.instance(RpcUtil.randomPort, RpcUtil.randomPort)
     val dir = instance.authCredentials.datadir
     assert(dir.isDirectory)
     assert(
@@ -105,9 +123,6 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
   }
 
   it should "be able to create a single node, wait for it to start and then delete it" in {
-    implicit val m: ActorMaterializer = ActorMaterializer.create(system)
-    implicit val ec = m.executionContext
-
     val instance = BitcoindRpcTestUtil.instance()
     val client = new BitcoindRpcClient(instance)
     val startedF = client.start()
@@ -118,31 +133,100 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
     }
   }
 
-  it should "be able to create a connected node pair with 100 blocks and then delete them" in {
-    BitcoindRpcTestUtil.createNodePair().flatMap {
-      case (client1, client2) =>
+  it should "be able to create a connected node pair with more than 100 blocks and then delete them" in {
+    for {
+      (client1, client2) <- BitcoindRpcTestUtil.createNodePair()
+      _ = {
         assert(client1.getDaemon.authCredentials.datadir.isDirectory)
         assert(client2.getDaemon.authCredentials.datadir.isDirectory)
+      }
+      nodes <- client1.getAddedNodeInfo(client2.getDaemon.uri)
+      _ = {
+        assert(nodes.nonEmpty)
+      }
+      count1 <- client1.getBlockCount
+      count2 <- client2.getBlockCount
+      _ = {
+        assert(count1 > 100)
+        assert(count2 > 100)
+      }
+      _ <- BitcoindRpcTestUtil.deleteNodePair(client1, client2)
+    } yield {
+      assert(!client1.getDaemon.authCredentials.datadir.exists)
+      assert(!client2.getDaemon.authCredentials.datadir.exists)
+    }
+  }
 
-        client1.getAddedNodeInfo(client2.getDaemon.uri).flatMap { nodes =>
-          assert(nodes.nonEmpty)
+  it should "be able to generate and sync blocks" in {
+    for {
+      (first, second, third) <- clientsF
+      address <- second.getNewAddress
+      txid <- first.sendToAddress(address, Bitcoins.one)
+      _ <- BitcoindRpcTestUtil.generateAndSync(Vector(first, second, third))
+      tx <- first.getTransaction(txid)
+      _ = assert(tx.confirmations > 0)
+      rawTx <- second.getRawTransaction(txid)
+      _ = assert(rawTx.confirmations.exists(_ > 0))
+      firstBlock <- first.getBestBlockHash
+      secondBlock <- second.getBestBlockHash
+    } yield assert(firstBlock == secondBlock)
+  }
 
-          client1.getBlockCount.flatMap { count1 =>
-            assert(count1 == 100)
+  it should "ble able to generate blocks with multiple clients and sync inbetween" in {
+    val blocksToGenerate = 10
 
-            client2.getBlockCount.map { count2 =>
-              assert(count2 == 100)
+    for {
+      (first, second, third) <- clientsF
+      allClients = Vector(first, second, third)
+      heightPreGeneration <- first.getBlockCount
+      _ <- BitcoindRpcTestUtil.generateAllAndSync(allClients,
+                                                  blocks = blocksToGenerate)
+      firstHash <- first.getBestBlockHash
+      secondHash <- second.getBestBlockHash
+      heightPostGeneration <- first.getBlockCount
+    } yield {
+      assert(firstHash == secondHash)
+      assert(
+        heightPostGeneration - heightPreGeneration == blocksToGenerate * allClients.length)
+    }
+  }
 
-              BitcoindRpcTestUtil.deleteNodePair(client1, client2)
-              assert(!client1.getDaemon.authCredentials.datadir.exists)
-              assert(!client2.getDaemon.authCredentials.datadir.exists)
-            }
-          }
-        }
+  it should "be able to wait for disconnected nodes" in {
+    for {
+      (first, second) <- BitcoindRpcTestUtil.createUnconnectedNodePair(accum)
+      _ <- first.addNode(second.instance.uri, AddNodeArgument.Add)
+      _ <- BitcoindRpcTestUtil.awaitConnection(first, second)
+      peerInfo <- first.getPeerInfo
+      _ = {
+        assert(peerInfo.length == 1)
+        assert(peerInfo.head.addnode)
+        assert(peerInfo.head.networkInfo.addr == second.instance.uri)
+      }
+      _ <- first.disconnectNode(peerInfo.head.networkInfo.addr)
+      _ <- BitcoindRpcTestUtil.awaitDisconnected(first, second)
+      newPeerInfo <- first.getPeerInfo
+    } yield assert(newPeerInfo.isEmpty)
+  }
+
+  it should "be able to find outputs of previous transactions" in {
+    for {
+      (first, second, _) <- clientsF
+      address <- second.getNewAddress
+      txid <- first.sendToAddress(address, Bitcoins.one)
+      hashes <- BitcoindRpcTestUtil.generateAndSync(Vector(first, second))
+      vout <- BitcoindRpcTestUtil.findOutput(first,
+                                             txid,
+                                             Bitcoins.one,
+                                             Some(hashes.head))
+      tx <- first.getRawTransaction(txid, Some(hashes.head))
+    } yield {
+      assert(tx.vout(vout.toInt).value == Bitcoins.one)
     }
   }
 
   override def afterAll(): Unit = {
-    Await.result(system.terminate(), 10.seconds)
+    BitcoindRpcTestUtil.stopServers(accum.result)
+
+    TestKit.shutdownActorSystem(system)
   }
 }
