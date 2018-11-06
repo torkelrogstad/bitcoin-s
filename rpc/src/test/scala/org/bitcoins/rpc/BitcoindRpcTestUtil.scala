@@ -12,7 +12,12 @@ import org.bitcoins.rpc.client.BitcoindRpcClient
 import org.bitcoins.rpc.config.{BitcoindAuthCredentials, BitcoindInstance}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{
+  ExecutionContext,
+  ExecutionContextExecutor,
+  Future,
+  Promise
+}
 import scala.util.{Failure, Success, Try}
 
 trait BitcoindRpcTestUtil extends BitcoinSLogger {
@@ -259,9 +264,9 @@ trait BitcoindRpcTestUtil extends BitcoinSLogger {
   def startedBitcoindRpcClient(
       instance: BitcoindInstance = BitcoindRpcTestUtil.instance())(
       implicit system: ActorSystem): BitcoindRpcClient = {
-    implicit val ec = system.dispatcher
+    implicit val ec: ExecutionContextExecutor = system.dispatcher
     //start the bitcoind instance so eclair can properly use it
-    val rpc = new BitcoindRpcClient(instance)(system)
+    val rpc = new BitcoindRpcClient(instance)(ActorMaterializer.create(system))
     rpc.start()
 
     logger.debug(s"Starting bitcoind at ${instance.authCredentials.datadir}")
