@@ -25,7 +25,7 @@ import play.api.libs.json._
 
 import scala.util.{ Failure, Success }
 
-object JsonReaders {
+object BitcoindJsonReaders {
   // For use in implementing reads method of Reads[T] where T is constructed from a JsNumber via numFunc
   private def processJsNumber[T](numFunc: BigDecimal => T)(
     json: JsValue): JsResult[T] = json match {
@@ -33,6 +33,23 @@ object JsonReaders {
     case err @ (JsNull | _: JsBoolean | _: JsString | _: JsArray |
       _: JsObject) =>
       buildJsErrorMsg("jsnumber", err)
+  }
+
+  // For use in implementing reads method of Reads[T] where T is constructed from a JsString via strFunc
+  private def processJsString[T](strFunc: String => T)(
+    json: JsValue): JsResult[T] = json match {
+    case JsString(s) => JsSuccess(strFunc(s))
+    case err @ (JsNull | _: JsBoolean | _: JsNumber | _: JsArray |
+      _: JsObject) =>
+      buildJsErrorMsg("jsstring", err)
+  }
+
+  private def buildJsErrorMsg(expected: String, err: JsValue): JsError = {
+    JsError(s"error.expected.$expected, got ${Json.toJson(err).toString()}")
+  }
+
+  private def buildErrorMsg(expected: String, err: Any): JsError = {
+    JsError(s"error.expected.$expected, got ${err.toString}")
   }
 
   // For use in implementing reads method of Reads[T] where T is constructed from a JsString via strFunc
