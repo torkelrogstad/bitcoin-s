@@ -4,12 +4,14 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import org.bitcoins.rpc.client.BitcoindRpcClient
+import org.bitcoins.rpc.client.common.BitcoindRpcClient
+
 import org.scalatest.{ AsyncFlatSpec, BeforeAndAfterAll }
 
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.duration.DurationInt
 import scala.util.{ Success, Try }
+import scala.async.Async.{ async, await }
 
 class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
 
@@ -24,8 +26,9 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
   private def boolLaterDoneAnd(bool: Boolean, boolFuture: Future[Boolean]): Boolean =
     boolFuture.value.contains(Success(bool))
 
-  private def boolLaterDoneAndTrue(trueLater: Future[Boolean]): Boolean =
-    boolLaterDoneAnd(bool = true, trueLater)
+  private def boolLaterDoneAndTrue(trueLater: Future[Boolean]): () => Future[Boolean] = {
+    () => boolLaterDoneAnd(bool = true, trueLater)
+  }
 
   behavior of "RpcUtil"
 
@@ -81,8 +84,8 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
     }
   }
 
-  "TestUtil" should "create a temp bitcoin directory when creating a DaemonInstance, and then delete it" in {
-    val instance = TestUtil.instance(TestUtil.randomPort, TestUtil.randomPort)
+  "BitcoindRpcTestUtil" should "create a temp bitcoin directory when creating a DaemonInstance, and then delete it" in {
+    val instance = BitcoindRpcTestUtil.instance(BitcoindRpcTestUtil.randomPort, BitcoindRpcTestUtil.randomPort)
     val dir = instance.authCredentials.datadir
     assert(dir.isDirectory)
     assert(dir.listFiles.contains(new File(dir.getAbsolutePath + "/bitcoin.conf")))
@@ -97,7 +100,7 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
     val instance = TestUtil.instance()
     val client = new BitcoindRpcClient(instance)
     client.start()
-    RpcUtil.awaitCondition(client.isStarted)
+    RpcUtil.awaitCondition(() => client.isStarted)
     assert(client.isStarted)
     client.stop()
     RpcUtil.awaitServerShutdown(client)
@@ -107,8 +110,8 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
     assert(t.isFailure)
   }
 
-  "TestUtil" should "be able to create a connected node pair with 100 blocks and then delete them" in {
-    TestUtil.createNodePair().flatMap {
+  it should "be able to create a connected node pair with 100 blocks and then delete them" in {
+    BitcoindRpcTestUtil.createNodePair().flatMap {
       case (client1, client2) =>
         assert(client1.getDaemon.authCredentials.datadir.isDirectory)
         assert(client2.getDaemon.authCredentials.datadir.isDirectory)
@@ -129,6 +132,22 @@ class RpcUtilTest extends AsyncFlatSpec with BeforeAndAfterAll {
           }
         }
     }
+  }
+
+  it should "be able to create a unconnected node pair" in async {
+    val (client1, client2) = BitcoindRpcTestUtil.createUnconnectedNodePair()
+    assert(client1.getDaemon.authCredentials.datadir.isDirectory)
+    assert(client2.getDaemon.authCredentials.datadir.isDirectory)
+
+    val nodes = await(client1.getConnectionCount)
+    assert(nodes == 0)
+
+    val count1 = await(client1.getBlockCount)
+    assert(count1 == 0)
+
+    val count2 = await(client2.getBlockCount)
+    assert(count2 == 0)
+
   }
 
   override def afterAll(): Unit = {
