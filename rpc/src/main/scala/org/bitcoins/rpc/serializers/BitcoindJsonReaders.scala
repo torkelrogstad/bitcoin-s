@@ -11,11 +11,11 @@ import org.bitcoins.core.crypto.{
 import org.bitcoins.core.currency.{ Bitcoins, Satoshis }
 import org.bitcoins.core.number.{ Int32, Int64, UInt32, UInt64 }
 import org.bitcoins.core.protocol.blockchain.{ Block, BlockHeader, MerkleBlock }
-import org.bitcoins.core.protocol.script.{ ScriptPubKey, ScriptSignature }
+import org.bitcoins.core.protocol.script.{ ScriptPubKey, ScriptSignature, WitnessVersion, WitnessVersion0 }
 import org.bitcoins.core.protocol.transaction._
 import org.bitcoins.core.protocol.{ Address, BitcoinAddress, P2PKHAddress, P2SHAddress }
 import org.bitcoins.core.wallet.fee.{ BitcoinFeeUnit, SatoshisPerByte }
-import org.bitcoins.rpc.client.RpcOpts.LabelPurpose
+import org.bitcoins.rpc.client.common.RpcOpts.LabelPurpose
 import org.bitcoins.rpc.jsonmodels.RpcAddress
 import play.api.libs.json._
 
@@ -65,11 +65,6 @@ object BitcoindJsonReaders {
         case JsNumber(num) if num != 0 => buildErrorMsg("Expected witness_version 0", num)
         case err => buildErrorMsg("Expected numerical witness_version", err)
       }
-  }
-
-  implicit object BigIntReads extends Reads[BigInt] {
-    override def reads(json: JsValue): JsResult[BigInt] =
-      SerializerUtil.processJsNumber[BigInt](_.toBigInt())(json)
   }
 
   implicit object BigIntReads extends Reads[BigInt] {

@@ -1,11 +1,13 @@
-package org.bitcoins.rpc
+package org.bitcoins.rpc.v16
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.bitcoins.core.config.NetworkParameters
 import org.bitcoins.core.currency.Bitcoins
 import org.bitcoins.core.util.BitcoinSLogger
-import org.bitcoins.rpc.client.BitcoindV16RpcClient
+import org.bitcoins.rpc.TestUtil
+import org.bitcoins.rpc.client.common.RpcOpts.AddNodeArgument
+import org.bitcoins.rpc.client.v16.BitcoindV16RpcClient
 import org.scalatest.{ AsyncFlatSpec, BeforeAndAfterAll }
 import org.slf4j.Logger
 
@@ -22,30 +24,23 @@ class BitcoindV16RpcClientTest extends AsyncFlatSpec with BeforeAndAfterAll {
 
   val client = new BitcoindV16RpcClient(TestUtil.instance())
   val otherClient = new BitcoindV16RpcClient(TestUtil.instance())
+  val clients = Vector(client, otherClient)
 
   override protected def beforeAll(): Unit = {
     logger.info("Starting MessageRpcTest")
     logger.info("Bitcoin server starting")
-    TestUtil.startServers(client, otherClient)
+    TestUtil.startServers(clients)
     logger.info("Bitcoin server started")
 
-    client.addNode(otherClient.getDaemon.uri, "add")
+    client.addNode(otherClient.getDaemon.uri, AddNodeArgument.Add)
 
     logger.info("Funding wallet by mining some blocks")
     Await.result(client.generate(200), 3.seconds)
   }
 
   override protected def afterAll(): Unit = {
-    logger.info("Cleaning up after MessageRpcTest")
-
-    logger.info("Stopping Bitcoin servers")
-    TestUtil.stopServers(client, otherClient)
-    logger.info("Bitcoin servers stopped")
-
-    logger.info("Stopping ActorSystem")
+    TestUtil.stopServers(clients)
     Await.result(system.terminate(), 10.seconds)
-    logger.info("Stopped ActorSystem")
-
   }
 
   behavior of "BitoindV16RpcClient"
