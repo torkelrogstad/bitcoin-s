@@ -1,4 +1,4 @@
-package org.bitcoins.rpc.client
+package org.bitcoins.rpc.client.common
 
 import akka.stream.ActorMaterializer
 import org.bitcoins.rpc.config.BitcoindInstance
@@ -9,8 +9,10 @@ import scala.concurrent.ExecutionContext
   * This class is not guaranteed to be compatible with any particular
   * version of Bitcoin Core. It implements RPC calls that are similar
   * across different versions. If you need RPC calls specific to a
-  * version, check out [[BitcoindV16RpcClient]] or
-  * [[BitcoindV17RpcClient]].
+  * version, check out 
+  * [[org.bitcoins.rpc.client.v16.BitcoindV16RpcClient BitcoindV16RpcClient]] 
+  * or
+  * [[org.bitcoins.rpc.client.v17.BitcoindV17RpcClient BitcoindV17RpcClient]].
   */
 class BitcoindRpcClient(protected val instance: BitcoindInstance)(
     implicit

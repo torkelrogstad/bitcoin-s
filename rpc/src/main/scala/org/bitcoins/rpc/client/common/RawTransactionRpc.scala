@@ -1,4 +1,4 @@
-package org.bitcoins.rpc.client
+package org.bitcoins.rpc.client.common
 
 import org.bitcoins.core.crypto.{DoubleSha256Digest, ECPrivateKey}
 import org.bitcoins.core.currency.Bitcoins
@@ -10,9 +10,7 @@ import org.bitcoins.rpc.jsonmodels.{
   RpcTransaction,
   SignRawTransactionResult
 }
-import org.bitcoins.rpc.serializers.BitcoindJsonReaders._
 import org.bitcoins.rpc.serializers.BitcoindJsonSerializers._
-import org.bitcoins.rpc.serializers.BitcoindJsonWriters._
 import play.api.libs.json._
 
 import scala.concurrent.Future

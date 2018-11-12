@@ -8,7 +8,8 @@ import akka.stream.ActorMaterializer
 import org.bitcoins.core.config.RegTest
 import org.bitcoins.core.crypto.DoubleSha256Digest
 import org.bitcoins.core.util.BitcoinSLogger
-import org.bitcoins.rpc.client.BitcoindRpcClient
+import org.bitcoins.rpc.client.common.BitcoindRpcClient
+import org.bitcoins.rpc.client.common.RpcOpts.AddNodeArgument
 import org.bitcoins.rpc.config.{BitcoindAuthCredentials, BitcoindInstance}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -217,7 +218,7 @@ trait BitcoindRpcTestUtil extends BitcoinSLogger {
       throw try2.failed.get
     }
 
-    client1.addNode(client2.getDaemon.uri, "add").flatMap { _ =>
+    client1.addNode(client2.getDaemon.uri, AddNodeArgument.Add).flatMap { _ =>
       val try3 =
         Try(awaitConnection(from = client1, to = client2, duration = 1.seconds))
 
