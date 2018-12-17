@@ -9,7 +9,6 @@ os:
 
 jdk: 
   - oraclejdk8
-  - openjdk8
 
 scala:
   - 2.11.12
