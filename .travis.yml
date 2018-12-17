@@ -3,6 +3,10 @@ sudo: false
 
 language: scala
 
+os:
+  - linux
+  - osx
+
 jdk: 
   - oraclejdk8
   - openjdk8
