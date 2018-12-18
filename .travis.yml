@@ -3,13 +3,11 @@ sudo: false
 
 language: scala
 
-os:
-  - linux
-  - osx
-
 #This forces the use of oraclejdk8, we don't support higher yet
 #https://docs.travis-ci.com/user/reference/osx#jdk-and-os-x
-osx_image: xcode9.3
+os:
+  - linux
+  - xcode9.3
 
 jdk: 
   - oraclejdk8
