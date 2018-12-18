@@ -25,10 +25,11 @@ before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 
 before_install:
-  - wget https://bitcoincore.org/bin/bitcoin-core-0.16.3/bitcoin-0.16.3-x86_64-linux-gnu.tar.gz
-  - tar -xzf bitcoin-0.16.3-x86_64-linux-gnu.tar.gz
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; PLATFORM=osx64; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; PLATFORM=x86_64-linux-gnu; fi
+  - wget https://bitcoincore.org/bin/bitcoin-core-0.16.3/bitcoin-0.16.3-${PLATFORM}.tar.gz
+  - tar -xzf bitcoin-0.16.3-${PLATFORM}.tar.gz
   - cd bitcoin-0.16.3/bin
-  - chmod +x bitcoin{d,-cli}
   - export PATH=$PATH:$(pwd)
   - cd ../..
 
