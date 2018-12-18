@@ -7,10 +7,7 @@ language: scala
 #https://docs.travis-ci.com/user/reference/osx#jdk-and-os-x
 os:
   - linux
-  - xcode9.3
-
-jdk: 
-  - oraclejdk8
+  - osx
 
 scala:
   - 2.11.12
