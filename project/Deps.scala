@@ -16,6 +16,10 @@ object Deps {
     val junitV = "0.11"
     val nativeLoaderV = "2.3.2"
 
+    val jodaV = "2.9.4"
+    val postgresV = "9.4.1210"
+    val akkaActorV = akkaStreamv
+    val slickV = "3.2.3"
     val bitcoinsV = "0.0.1-SNAPSHOT"
   }
 
@@ -26,12 +30,20 @@ object Deps {
     val zeromq = "org.zeromq" % "jeromq" % V.zeromq withSources() withJavadoc()
     val akkaHttp = "com.typesafe.akka" %% "akka-http" % V.akkav withSources() withJavadoc()
     val akkaStream = "com.typesafe.akka" %% "akka-stream" % V.akkaStreamv withSources() withJavadoc()
+    val akkaActor = "com.typesafe.akka" %% "akka-actor" % V.akkaStreamv withSources() withJavadoc()
     val playJson = "com.typesafe.play" %% "play-json" % V.playv withSources() withJavadoc()
 
     val logback = "ch.qos.logback" % "logback-classic" % V.logback withSources() withJavadoc()
 
     //for loading secp256k1 natively
     val nativeLoader = "org.scijava" % "native-lib-loader" % V.nativeLoaderV withSources() withJavadoc()
+
+    //node deps
+    val joda = "joda-time" % "joda-time" % V.jodaV
+    val akkaSlf4j = ("com.typesafe.akka" %% "akka-slf4j" % V.akkaStreamv withSources() withJavadoc()).exclude("org.slf4j", "slf4j-api")
+    val slick = "com.typesafe.slick" %% "slick" % V.slickV withSources() withJavadoc()
+    val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % V.slickV
+    val postgres = "org.postgresql" % "postgresql" % V.postgresV
   }
 
   object Test {
@@ -108,6 +120,13 @@ object Deps {
     Test.scalaTest,
     Test.scalacheck,
     Test.testkit
+  )
+
+  val node = List(
+    Compile.akkaActor,
+    Compile.slick,
+    Compile.slickHikari,
+    Compile.postgres
   )
 
   val testkit = List(

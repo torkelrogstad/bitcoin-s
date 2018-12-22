@@ -89,6 +89,7 @@ lazy val root = project
     rpc,
     bench,
     eclairRpc,
+    node,
     testkit
   )
   .settings(commonSettings: _*)
@@ -157,6 +158,18 @@ lazy val eclairRpc = project
   .dependsOn(
     core,
     rpc
+  )
+
+lazy val node = project
+  .in(file("node"))
+  .enablePlugins()
+  .settings(commonSettings: _*)
+  .settings(
+    name := "bitcoin-s-node",
+    libraryDependencies ++= Deps.node
+  )
+  .dependsOn(
+    core
   )
 
 lazy val testkit = project
