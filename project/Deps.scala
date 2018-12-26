@@ -114,4 +114,9 @@ object Deps {
     Compile.slf4j,
     "org.scalacheck" %% "scalacheck" % V.scalacheck withSources() withJavadoc()
   )
+
+  val doc = List(
+    Test.scalaTest,
+    Test.logback
+  )
 }

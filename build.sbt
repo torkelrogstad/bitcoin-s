@@ -28,6 +28,7 @@ lazy val testCompilerOpts = commonCompilerOpts
 
 lazy val commonSettings = List(
   scalacOptions in Compile := compilerOpts,
+
   scalacOptions in Test := testCompilerOpts,
   assemblyOption in assembly := (assemblyOption in assembly).value
     .copy(includeScala = false),
@@ -52,7 +53,8 @@ lazy val root = project
     rpc,
     bench,
     eclairRpc,
-    testkit
+    testkit,
+    doc
   )
   .settings(commonSettings: _*)
 
@@ -97,9 +99,6 @@ lazy val rpc = project
   .dependsOn(
     core
   )
-  .settings(
-    testOptions in Test += Tests.Argument("-oF")
-  )
 
 lazy val bench = project
   .in(file("bench"))
@@ -132,5 +131,16 @@ lazy val testkit = project
     eclairRpc
   )
 
+
+lazy val doc = project
+  .in(file("doc"))
+  .settings(
+    name := "bitcoin-s-doc",
+    libraryDependencies ++= Deps.doc
+  )
+  .dependsOn(
+    secp256k1jni,
+    core
+  )
 
 publishArtifact in root := false
