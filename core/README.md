@@ -1,23 +1,19 @@
-[![Build Status](https://travis-ci.org/bitcoin-s/bitcoin-s-core.svg?branch=master)](https://travis-ci.org/bitcoin-s/bitcoin-s-core) [![Coverage Status](https://coveralls.io/repos/github/bitcoin-s/bitcoin-s-core/badge.svg?branch=master)](https://coveralls.io/github/bitcoin-s/bitcoin-s-core?branch=master) [![IRC Network](https://img.shields.io/badge/irc-%23bitcoin--scala-blue.svg "IRC Freenode")](https://webchat.freenode.net/?channels=bitcoin-scala)[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/bitcoin-s-core)
-
-# Bitcoin-S-Core
-
 This is the core functionality of bitcoin-s. The goal is to provide basic data structures that are found in the bitcoin and lightning protocols while minimizing depedencies for security purposes. We aim to have an extremely high level of test coverage in this module to flesh out bugs. We use [property based testing](http://www.scalatest.org/user_guide/property_based_testing) heavily in this library to ensure high quality of code.
 
 # The basics
 
-Every bitcoin protocol data structure (and some other data structures) extends [`NetworkElement`](core/src/main/scala/org/bitcoins/core/protocol/NetworkElement.scala). NetworkElement provides easier methods to convert the data structure to hex or a byte representation. When paired with our [`Factory`](core/src/main/scala/org/bitcoins/core/util/Factory.scala) we can easily serialize and deserialize data structures. Most data structures have companion objects that extends `Factory` to be able to easily create protocol data structures. An example of this is the [`ScriptPubKey`](https://github.com/bitcoin-s/bitcoin-s-core/blob/1c7a7b9f46679a753248d9f55246c272bb3d63b9/src/main/scala/org/bitcoins/core/protocol/script/ScriptPubKey.scala#L462) companion object. You can use this companion object to create a SPK from hex or a byte array.
+Every bitcoin protocol data structure (and some other data structures) extends [`NetworkElement`](src/main/scala/org/bitcoins/core/protocol/NetworkElement.scala). NetworkElement provides easier methods to convert the data structure to hex or a byte representation. When paired with our [`Factory`](src/main/scala/org/bitcoins/core/util/Factory.scala) we can easily serialize and deserialize data structures. Most data structures have companion objects that extends `Factory` to be able to easily create protocol data structures. An example of this is the [`ScriptPubKey`](https://github.com/bitcoin-s/bitcoin-s-core/blob/1c7a7b9f46679a753248d9f55246c272bb3d63b9/src/main/scala/org/bitcoins/core/protocol/script/ScriptPubKey.scala#L462) companion object. You can use this companion object to create a SPK from hex or a byte array.
 
 
 # Main modules in core
 
-1. [protocol](core/src/main/scala/org/bitcoins/core/protocol) - basic protocol data structures. Useful for serializing/deserializing things
-2. [script](core/src/main/scala/org/bitcoins/core/script) - an implementation of Script -- the programming language in bitcoin
-3. [wallet](core/src/main/scala/org/bitcoins/core/wallet) - implements signing logic for bitcoin transaction's. This module is not named well as there is NO functionality to persist wallet state to disk as it stands. This will more than likely be renamed in the future.
-4. [config](core/src/main/scala/org/bitcoins/core/config) - Contains information about a chain's genesis block and dns seeds
-5. [number](core/src/main/scala/org/bitcoins/core/number) - Implements number types that are native in C, i.e. `UInt8`, `UInt32`, `UInt64`, etc.
-6. [currency](core/src/main/scala/org/bitcoins/core/number) - Implements currency units in a cryptocurrency protocol
-7. [bloom](core/src/main/scala/org/bitcoins/core/bloom) - Implements bloom filters and merkle blocks needed for BIP37
+1. [protocol](src/main/scala/org/bitcoins/core/protocol) - basic protocol data structures. Useful for serializing/deserializing things
+2. [script](src/main/scala/org/bitcoins/core/script) - an implementation of Script -- the programming language in bitcoin
+3. [wallet](src/main/scala/org/bitcoins/core/wallet) - implements signing logic for bitcoin transaction's. This module is not named well as there is NO functionality to persist wallet state to disk as it stands. This will more than likely be renamed in the future.
+4. [config](src/main/scala/org/bitcoins/core/config) - Contains information about a chain's genesis block and dns seeds
+5. [number](src/main/scala/org/bitcoins/core/number) - Implements number types that are native in C, i.e. `UInt8`, `UInt32`, `UInt64`, etc.
+6. [currency](src/main/scala/org/bitcoins/core/number) - Implements currency units in a cryptocurrency protocol
+7. [bloom](src/main/scala/org/bitcoins/core/bloom) - Implements bloom filters and merkle blocks needed for BIP37
 
 # Examples
 
@@ -58,20 +54,20 @@ This gives us an example of a bitcoin transaction that is encoded in hex format 
 
 ## Building a signed transaction
 
-Core supports building unsigned transactions and then signing them with a set of private keys. The first important thing to look at is [UTXOSpendingInfo](core/src/main/scala/org/bitcoins/core/wallet/utxo/UTXOSpendingInfo.scala). This contains all of the information needed to create a validly signed [ScriptSignature](core/src/main/scala/org/bitcoins/core/protocol/script/ScriptSignature.scala) that spends this output. 
+Core supports building unsigned transactions and then signing them with a set of private keys. The first important thing to look at is [UTXOSpendingInfo](src/main/scala/org/bitcoins/core/wallet/utxo/UTXOSpendingInfo.scala). This contains all of the information needed to create a validly signed [ScriptSignature](src/main/scala/org/bitcoins/core/protocol/script/ScriptSignature.scala) that spends this output. 
 
 Our `TxBuilder` class requires you to provide the following
 
-1. destinations - the places we are sending bitcoin to. These are [TransactionOutputs](core/src/main/scala/org/bitcoins/core/protocol/transaction/TransactionOutput.scala) you are sending coins too
-2. utxos - these are the [utxos](core/src/main/scala/org/bitcoins/core/wallet/utxo/UTXOSpendingInfo.scala) used to fund your transaction. These must exist in your wallet, and you must know how to spend them (i.e. have the private key)
+1. destinations - the places we are sending bitcoin to. These are [TransactionOutputs](src/main/scala/org/bitcoins/core/protocol/transaction/TransactionOutput.scala) you are sending coins too
+2. utxos - these are the [utxos](src/main/scala/org/bitcoins/core/wallet/utxo/UTXOSpendingInfo.scala) used to fund your transaction. These must exist in your wallet, and you must know how to spend them (i.e. have the private key)
 3. feeRate - the fee rate you want to pay for this transaction
 4. changeSPK - where the change from the transaction will be sent. Any extra money after the `creditingAmount` - `destinationAmount` - `fee` 
 will be sent here 
-5. network - the [Network](core/src/main/scala/org/bitcoins/core/config/NetworkParameters.scala) we are transacting on
+5. network - the [Network](src/main/scala/org/bitcoins/core/config/NetworkParameters.scala) we are transacting on
 
 After providing this information, you can generate a validly signed bitcoin transaction by calling the `sign` method.
 
-### The [sign api](core/src/main/scala/org/bitcoins/core/crypto/Sign.scala)
+### The [sign api](src/main/scala/org/bitcoins/core/crypto/Sign.scala)
 
 This is the API we define to sign things with. It takes in an arbitrary byte vector and returns a `Future[ECDigitalSignature]`. The reason we incorporate Futures here is for extensibility of this API. We would like to provide implementations of this API for hardware devices, which need to be asynchrnous since they may require user input. 
 
@@ -91,15 +87,15 @@ trait Sign {
 
 ```
 
-The `ByteVector` that is input is input to the `signFunction` should be the hash that is output from [TransactionSignatureSerializer](core/src/main/scala/org/bitcoins/core/crypto/TransactionSignatureSerializer.scala)'s `hashForSignature` method. Our in memory [ECKey](core/src/main/scala/org/bitcoins/core/crypto/ECKey.scala) types implement the `Sign` api.
+The `ByteVector` that is input is input to the `signFunction` should be the hash that is output from [TransactionSignatureSerializer](src/main/scala/org/bitcoins/core/crypto/TransactionSignatureSerializer.scala)'s `hashForSignature` method. Our in memory [ECKey](src/main/scala/org/bitcoins/core/crypto/ECKey.scala) types implement the `Sign` api.
 
 If you wanted to implement a new `Sign` api for a hardware wallet, you can easily pass it into the `TxBuilder`/`Signer` classes to allow for you to use those devices to sign with bitcoin-s.
 
-This API is currently used to sign ordinary transactions with our [Signer](core/src/main/scala/org/bitcoins/core/wallet/signer/Signer.scala)s. The `Signer` subtypes (i.e. `P2PKHSigner`) implement the specific functionality needed to produce a valid digital signature for their corresponding script type. 
+This API is currently used to sign ordinary transactions with our [Signer](src/main/scala/org/bitcoins/core/wallet/signer/Signer.scala)s. The `Signer` subtypes (i.e. `P2PKHSigner`) implement the specific functionality needed to produce a valid digital signature for their corresponding script type. 
 
 ### Example
 
-For a example of how to use the `TxBuilder` please see [this scala file](doc/src/test/scala/TxBuilderExample.scala)
+For a example of how to use the `TxBuilder` please see [this scala file](../doc/src/test/scala/TxBuilderExample.scala)
 
 ## Verifying a transaction's script is valid (does not check if utxo is valid)
 
