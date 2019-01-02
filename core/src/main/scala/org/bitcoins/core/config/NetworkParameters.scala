@@ -49,13 +49,16 @@ sealed abstract class MainNet extends BitcoinNetwork {
   override def rpcPort = 8332
   //mainnet doesn't need to be specified like testnet or regtest
   override def name = ""
-  override def dnsSeeds =
-    Seq("seed.bitcoin.sipa.be",
-        "dnsseed.bluematt.me",
-        "dnsseed.bitcoin.dashjr.org",
-        "seed.bitcoinstats.com",
-        "bitseed.xf2.org",
-        "seed.bitcoin.jonasschnelli.ch")
+  override def dnsSeeds = {
+    List("seed.bitcoin.sipa.be",
+      "dnsseed.bluematt.me",
+      "dnsseed.bitcoin.dashjr.org",
+      "seed.bitcoinstats.com",
+      "seed.btc.petertodd.org",
+      "seed.bitcoin.jonasschnelli.ch",
+      "seed.bitcoin.sprovoost.nl")
+  }
+
 
   override def magicBytes = ByteVector(0xf9, 0xbe, 0xb4, 0xd9)
 
@@ -68,10 +71,14 @@ sealed abstract class TestNet3 extends BitcoinNetwork {
   override def chainParams = TestNetChainParams
   override def port = 18333
   override def rpcPort = 18332
-  override def dnsSeeds =
-    Seq("testnet-seed.bitcoin.petertodd.org",
-        "testnet-seed.bluematt.me",
-        "testnet-seed.bitcoin.schildbach.de")
+  override def dnsSeeds = {
+    List("testnet-seed.bitcoin.jonasschnelli.ch",
+      "seed.tbtc.petertodd.org",
+      "seed.testnet.bitcoin.sprovoost.nl",
+      "testnet-seed.bluematt.me"
+    )
+  }
+
   override def magicBytes = ByteVector(0x0b, 0x11, 0x09, 0x07)
 
   override def difficultyChangeThreshold: Int = 2016

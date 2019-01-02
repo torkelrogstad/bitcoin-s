@@ -30,7 +30,7 @@ class BlockActorTest
 
   def blockActor = TestActorRef(BlockActor.props, self)
 
-  val blockHash = DoubleSha256Digest(
+  val blockHash = DoubleSha256Digest.fromHex(
     BitcoinSUtil.flipEndianness(
       "00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"))
 

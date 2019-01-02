@@ -1,34 +1,19 @@
 package org.bitcoins.node.networking
 
-import akka.actor.{Actor, ActorContext, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorContext, ActorRef, Props}
 import akka.event.LoggingReceive
 import org.bitcoins.core.crypto.DoubleSha256Digest
-import org.bitcoins.core.protocol.CompactSizeUInt
 import org.bitcoins.core.protocol.blockchain.BlockHeader
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.node.NetworkMessage
 import org.bitcoins.node.constant.Constants
 import org.bitcoins.node.messages.data.{GetDataMessage, Inventory}
 import org.bitcoins.node.messages.{BlockMessage, MsgBlock}
-import org.bitcoins.node.NetworkMessage
-import org.bitcoins.node.messages.{
-  BlockMessage,
-  GetBlocksMessage,
-  InventoryMessage,
-  MsgBlock
-}
-import org.bitcoins.node.messages.data.{
-  GetBlocksMessage,
-  GetDataMessage,
-  Inventory,
-  InventoryMessage
-}
-import org.bitcoins.node.util.BitcoinSpvNodeUtil
 
 /**
   * Created by chris on 7/10/16.
   */
-sealed trait BlockActor extends Actor with BitcoinSLogger {
+sealed abstract class BlockActor extends Actor with BitcoinSLogger {
 
   def receive: Receive = LoggingReceive {
     case hash: DoubleSha256Digest =>

@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
   * This actor is responsible for all database operations relating to
   * [[BlockHeader]]'s. Currently we store all block headers in a postgresql database
   */
-sealed trait BlockHeaderDAO extends CRUDActor[BlockHeader, DoubleSha256Digest] {
+sealed abstract class BlockHeaderDAO extends CRUDActor[BlockHeader, DoubleSha256Digest] {
 
   override val table = TableQuery[BlockHeaderTable]
 
@@ -27,7 +27,7 @@ sealed trait BlockHeaderDAO extends CRUDActor[BlockHeader, DoubleSha256Digest] {
 
   /** Function designed to handle all [[BlockHeaderDAO.BlockHeaderDAORequest]] messages we can receive */
   private def handleBlockHeaderDAORequest(
-      message: BlockHeaderDAO.BlockHeaderDAORequest) = message match {
+      message: BlockHeaderDAO.BlockHeaderDAORequest): Unit = message match {
     case createMsg: BlockHeaderDAO.Create =>
       val createdBlockHeader = create(createMsg.blockHeader)
         .map(BlockHeaderDAO.CreateReply(_))(context.dispatcher)

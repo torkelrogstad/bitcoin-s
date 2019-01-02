@@ -1,8 +1,7 @@
 package org.bitcoins.node.constant
 
-import slick.backend.DatabaseConfig
-import slick.driver.PostgresDriver
-import slick.driver.PostgresDriver.api._
+import slick.basic.DatabaseConfig
+import slick.jdbc.PostgresProfile
 
 /**
   * Created by chris on 9/11/16.
@@ -10,7 +9,7 @@ import slick.driver.PostgresDriver.api._
 trait TestConstants extends DbConfig {
 
   /** Reads the configuration for the database specified inside of application.conf */
-  def dbConfig: DatabaseConfig[PostgresDriver] =
+  def dbConfig: DatabaseConfig[PostgresProfile] =
     DatabaseConfig.forConfig("unitTestDatabaseUrl")
 
 }

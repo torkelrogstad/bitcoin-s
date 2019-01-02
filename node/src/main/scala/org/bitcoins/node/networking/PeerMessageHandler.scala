@@ -27,7 +27,7 @@ import scodec.bits.ByteVector
   * with our peer on the network. When the Client finally responds to the [[NetworkMessage]] we originally
   * sent it sends that [[NetworkMessage]] back to the actor that requested it.
   */
-sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
+sealed abstract class PeerMessageHandler extends Actor with BitcoinSLogger {
 
   lazy val peer: ActorRef = context.actorOf(
     Client.props,
@@ -320,8 +320,11 @@ object PeerMessageHandler {
   }
 
   def props: Props = {
-    val seed = new InetSocketAddress(Constants.networkParameters.dnsSeeds(2),
-                                     Constants.networkParameters.port)
+    val seed = {
+      val randIndex = scala.util.Random.nextInt() % Constants.networkParameters.dnsSeeds.size
+      val seed = Constants.networkParameters.dnsSeeds(randIndex)
+      new InetSocketAddress(seed,Constants.networkParameters.port)
+    }
     props(seed)
   }
 
