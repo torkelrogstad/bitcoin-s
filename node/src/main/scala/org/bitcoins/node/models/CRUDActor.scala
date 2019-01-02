@@ -8,6 +8,7 @@ import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 /**
   * Created by chris on 9/8/16.
   * This is an abstract actor that can be used to implement any sort of
@@ -17,11 +18,12 @@ import scala.concurrent.Future
   * the table and the database you are connecting to.
   */
 trait CRUDActor[T, PrimaryKeyType] extends Actor with BitcoinSLogger {
+
   /** The table inside our database we are inserting into */
   val table: TableQuery[_ <: Table[T]]
 
   /** The [[DbConfig]] we used to setup our database connection */
-  def dbConfig : DbConfig
+  def dbConfig: DbConfig
 
   /** Binding to the actual database itself, this is what is used to run querys */
   val database: Database = dbConfig.database
@@ -43,7 +45,7 @@ trait CRUDActor[T, PrimaryKeyType] extends Actor with BitcoinSLogger {
   def read(id: PrimaryKeyType): Future[Option[T]] = {
     logger.debug("Reading record with id: " + id)
     val query = findByPrimaryKey(id)
-    val rows : Future[Seq[T]] = database.run(query.result)
+    val rows: Future[Seq[T]] = database.run(query.result)
     rows.map(_.headOption)
   }
 
@@ -54,7 +56,7 @@ trait CRUDActor[T, PrimaryKeyType] extends Actor with BitcoinSLogger {
     * @return int - the number of rows affected by the updated
     */
   def update(t: T): Future[Option[T]] = {
-    logger.debug("Updating record " + t )
+    logger.debug("Updating record " + t)
     val query: Query[Table[_], T, Seq] = find(t)
     val affectedRows = query.update(t)
     val findQuery = find(t)
@@ -69,7 +71,7 @@ trait CRUDActor[T, PrimaryKeyType] extends Actor with BitcoinSLogger {
     * @return int - the number of rows affected by the deletion
     */
   def delete(t: T): Future[Int] = {
-    logger.debug("Deleting record: " + t )
+    logger.debug("Deleting record: " + t)
     val query: Query[Table[_], T, Seq] = find(t)
     database.run(query.delete)
   }
@@ -99,11 +101,8 @@ trait CRUDActor[T, PrimaryKeyType] extends Actor with BitcoinSLogger {
     * @param t - the row to find
     * @return query - the sql query to find this record
     */
-
-  protected def find(t: T): Query[Table[_],  T, Seq]
-
+  protected def find(t: T): Query[Table[_], T, Seq]
 
   override def postStop = database.close()
-
 
 }

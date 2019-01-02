@@ -18,19 +18,20 @@ import scala.annotation.tailrec
   */
 trait RawAddrMessageSerializer extends RawBitcoinSerializer[AddrMessage] {
 
-  override def read(bytes : ByteVector) : AddrMessage = {
+  override def read(bytes: ByteVector): AddrMessage = {
     val ipCount = CompactSizeUInt.parseCompactSizeUInt(bytes)
     val ipAddressBytes = bytes.slice(ipCount.size.toInt, bytes.size)
-    val (networkIpAddresses, _) = parseNetworkIpAddresses(ipCount, ipAddressBytes)
+    val (networkIpAddresses, _) =
+      parseNetworkIpAddresses(ipCount, ipAddressBytes)
     AddrMessage(ipCount, networkIpAddresses)
   }
 
   override def write(addrMessage: AddrMessage): ByteVector = {
     addrMessage.ipCount.bytes ++
-      RawSerializerHelper.write(ts = addrMessage.addresses,
+      RawSerializerHelper.write(
+        ts = addrMessage.addresses,
         serializer = RawNetworkIpAddressSerializer.write)
   }
-
 
   /**
     * Parses ip addresses inside of an AddrMessage
@@ -38,17 +39,26 @@ trait RawAddrMessageSerializer extends RawBitcoinSerializer[AddrMessage] {
     * @param bytes the bytes from which we need to parse the ip addresses
     * @return the parsed ip addresses and the remaining bytes
     */
-  private def parseNetworkIpAddresses(ipCount : CompactSizeUInt, bytes : ByteVector) : (Seq[NetworkIpAddress], ByteVector) = {
+  private def parseNetworkIpAddresses(
+      ipCount: CompactSizeUInt,
+      bytes: ByteVector): (Seq[NetworkIpAddress], ByteVector) = {
     @tailrec
-    def loop(remainingAddresses : BigInt, remainingBytes : ByteVector, accum : List[NetworkIpAddress]) : (Seq[NetworkIpAddress], ByteVector) = {
+    def loop(
+        remainingAddresses: BigInt,
+        remainingBytes: ByteVector,
+        accum: List[NetworkIpAddress]): (Seq[NetworkIpAddress], ByteVector) = {
       if (remainingAddresses <= 0) (accum.reverse, remainingBytes)
       else {
-        val networkIpAddress = RawNetworkIpAddressSerializer.read(remainingBytes)
-        val newRemainingBytes = remainingBytes.slice(networkIpAddress.size, remainingBytes.size)
-        loop(remainingAddresses - 1, newRemainingBytes, networkIpAddress :: accum)
+        val networkIpAddress =
+          RawNetworkIpAddressSerializer.read(remainingBytes)
+        val newRemainingBytes =
+          remainingBytes.slice(networkIpAddress.size, remainingBytes.size)
+        loop(remainingAddresses - 1,
+             newRemainingBytes,
+             networkIpAddress :: accum)
       }
     }
-    loop(ipCount.num.toInt,bytes, List())
+    loop(ipCount.num.toInt, bytes, List())
   }
 }
 

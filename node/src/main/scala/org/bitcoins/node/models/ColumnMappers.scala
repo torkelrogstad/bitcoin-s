@@ -12,20 +12,23 @@ import slick.jdbc.PostgresProfile.api._
   * into a String, which s a type that Slick understands
   */
 trait ColumnMappers {
+
   /** Responsible for mapping a [[DoubleSha256Digest]] to a String, and vice versa */
-  implicit val doubleSha256DigestMapper: BaseColumnType[DoubleSha256Digest] = MappedColumnType.base[DoubleSha256Digest, String](
-    _.hex,
-    DoubleSha256Digest(_)
-  )
+  implicit val doubleSha256DigestMapper: BaseColumnType[DoubleSha256Digest] =
+    MappedColumnType.base[DoubleSha256Digest, String](
+      _.hex,
+      DoubleSha256Digest(_)
+    )
 
   /** Responsible for mapping a [[UInt32]] to a long in Slick, and vice versa */
-  implicit val uInt32Mapper: BaseColumnType[UInt32] = MappedColumnType.base[UInt32,Long](
-    tmap = _.toLong,
-    tcomap = UInt32(_)
-  )
+  implicit val uInt32Mapper: BaseColumnType[UInt32] =
+    MappedColumnType.base[UInt32, Long](
+      tmap = _.toLong,
+      tcomap = UInt32(_)
+    )
 
   implicit val int32Mapper: BaseColumnType[Int32] = {
-    MappedColumnType.base[Int32,Long](tmap = _.toLong, tcomap = Int32(_))
+    MappedColumnType.base[Int32, Long](tmap = _.toLong, tcomap = Int32(_))
   }
 
   /** Responsible for mapping a [[TransactionOutput]] to hex in Slick, and vice versa */

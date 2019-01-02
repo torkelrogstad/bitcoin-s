@@ -13,14 +13,17 @@ import scodec.bits.ByteVector
   * Responsible for serialization and deserialization of MerkleBlockMessages
   * https://bitcoin.org/en/developer-reference#merkleblock
   */
-trait RawMerkleBlockMessageSerializer extends RawBitcoinSerializer[MerkleBlockMessage] with BitcoinSLogger {
+trait RawMerkleBlockMessageSerializer
+    extends RawBitcoinSerializer[MerkleBlockMessage]
+    with BitcoinSLogger {
 
-  def read(bytes : ByteVector) : MerkleBlockMessage = {
+  def read(bytes: ByteVector): MerkleBlockMessage = {
     val merkleBlock = MerkleBlock(bytes)
     MerkleBlockMessage(merkleBlock)
   }
 
-  def write(merkleBlockMessage: MerkleBlockMessage) : ByteVector = merkleBlockMessage.merkleBlock.bytes
+  def write(merkleBlockMessage: MerkleBlockMessage): ByteVector =
+    merkleBlockMessage.merkleBlock.bytes
 
 }
 

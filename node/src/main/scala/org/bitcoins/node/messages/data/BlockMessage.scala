@@ -14,7 +14,8 @@ object BlockMessage extends Factory[BlockMessage] {
 
   private case class BlockMessageImpl(block: Block) extends BlockMessage
 
-  def fromBytes(bytes: ByteVector): BlockMessage = RawBlockMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): BlockMessage =
+    RawBlockMessageSerializer.read(bytes)
 
   def apply(block: Block): BlockMessage = BlockMessageImpl(block)
 

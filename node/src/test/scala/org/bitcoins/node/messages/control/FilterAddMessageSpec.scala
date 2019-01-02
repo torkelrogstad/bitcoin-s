@@ -9,7 +9,8 @@ import org.scalacheck.{Prop, Properties}
 class FilterAddMessageSpec extends Properties("FilterAddMessageSpec") {
 
   property("Serialization symmetry") =
-    Prop.forAll(ControlMessageGenerator.filterAddMessage) { case filterAddMsg =>
+    Prop.forAll(ControlMessageGenerator.filterAddMessage) {
+      case filterAddMsg =>
         FilterAddMessage(filterAddMsg.hex) == filterAddMsg
     }
 }

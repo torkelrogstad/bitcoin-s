@@ -13,7 +13,8 @@ import scodec.bits.ByteVector
   * Serializes and deserializes a [[messages.FilterLoadMessage]]
   * https://bitcoin.org/en/developer-reference#filterload
   */
-trait RawFilterLoadMessageSerializer extends RawBitcoinSerializer[FilterLoadMessage] {
+trait RawFilterLoadMessageSerializer
+    extends RawBitcoinSerializer[FilterLoadMessage] {
 
   override def read(bytes: ByteVector): FilterLoadMessage = {
     val filter = RawBloomFilterSerializer.read(bytes)

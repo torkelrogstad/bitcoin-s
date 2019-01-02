@@ -17,10 +17,17 @@ import scodec.bits.ByteVector
   */
 object AddrMessage extends Factory[AddrMessage] {
 
-  private case class AddrMessageImpl(ipCount : CompactSizeUInt, addresses : Seq[NetworkIpAddress]) extends AddrMessage
+  private case class AddrMessageImpl(
+      ipCount: CompactSizeUInt,
+      addresses: Seq[NetworkIpAddress])
+      extends AddrMessage
 
-  def fromBytes(bytes : ByteVector) : AddrMessage = RawAddrMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): AddrMessage =
+    RawAddrMessageSerializer.read(bytes)
 
-  def apply(ipCount : CompactSizeUInt, addresses : Seq[NetworkIpAddress]) : AddrMessage = AddrMessageImpl(ipCount,addresses)
+  def apply(
+      ipCount: CompactSizeUInt,
+      addresses: Seq[NetworkIpAddress]): AddrMessage =
+    AddrMessageImpl(ipCount, addresses)
 
 }

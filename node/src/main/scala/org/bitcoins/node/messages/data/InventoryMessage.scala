@@ -16,11 +16,17 @@ import scodec.bits.ByteVector
   */
 object InventoryMessage extends Factory[InventoryMessage] {
 
-  private case class InventoryMessageImpl(inventoryCount: CompactSizeUInt, inventories: Seq[Inventory]) extends InventoryMessage
-  override def fromBytes(bytes : ByteVector) : InventoryMessage = RawInventoryMessageSerializer.read(bytes)
+  private case class InventoryMessageImpl(
+      inventoryCount: CompactSizeUInt,
+      inventories: Seq[Inventory])
+      extends InventoryMessage
+  override def fromBytes(bytes: ByteVector): InventoryMessage =
+    RawInventoryMessageSerializer.read(bytes)
 
-  def apply(inventoryCount : CompactSizeUInt, inventories : Seq[Inventory]) : InventoryMessage = {
-    InventoryMessageImpl(inventoryCount,inventories)
+  def apply(
+      inventoryCount: CompactSizeUInt,
+      inventories: Seq[Inventory]): InventoryMessage = {
+    InventoryMessageImpl(inventoryCount, inventories)
   }
 
   def apply(inventories: Seq[Inventory]): InventoryMessage = {
@@ -28,4 +34,3 @@ object InventoryMessage extends Factory[InventoryMessage] {
     InventoryMessage(count, inventories)
   }
 }
-

@@ -10,7 +10,6 @@ import org.bitcoins.node.messages.NetworkPayload
 import org.bitcoins.node.serializers.headers.RawNetworkHeaderSerializer
 import scodec.bits.ByteVector
 
-
 /**
   * Created by chris on 5/31/16.
   * Represents a message header on the peer-to-peer network
@@ -25,7 +24,7 @@ sealed trait NetworkHeader extends NetworkElement {
     * used to seek to next message when stream state is unknown.
     * @return
     */
-  def network : ByteVector
+  def network: ByteVector
 
   /**
     * ASCII string which identifies what message type is contained in the payload.
@@ -33,7 +32,7 @@ sealed trait NetworkHeader extends NetworkElement {
     *
     * @return
     */
-  def commandName : String
+  def commandName: String
 
   /**
     * Number of bytes in payload. The current maximum number of bytes (MAX_SIZE) allowed in the payload
@@ -41,7 +40,7 @@ sealed trait NetworkHeader extends NetworkElement {
     *
     * @return
     */
-  def payloadSize : UInt32
+  def payloadSize: UInt32
 
   /**
     * Added in protocol version 209.
@@ -51,19 +50,23 @@ sealed trait NetworkHeader extends NetworkElement {
     *
     * @return
     */
-  def checksum : ByteVector
+  def checksum: ByteVector
 
 }
 
-
 object NetworkHeader extends Factory[NetworkHeader] {
 
-  private case class NetworkHeaderImpl(network : ByteVector, commandName : String,
-                                       payloadSize : UInt32, checksum : ByteVector) extends NetworkHeader {
-    require(bytes.length == 24,"NetworkHeaders must be 24 bytes")
+  private case class NetworkHeaderImpl(
+      network: ByteVector,
+      commandName: String,
+      payloadSize: UInt32,
+      checksum: ByteVector)
+      extends NetworkHeader {
+    require(bytes.length == 24, "NetworkHeaders must be 24 bytes")
   }
 
-  override def fromBytes(bytes : ByteVector) : NetworkHeader = RawNetworkHeaderSerializer.read(bytes)
+  override def fromBytes(bytes: ByteVector): NetworkHeader =
+    RawNetworkHeaderSerializer.read(bytes)
 
   /**
     * Creates a [[NetworkHeader]] from all of its individual components
@@ -73,7 +76,11 @@ object NetworkHeader extends Factory[NetworkHeader] {
     * @param checksum the checksum of the payload to ensure that the entire payload was sent
     * @return
     */
-  def apply(network : ByteVector, commandName : String, payloadSize : UInt32, checksum : ByteVector) : NetworkHeader = {
+  def apply(
+      network: ByteVector,
+      commandName: String,
+      payloadSize: UInt32,
+      checksum: ByteVector): NetworkHeader = {
     NetworkHeaderImpl(network, commandName, payloadSize, checksum)
   }
 
@@ -83,8 +90,13 @@ object NetworkHeader extends Factory[NetworkHeader] {
     * @param payload the [[NetworkPayload]] object that needs to be sent on the network
     * @return
     */
-  def apply(network : NetworkParameters, payload : NetworkPayload) : NetworkHeader = {
+  def apply(
+      network: NetworkParameters,
+      payload: NetworkPayload): NetworkHeader = {
     val checksum = CryptoUtil.doubleSHA256(payload.bytes)
-    NetworkHeader(network.magicBytes, payload.commandName, UInt32(payload.bytes.size), checksum.bytes.take(4))
+    NetworkHeader(network.magicBytes,
+                  payload.commandName,
+                  UInt32(payload.bytes.size),
+                  checksum.bytes.take(4))
   }
 }

@@ -31,6 +31,7 @@ import scodec.bits.ByteVector
   * [[https://bitcoin.org/en/developer-reference#p2p-network]]
   */
 sealed trait NetworkPayload extends NetworkElement {
+
   /**
     * ASCII string which identifies what message type is contained in the payload.
     * Followed by nulls (0x00) to pad out byte count; for example: version\0\0\0\0\0.
@@ -38,7 +39,7 @@ sealed trait NetworkPayload extends NetworkElement {
     * This is generally used to build a [[org.bitcoins.node.headers.MessageHeader]]
     * @return
     */
-  def commandName : String
+  def commandName: String
 }
 
 /**
@@ -52,6 +53,7 @@ sealed trait DataPayload extends NetworkPayload
   * [[https://bitcoin.org/en/developer-reference#block]]
   */
 trait BlockMessage extends DataPayload {
+
   /**
     * The block being transmitted inside of this [[BlockMessage]]
     * @return
@@ -71,11 +73,12 @@ trait BlockMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#getblocks]]
   */
 trait GetBlocksMessage extends DataPayload {
+
   /**
     * The protocol version number; the same as sent in the version message.
     * @return
     */
-  def protocolVersion : ProtocolVersion
+  def protocolVersion: ProtocolVersion
 
   /**
     * The number of header hashes provided not including the stop hash.
@@ -83,7 +86,7 @@ trait GetBlocksMessage extends DataPayload {
     * must be below the MAX_SIZE limit; typically from 1 to 200 hashes are sent.
     * @return
     */
-  def hashCount : CompactSizeUInt
+  def hashCount: CompactSizeUInt
 
   /**
     * One or more block header hashes (32 bytes each) in internal byte order.
@@ -91,7 +94,7 @@ trait GetBlocksMessage extends DataPayload {
     * so highest-height hashes are listed first and lowest-height hashes are listed last.
     * @return
     */
-  def blockHeaderHashes : Seq[DoubleSha256Digest]
+  def blockHeaderHashes: Seq[DoubleSha256Digest]
 
   /**
     * The header hash of the last header hash being requested;
@@ -101,7 +104,7 @@ trait GetBlocksMessage extends DataPayload {
     * with a higher-height header hash as the first entry in block header hash field).
     * @return
     */
-  def stopHash : DoubleSha256Digest
+  def stopHash: DoubleSha256Digest
 
   override def commandName = NetworkPayload.getBlocksCommandName
 
@@ -115,17 +118,18 @@ trait GetBlocksMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#getdata]]
   */
 trait GetDataMessage extends DataPayload {
+
   /**
     * The number of inventory enteries
     * @return
     */
-  def inventoryCount : CompactSizeUInt
+  def inventoryCount: CompactSizeUInt
 
   /**
     * One or more inventory entries up to a maximum of 50,000 entries.
     * @return
     */
-  def inventories : Seq[Inventory]
+  def inventories: Seq[Inventory]
 
   override def commandName = NetworkPayload.getDataCommandName
 
@@ -155,13 +159,14 @@ trait GetHeadersMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#headers]]
   */
 trait HeadersMessage extends DataPayload {
+
   /**
     * Number of block headers up to a maximum of 2,000.
     * Note: headers-first sync assumes the sending node
     * will send the maximum number of headers whenever possible.
     * @return
     */
-  def count : CompactSizeUInt
+  def count: CompactSizeUInt
 
   /**
     * Block headers: each 80-byte block header is in the format described in the
@@ -170,7 +175,7 @@ trait HeadersMessage extends DataPayload {
     * doesn’t include any transactions, the transaction count is always zero.
     * @return
     */
-  def headers : Seq[BlockHeader]
+  def headers: Seq[BlockHeader]
 
   override def commandName = NetworkPayload.headersCommandName
 
@@ -184,17 +189,18 @@ trait HeadersMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#inv]]
   */
 trait InventoryMessage extends DataPayload {
+
   /**
     * The number of inventory enteries
     * @return
     */
-  def inventoryCount : CompactSizeUInt
+  def inventoryCount: CompactSizeUInt
 
   /**
     * One or more inventory entries up to a maximum of 50,000 entries.
     * @return
     */
-  def inventories : Seq[Inventory]
+  def inventories: Seq[Inventory]
 
   override def commandName = NetworkPayload.invCommandName
 
@@ -221,8 +227,9 @@ case object MemPoolMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#merkleblock]]
   */
 trait MerkleBlockMessage extends DataPayload {
+
   /** The actual [[MerkleBlock]] that this message represents */
-  def merkleBlock : MerkleBlock
+  def merkleBlock: MerkleBlock
 
   override def commandName = NetworkPayload.merkleBlockCommandName
 
@@ -248,18 +255,15 @@ trait NotFoundMessage extends DataPayload with InventoryMessage {
   * [[https://bitcoin.org/en/developer-reference#tx]]
   */
 trait TransactionMessage extends DataPayload {
+
   /**
     * The transaction being sent over the wire
     * @return
     */
-  def transaction : Transaction
+  def transaction: Transaction
   override def commandName = NetworkPayload.transactionCommandName
   override def bytes: ByteVector = RawTransactionMessageSerializer.write(this)
 }
-
-
-
-
 
 /**
   * Represents a control message on this network
@@ -277,8 +281,8 @@ sealed trait ControlPayload extends NetworkPayload
   * [[https://bitcoin.org/en/developer-reference#addr]]
   */
 trait AddrMessage extends ControlPayload {
-  def ipCount : CompactSizeUInt
-  def addresses : Seq[NetworkIpAddress]
+  def ipCount: CompactSizeUInt
+  def addresses: Seq[NetworkIpAddress]
   override def commandName = NetworkPayload.addrCommandName
   override def bytes: ByteVector = RawAddrMessageSerializer.write(this)
 }
@@ -296,7 +300,7 @@ trait FilterAddMessage extends ControlPayload {
     * The number of bytes in the following element field.
     * @return
     */
-  def elementSize : CompactSizeUInt
+  def elementSize: CompactSizeUInt
 
   /**
     * The element to add to the current filter.
@@ -306,13 +310,12 @@ trait FilterAddMessage extends ControlPayload {
     * for example, hashes should be sent in internal byte order.
     * @return
     */
-  def element : ByteVector
+  def element: ByteVector
 
   override def commandName = NetworkPayload.filterAddCommandName
 
   override def bytes: ByteVector = RawFilterAddMessageSerializer.write(this)
 }
-
 
 /**
   * The filterclear message tells the receiving peer to remove a previously-set bloom filter.
@@ -362,13 +365,14 @@ case object GetAddrMessage extends ControlPayload {
   * [[https://bitcoin.org/en/developer-reference#ping]]
   */
 trait PingMessage extends ControlPayload {
+
   /**
     * Random nonce assigned to this ping message.
     * The responding pong message will include this nonce
     * to identify the ping message to which it is replying.
     * @return
     */
-  def nonce : UInt64
+  def nonce: UInt64
 
   override def commandName = NetworkPayload.pingCommandName
 
@@ -387,7 +391,7 @@ trait PongMessage extends ControlPayload {
     * The nonce which is the nonce in the ping message the peer is responding too
     * @return
     */
-  def nonce : UInt64
+  def nonce: UInt64
 
   override def commandName = NetworkPayload.pongCommandName
 
@@ -400,38 +404,39 @@ trait PongMessage extends ControlPayload {
   * [[https://bitcoin.org/en/developer-reference#reject]]
   */
 trait RejectMessage extends ControlPayload {
+
   /**
     * The number of bytes in the following message field.
     * @return
     */
-  def messageSize : CompactSizeUInt
+  def messageSize: CompactSizeUInt
 
   /**
     * The type of message rejected as ASCII text without null padding.
     * For example: “tx”, “block”, or “version”.
     * @return
     */
-  def message : String
+  def message: String
 
   /**
     * The reject message code.
     * @return
     */
-  def code : Char
+  def code: Char
 
   /**
     * The number of bytes in the following reason field.
     * May be 0x00 if a text reason isn’t provided.
     * @return
     */
-  def reasonSize : CompactSizeUInt
+  def reasonSize: CompactSizeUInt
 
   /**
     * The reason for the rejection in ASCII text.
     * This should not be displayed to the user; it is only for debugging purposes.
     * @return
     */
-  def reason : String
+  def reason: String
 
   /**
     * Optional additional data provided with the rejection.
@@ -439,7 +444,7 @@ trait RejectMessage extends ControlPayload {
     * the hash of the rejected transaction or block header. See the code table below.
     * @return
     */
-  def extra : ByteVector
+  def extra: ByteVector
 
   override def commandName = NetworkPayload.rejectCommandName
 
@@ -458,7 +463,6 @@ case object SendHeadersMessage extends ControlPayload {
   override def bytes: ByteVector = ByteVector.empty
 }
 
-
 /**
   * The verack message acknowledges a previously-received version message,
   * informing the connecting node that it can begin to send other messages.
@@ -470,7 +474,6 @@ case object VerAckMessage extends ControlPayload {
   override val commandName = NetworkPayload.verAckCommandName
   override val bytes: ByteVector = ByteVector.empty
 }
-
 
 /**
   * The version message provides information about the transmitting node to the
@@ -487,13 +490,13 @@ trait VersionMessage extends ControlPayload {
     * The highest protocol version understood by the transmitting node. See the protocol version section.
     * @return
     */
-  def version : ProtocolVersion
+  def version: ProtocolVersion
 
   /**
     * The services supported by the transmitting node encoded as a bitfield. See the list of service codes below.
     * @return
     */
-  def services : ServiceIdentifier
+  def services: ServiceIdentifier
 
   /**
     * The current Unix epoch time according to the transmitting node’s clock.
@@ -501,7 +504,7 @@ trait VersionMessage extends ControlPayload {
     * this field can help other nodes to determine that their clock is wrong.
     * @return
     */
-  def timestamp : Int64
+  def timestamp: Int64
 
   /**
     * The services supported by the receiving node as perceived by the transmitting node.
@@ -509,7 +512,7 @@ trait VersionMessage extends ControlPayload {
     * Bitcoin Core will attempt to provide accurate information. BitcoinJ will, by default, always send 0.
     * @return
     */
-  def addressReceiveServices : ServiceIdentifier
+  def addressReceiveServices: ServiceIdentifier
 
   /**
     * The IPv6 address of the receiving node as perceived by the transmitting node in big endian byte order.
@@ -518,19 +521,19 @@ trait VersionMessage extends ControlPayload {
     * BitcoinJ will, by default, always return ::ffff:127.0.0.1
     * This is the network address of the node receiving this message
     */
-  def addressReceiveIpAddress : InetAddress
+  def addressReceiveIpAddress: InetAddress
 
   /**
     * The port number of the receiving node as perceived by the transmitting node in big endian byte order.
     * @return
     */
-  def addressReceivePort : Int
+  def addressReceivePort: Int
 
   /**
     * The services supported by the transmitting node. Should be identical to the ‘services’ field above.
     * @return
     */
-  def addressTransServices : ServiceIdentifier
+  def addressTransServices: ServiceIdentifier
 
   /**
     * The IPv6 address of the transmitting node in big endian byte order.
@@ -539,13 +542,13 @@ trait VersionMessage extends ControlPayload {
     * This is the network address of the node emitting this message
     * @return
     */
-  def addressTransIpAddress : InetAddress
+  def addressTransIpAddress: InetAddress
 
   /**
     * The port number of the transmitting node in big endian byte order.
     * @return
     */
-  def addressTransPort : Int
+  def addressTransPort: Int
 
   /**
     * A random nonce which can help a node detect a connection to itself.
@@ -554,26 +557,26 @@ trait VersionMessage extends ControlPayload {
     * of a version message with a nonce it previously sent.
     * @return
     */
-  def nonce : UInt64
+  def nonce: UInt64
 
   /**
     * Number of bytes in following user_agent field. If 0x00, no user agent field is sent.
     * @return
     */
-  def userAgentSize : CompactSizeUInt
+  def userAgentSize: CompactSizeUInt
 
   /**
     * User agent as defined by BIP14. Previously called subVer.
     * @return
     */
-  def userAgent : String
+  def userAgent: String
 
   /**
     * The height of the transmitting node’s best block chain or,
     * in the case of an SPV client, best block header chain.
     * @return
     */
-  def startHeight : Int32
+  def startHeight: Int32
 
   /**
     * Transaction relay flag. If 0x00, no inv messages or tx messages announcing new transactions
@@ -581,7 +584,7 @@ trait VersionMessage extends ControlPayload {
     * If 0x01, this node wants inv messages and tx messages announcing new transactions.
     * @return
     */
-  def relay : Boolean
+  def relay: Boolean
 
   override def commandName = NetworkPayload.versionCommandName
 
@@ -611,6 +614,7 @@ object NetworkPayload {
   def sendHeadersCommandName = "sendheaders"
   def verAckCommandName = "verack"
   def versionCommandName = "version"
+
   /**
     * Contains all the valid command names with their deserializer on the p2p protocol
     * These commands all have the null bytes appended to the end of the string as
@@ -619,27 +623,39 @@ object NetworkPayload {
     *
     * @return
     */
-  def commandNames : Map[String, ByteVector => NetworkPayload] = Map(
-    blockCommandName -> { RawBlockMessageSerializer.read(_)},
+  def commandNames: Map[String, ByteVector => NetworkPayload] = Map(
+    blockCommandName -> { RawBlockMessageSerializer.read(_) },
     getBlocksCommandName -> { RawGetBlocksMessageSerializer.read(_) },
     getHeadersCommandName -> { RawGetHeadersMessageSerializer.read(_) },
     getDataCommandName -> { RawGetDataMessageSerializer.read(_) },
     headersCommandName -> { RawHeadersMessageSerializer.read(_) },
     invCommandName -> { RawInventoryMessageSerializer.read(_) },
-    memPoolCommandName -> { x : ByteVector => MemPoolMessage},
+    memPoolCommandName -> { x: ByteVector =>
+      MemPoolMessage
+    },
     merkleBlockCommandName -> { RawMerkleBlockMessageSerializer.read(_) },
     notFoundCommandName -> { RawNotFoundMessageSerializer.read(_) },
     transactionCommandName -> { RawTransactionMessageSerializer.read(_) },
     addrCommandName -> { RawAddrMessageSerializer.read(_) },
     filterAddCommandName -> { RawFilterAddMessageSerializer.read(_) },
-    filterClearCommandName -> { x : ByteVector => FilterClearMessage},
-    filterLoadCommandName -> { RawFilterLoadMessageSerializer.read(_)},
-    getAddrCommandName -> { x : ByteVector => GetAddrMessage},
-    pingCommandName -> { RawPingMessageSerializer.read(_)},
+    filterClearCommandName -> { x: ByteVector =>
+      FilterClearMessage
+    },
+    filterLoadCommandName -> { RawFilterLoadMessageSerializer.read(_) },
+    getAddrCommandName -> { x: ByteVector =>
+      GetAddrMessage
+    },
+    pingCommandName -> { RawPingMessageSerializer.read(_) },
     pongCommandName -> { RawPongMessageSerializer.read(_) },
-    rejectCommandName -> { x : ByteVector => ???},
-    sendHeadersCommandName -> { x : ByteVector => SendHeadersMessage},
-    verAckCommandName -> { x : ByteVector => VerAckMessage},
+    rejectCommandName -> { x: ByteVector =>
+      ???
+    },
+    sendHeadersCommandName -> { x: ByteVector =>
+      SendHeadersMessage
+    },
+    verAckCommandName -> { x: ByteVector =>
+      VerAckMessage
+    },
     versionCommandName -> { RawVersionMessageSerializer.read(_) }
   )
 
@@ -650,9 +666,12 @@ object NetworkPayload {
     * @param payloadBytes the payload corresponding to the header on the p2p network
     * @return
     */
-  def apply(networkHeader : NetworkHeader, payloadBytes : ByteVector) : NetworkPayload = {
+  def apply(
+      networkHeader: NetworkHeader,
+      payloadBytes: ByteVector): NetworkPayload = {
     //the commandName in the network header tells us what payload type this is
-    val deserializer : ByteVector => NetworkPayload = commandNames(networkHeader.commandName)
+    val deserializer: ByteVector => NetworkPayload = commandNames(
+      networkHeader.commandName)
     deserializer(payloadBytes)
   }
 
@@ -663,7 +682,9 @@ object NetworkPayload {
     * @param payloadHex the hexadecimal representation of the payload
     * @return
     */
-  def apply(networkHeader : NetworkHeader, payloadHex : String) : NetworkPayload = {
+  def apply(
+      networkHeader: NetworkHeader,
+      payloadHex: String): NetworkPayload = {
     NetworkPayload(networkHeader, BitcoinSUtil.decodeHex(payloadHex))
   }
 }

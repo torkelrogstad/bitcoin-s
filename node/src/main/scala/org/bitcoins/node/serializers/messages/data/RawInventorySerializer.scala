@@ -15,13 +15,13 @@ import scodec.bits.ByteVector
   */
 trait RawInventorySerializer extends RawBitcoinSerializer[Inventory] {
 
-  override def read(bytes : ByteVector) : Inventory = {
+  override def read(bytes: ByteVector): Inventory = {
     val typeIdentifier = TypeIdentifier(bytes.take(4))
-    val hash = DoubleSha256Digest(bytes.slice(4,bytes.size))
-    Inventory(typeIdentifier,hash)
+    val hash = DoubleSha256Digest(bytes.slice(4, bytes.size))
+    Inventory(typeIdentifier, hash)
   }
 
-  override def write(inventory : Inventory) : ByteVector = {
+  override def write(inventory: Inventory): ByteVector = {
     inventory.typeIdentifier.bytes ++ inventory.hash.bytes
   }
 }

@@ -49,10 +49,12 @@ sealed trait PaymentActor extends Actor with BitcoinSLogger {
   /** Constructs a bloom filter that matches the given hash,
     * then sends that bloom filter to a peer on the network */
   def paymentToHash(hash: Sha256Hash160Digest) = {
-    val bloomFilter = BloomFilter(10,0.0001,UInt32.zero,BloomUpdateNone).insert(hash)
+    val bloomFilter =
+      BloomFilter(10, 0.0001, UInt32.zero, BloomUpdateNone).insert(hash)
     val filterLoadMsg = FilterLoadMessage(bloomFilter)
     val peerMsgHandler = PeerMessageHandler(context)
-    val bloomFilterNetworkMsg = NetworkMessage(Constants.networkParameters,filterLoadMsg)
+    val bloomFilterNetworkMsg =
+      NetworkMessage(Constants.networkParameters, filterLoadMsg)
     peerMsgHandler ! bloomFilterNetworkMsg
     logger.debug("Switching to awaitTransactionInventoryMessage")
     context.become(awaitTransactionInventoryMessage(hash, peerMsgHandler))
@@ -60,57 +62,75 @@ sealed trait PaymentActor extends Actor with BitcoinSLogger {
 
   /** Waits for a transaction inventory message on the p2p network,
     * once we receive one we switch to teh awaitTransactionGetDataMessage context */
-  def awaitTransactionInventoryMessage(hash: Sha256Hash160Digest, peerMessageHandler: ActorRef): Receive = LoggingReceive {
+  def awaitTransactionInventoryMessage(
+      hash: Sha256Hash160Digest,
+      peerMessageHandler: ActorRef): Receive = LoggingReceive {
     case invMsg: InventoryMessage =>
       //txs are broadcast by nodes on the network when they are seen by a node
       //filter out the txs we do not care about
       val txInventories = invMsg.inventories.filter(_.typeIdentifier == MsgTx)
-      handleTransactionInventoryMessages(txInventories,peerMessageHandler)
-      context.become(awaitTransactionGetDataMessage(hash,peerMessageHandler))
+      handleTransactionInventoryMessages(txInventories, peerMessageHandler)
+      context.become(awaitTransactionGetDataMessage(hash, peerMessageHandler))
   }
 
   /** Awaits for a [[GetDataMessage]] that requested a transaction. We can also fire off more [[GetDataMessage]] inside of this context */
-  def awaitTransactionGetDataMessage(hash: Sha256Hash160Digest, peerMessageHandler: ActorRef): Receive = LoggingReceive {
-    case txMsg : TransactionMessage =>
+  def awaitTransactionGetDataMessage(
+      hash: Sha256Hash160Digest,
+      peerMessageHandler: ActorRef): Receive = LoggingReceive {
+    case txMsg: TransactionMessage =>
       //check to see if any of the outputs on this tx match our hash
-      val outputs = txMsg.transaction.outputs.filter(o => o.scriptPubKey.asm.filter(_.bytes == hash.bytes).nonEmpty)
+      val outputs = txMsg.transaction.outputs.filter(o =>
+        o.scriptPubKey.asm.filter(_.bytes == hash.bytes).nonEmpty)
 
       if (outputs.nonEmpty) {
-        logger.debug("matched transaction inside of awaitTransactionGetDataMsg: " + txMsg.transaction.hex)
+        logger.debug(
+          "matched transaction inside of awaitTransactionGetDataMsg: " + txMsg.transaction.hex)
         logger.debug("Matched txid: " + txMsg.transaction.txId.hex)
         logger.debug("Switching to awaitBlockAnnouncement")
-        context.become(awaitBlockAnnouncement(hash,txMsg.transaction.txId, peerMessageHandler))
+        context.become(
+          awaitBlockAnnouncement(hash,
+                                 txMsg.transaction.txId,
+                                 peerMessageHandler))
       }
-      //otherwise we do nothing and wait for another transaction message
+    //otherwise we do nothing and wait for another transaction message
     case invMsg: InventoryMessage =>
       //txs are broadcast by nodes on the network when they are seen by a node
       //filter out the txs we do not care about
       val txInventories = invMsg.inventories.filter(_.typeIdentifier == MsgTx)
-      handleTransactionInventoryMessages(txInventories,peerMessageHandler)
+      handleTransactionInventoryMessages(txInventories, peerMessageHandler)
   }
 
   /** Sends a [[GetDataMessage]] to get the full transaction for a transaction inventory message */
-  private def handleTransactionInventoryMessages(inventory: Seq[Inventory], peerMessageHandler: ActorRef) = for {
-    txInv <- inventory
-    inventory = GetDataMessage(txInv)
-  } yield peerMessageHandler ! inventory
+  private def handleTransactionInventoryMessages(
+      inventory: Seq[Inventory],
+      peerMessageHandler: ActorRef) =
+    for {
+      txInv <- inventory
+      inventory = GetDataMessage(txInv)
+    } yield peerMessageHandler ! inventory
 
   /** This context waits for a block announcement on the network,
     * then constructs a [[MerkleBlockMessage]] to check
     * if the txid was included in that block */
-  def awaitBlockAnnouncement(hash: Sha256Hash160Digest, txId: DoubleSha256Digest, peerMessageHandler: ActorRef): Receive = LoggingReceive {
+  def awaitBlockAnnouncement(
+      hash: Sha256Hash160Digest,
+      txId: DoubleSha256Digest,
+      peerMessageHandler: ActorRef): Receive = LoggingReceive {
     case invMsg: InventoryMessage =>
-      val blockHashes = invMsg.inventories.filter(_.typeIdentifier == MsgBlock).map(_.hash)
+      val blockHashes =
+        invMsg.inventories.filter(_.typeIdentifier == MsgBlock).map(_.hash)
       if (blockHashes.nonEmpty) {
         //construct a merkle block message to verify that the txIds was in the block
-        val merkleBlockInventory = Inventory(MsgFilteredBlock,blockHashes.head)
+        val merkleBlockInventory = Inventory(MsgFilteredBlock, blockHashes.head)
         val getDataMsg = GetDataMessage(merkleBlockInventory)
-        val getDataNetworkMessage = NetworkMessage(Constants.networkParameters,getDataMsg)
+        val getDataNetworkMessage =
+          NetworkMessage(Constants.networkParameters, getDataMsg)
         peerMessageHandler ! getDataNetworkMessage
         logger.debug("Switching to awaitMerkleBlockMessage")
-        context.become(awaitMerkleBlockMessage(hash,txId,blockHashes, peerMessageHandler))
+        context.become(
+          awaitMerkleBlockMessage(hash, txId, blockHashes, peerMessageHandler))
       }
-      //else do nothing and wait for another block announcement
+    //else do nothing and wait for another block announcement
 
   }
 
@@ -124,12 +144,20 @@ sealed trait PaymentActor extends Actor with BitcoinSLogger {
     * @param peerMessageHandler
     * @return
     */
-  def awaitMerkleBlockMessage(hash: Sha256Hash160Digest, txId: DoubleSha256Digest, blockHashes: Seq[DoubleSha256Digest],
-                              peerMessageHandler: ActorRef): Receive = LoggingReceive {
+  def awaitMerkleBlockMessage(
+      hash: Sha256Hash160Digest,
+      txId: DoubleSha256Digest,
+      blockHashes: Seq[DoubleSha256Digest],
+      peerMessageHandler: ActorRef): Receive = LoggingReceive {
     case merkleBlockMsg: MerkleBlockMessage =>
-      val result = merkleBlockMsg.merkleBlock.partialMerkleTree.extractMatches.contains(txId)
+      val result = merkleBlockMsg.merkleBlock.partialMerkleTree.extractMatches
+        .contains(txId)
       if (result) {
-        val successfulPayment = PaymentActor.SuccessfulPayment(hash,txId,blockHashes,merkleBlockMsg.merkleBlock)
+        val successfulPayment =
+          PaymentActor.SuccessfulPayment(hash,
+                                         txId,
+                                         blockHashes,
+                                         merkleBlockMsg.merkleBlock)
         logger.info("Received successful payment: " + successfulPayment)
         context.parent ! successfulPayment
       } else context.parent ! PaymentActor.FailedPayment(hash)
@@ -143,11 +171,17 @@ object PaymentActor {
 
   def props = Props(classOf[PaymentActorImpl])
 
-  def apply(context: ActorRefFactory): ActorRef = context.actorOf(props, BitcoinSpvNodeUtil.createActorName(this.getClass))
+  def apply(context: ActorRefFactory): ActorRef =
+    context.actorOf(props, BitcoinSpvNodeUtil.createActorName(this.getClass))
 
   sealed trait PaymentActorMessage
-  case class SuccessfulPayment(hash:Sha256Hash160Digest, txId: DoubleSha256Digest,
-                               blockHash: Seq[DoubleSha256Digest], merkleBlock: MerkleBlock) extends PaymentActorMessage
+  case class SuccessfulPayment(
+      hash: Sha256Hash160Digest,
+      txId: DoubleSha256Digest,
+      blockHash: Seq[DoubleSha256Digest],
+      merkleBlock: MerkleBlock)
+      extends PaymentActorMessage
 
-  case class FailedPayment(hash: Sha256Hash160Digest) extends PaymentActorMessage
+  case class FailedPayment(hash: Sha256Hash160Digest)
+      extends PaymentActorMessage
 }

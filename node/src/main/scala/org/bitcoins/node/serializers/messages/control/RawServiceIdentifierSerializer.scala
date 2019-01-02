@@ -12,9 +12,10 @@ import scodec.bits.ByteVector
   * service identifier in a network message
   * https://bitcoin.org/en/developer-reference#version
   */
-trait RawServiceIdentifierSerializer extends RawBitcoinSerializer[ServiceIdentifier] {
+trait RawServiceIdentifierSerializer
+    extends RawBitcoinSerializer[ServiceIdentifier] {
 
-  override def read(bytes : ByteVector) : ServiceIdentifier = {
+  override def read(bytes: ByteVector): ServiceIdentifier = {
     val serviceBytes = bytes.take(8)
     //since bitcoin uses big endian for numbers, we need to convert to little endian
     ServiceIdentifier(UInt64(serviceBytes.reverse))

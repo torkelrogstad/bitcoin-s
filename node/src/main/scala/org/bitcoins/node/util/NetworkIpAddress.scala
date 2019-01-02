@@ -28,14 +28,14 @@ sealed trait NetworkIpAddress extends NetworkElement {
     *
     * @return
     */
-  def time : UInt32
+  def time: UInt32
 
   /**
     * The services the node advertised in its version message.
     *
     * @return
     */
-  def services : ServiceIdentifier
+  def services: ServiceIdentifier
 
   /**
     * IPv6 address in big endian byte order.
@@ -43,7 +43,7 @@ sealed trait NetworkIpAddress extends NetworkElement {
     *
     * @return
     */
-  def address : InetAddress
+  def address: InetAddress
 
   /**
     * Port number in big endian byte order.
@@ -53,21 +53,27 @@ sealed trait NetworkIpAddress extends NetworkElement {
     *
     * @return
     */
-  def port : Int
+  def port: Int
 
   override def bytes: ByteVector = RawNetworkIpAddressSerializer.write(this)
 }
 
-
 object NetworkIpAddress extends Factory[NetworkIpAddress] {
-  private case class NetworkIpAddressImpl(time : UInt32, services : ServiceIdentifier,
-                                          address : InetAddress, port : Int) extends NetworkIpAddress
+  private case class NetworkIpAddressImpl(
+      time: UInt32,
+      services: ServiceIdentifier,
+      address: InetAddress,
+      port: Int)
+      extends NetworkIpAddress
 
-  def apply(time : UInt32, services : ServiceIdentifier, address : InetAddress, port : Int) : NetworkIpAddress = {
-    NetworkIpAddressImpl(time,services,address,port)
+  def apply(
+      time: UInt32,
+      services: ServiceIdentifier,
+      address: InetAddress,
+      port: Int): NetworkIpAddress = {
+    NetworkIpAddressImpl(time, services, address, port)
   }
 
-  def fromBytes(bytes : ByteVector) : NetworkIpAddress = RawNetworkIpAddressSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): NetworkIpAddress =
+    RawNetworkIpAddressSerializer.read(bytes)
 }
-
-

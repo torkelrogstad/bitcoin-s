@@ -9,7 +9,8 @@ import org.scalacheck.{Prop, Properties}
 class RejectMessageSpec extends Properties("RejectMessageSpec") {
 
   property("serialization symmetry") = {
-    Prop.forAll(ControlMessageGenerator.rejectMessage) { case rejectMsg =>
+    Prop.forAll(ControlMessageGenerator.rejectMessage) {
+      case rejectMsg =>
         RejectMessage(rejectMsg.hex) == rejectMsg
 
     }

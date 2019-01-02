@@ -4,7 +4,12 @@ import java.util.concurrent.Executors
 
 import akka.actor.ActorSystem
 import org.bitcoins.core.config.{MainNet, NetworkParameters, RegTest, TestNet3}
-import org.bitcoins.core.protocol.blockchain.{ChainParams, MainNetChainParams, RegTestNetChainParams, TestNetChainParams}
+import org.bitcoins.core.protocol.blockchain.{
+  ChainParams,
+  MainNetChainParams,
+  RegTestNetChainParams,
+  TestNetChainParams
+}
 import org.bitcoins.node.messages.control.VersionMessage
 import org.bitcoins.node.versions.ProtocolVersion70012
 import org.bitcoins.node.versions.ProtocolVersion70012
@@ -28,19 +33,18 @@ trait Constants {
   /** This is the file where our block headers are stored */
   def blockHeaderFile = new java.io.File("src/main/resources/block_headers.dat")
 
-
   /** This is the configuration details needed to connect to our database */
   def dbConfig: DbConfig = networkParameters match {
-    case MainNet => MainNetDbConfig
+    case MainNet  => MainNetDbConfig
     case TestNet3 => TestNet3DbConfig
-    case RegTest => RegTestDbConfig
+    case RegTest  => RegTestDbConfig
   }
 
   /** The [[ChainParams]] for the blockchain we are currently connected to */
   def chainParams: ChainParams = networkParameters match {
-    case MainNet => MainNetChainParams
+    case MainNet  => MainNetChainParams
     case TestNet3 => TestNetChainParams
-    case RegTest => RegTestNetChainParams
+    case RegTest  => RegTestNetChainParams
   }
 
   /** This is the database we are currently bound to, this

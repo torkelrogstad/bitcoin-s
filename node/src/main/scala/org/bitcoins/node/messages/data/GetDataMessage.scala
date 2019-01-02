@@ -12,16 +12,18 @@ import scodec.bits.ByteVector
   * Created by chris on 7/8/16.
   */
 object GetDataMessage extends Factory[GetDataMessage] {
-  private case class GetDataMessageImpl(inventoryCount: CompactSizeUInt,
-                                        inventories : Seq[Inventory]) extends GetDataMessage
-
-
+  private case class GetDataMessageImpl(
+      inventoryCount: CompactSizeUInt,
+      inventories: Seq[Inventory])
+      extends GetDataMessage
 
   override def fromBytes(bytes: ByteVector): GetDataMessage = {
     RawGetDataMessageSerializer.read(bytes)
   }
 
-  def apply(inventoryCount: CompactSizeUInt, inventories: Seq[Inventory]): GetDataMessage = {
+  def apply(
+      inventoryCount: CompactSizeUInt,
+      inventories: Seq[Inventory]): GetDataMessage = {
     GetDataMessageImpl(inventoryCount, inventories)
   }
 
@@ -30,5 +32,6 @@ object GetDataMessage extends Factory[GetDataMessage] {
     GetDataMessage(inventoryCount, inventories)
   }
 
-  def apply(inventory: Inventory): GetDataMessage = GetDataMessage(Seq(inventory))
+  def apply(inventory: Inventory): GetDataMessage =
+    GetDataMessage(Seq(inventory))
 }

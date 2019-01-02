@@ -14,11 +14,17 @@ import scodec.bits.ByteVector
   */
 object NotFoundMessage extends Factory[NotFoundMessage] {
 
-  private case class NotFoundMessageImpl(inventoryCount : CompactSizeUInt, inventories : Seq[Inventory]) extends NotFoundMessage
+  private case class NotFoundMessageImpl(
+      inventoryCount: CompactSizeUInt,
+      inventories: Seq[Inventory])
+      extends NotFoundMessage
 
-  def fromBytes(bytes : ByteVector) : NotFoundMessage = RawNotFoundMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): NotFoundMessage =
+    RawNotFoundMessageSerializer.read(bytes)
 
-  def apply(inventoryCount : CompactSizeUInt, inventories : Seq[Inventory]) : NotFoundMessage = {
-    NotFoundMessageImpl(inventoryCount,inventories)
+  def apply(
+      inventoryCount: CompactSizeUInt,
+      inventories: Seq[Inventory]): NotFoundMessage = {
+    NotFoundMessageImpl(inventoryCount, inventories)
   }
 }

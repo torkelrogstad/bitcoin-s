@@ -9,6 +9,7 @@ import org.scalatest.{FlatSpec, MustMatchers}
 class NetworkMessageTest extends FlatSpec with MustMatchers {
 
   "NetworkMessage" must "be able to serialize then deserialize a message and get the original hex back" in {
-    NetworkMessage(TestUtil.rawNetworkMessage).hex must be (TestUtil.rawNetworkMessage)
+    NetworkMessage(TestUtil.rawNetworkMessage).hex must be(
+      TestUtil.rawNetworkMessage)
   }
 }

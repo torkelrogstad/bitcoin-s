@@ -14,11 +14,21 @@ sealed trait ProtocolVersion extends NetworkElement
 
 object ProtocolVersion extends Factory[ProtocolVersion] {
 
-  val versions : Seq[ProtocolVersion] = List(ProtocolVersion106, ProtocolVersion209, ProtocolVersion311, ProtocolVersion31402,
-    ProtocolVersion31800, ProtocolVersion60000, ProtocolVersion60001, ProtocolVersion60002, ProtocolVersion70001,
-    ProtocolVersion70002, ProtocolVersion70012)
+  val versions: Seq[ProtocolVersion] = List(
+    ProtocolVersion106,
+    ProtocolVersion209,
+    ProtocolVersion311,
+    ProtocolVersion31402,
+    ProtocolVersion31800,
+    ProtocolVersion60000,
+    ProtocolVersion60001,
+    ProtocolVersion60002,
+    ProtocolVersion70001,
+    ProtocolVersion70002,
+    ProtocolVersion70012
+  )
 
-  def fromBytes(bytes : ByteVector) : ProtocolVersion = {
+  def fromBytes(bytes: ByteVector): ProtocolVersion = {
     //TODO: Should we default to the latest protocol version if the bytes don't match???
     versions.find(v => v.bytes == bytes).getOrElse(ProtocolVersion70012)
   }
@@ -88,7 +98,6 @@ case object ProtocolVersion60001 extends ProtocolVersion {
 case object ProtocolVersion60002 extends ProtocolVersion {
   override val bytes: ByteVector = ByteVector.fromHex("62ea0000").get
 }
-
 
 /**
   * Added notfound message.

@@ -12,7 +12,7 @@ import scodec.bits.ByteVector
   * [[https://bitcoin.org/en/developer-reference#version]]
   */
 sealed trait ServiceIdentifier extends NetworkElement {
-  def num : UInt64
+  def num: UInt64
   override def bytes: ByteVector = RawServiceIdentifierSerializer.write(this)
 }
 
@@ -39,17 +39,16 @@ sealed trait UnknownService extends ServiceIdentifier
 
 object ServiceIdentifier extends Factory[ServiceIdentifier] {
 
-  private case class UnknownServiceImpl(num : UInt64) extends UnknownService
+  private case class UnknownServiceImpl(num: UInt64) extends UnknownService
 
-  def fromBytes(bytes : ByteVector) : ServiceIdentifier = RawServiceIdentifierSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): ServiceIdentifier =
+    RawServiceIdentifierSerializer.read(bytes)
 
-  def apply(num : BigInt): ServiceIdentifier = ServiceIdentifier(UInt64(num))
+  def apply(num: BigInt): ServiceIdentifier = ServiceIdentifier(UInt64(num))
 
-  def apply(uInt64 : UInt64): ServiceIdentifier = uInt64 match {
+  def apply(uInt64: UInt64): ServiceIdentifier = uInt64 match {
     case UInt64.zero => UnnamedService
-    case UInt64.one => NodeNetwork
-    case x : UInt64 => UnknownServiceImpl(x)
+    case UInt64.one  => NodeNetwork
+    case x: UInt64   => UnknownServiceImpl(x)
   }
 }
-
-

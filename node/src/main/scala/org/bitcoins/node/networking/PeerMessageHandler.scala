@@ -29,76 +29,91 @@ import scodec.bits.ByteVector
   */
 sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
 
-  lazy val peer: ActorRef = context.actorOf(Client.props,BitcoinSpvNodeUtil.createActorName(this.getClass))
+  lazy val peer: ActorRef = context.actorOf(
+    Client.props,
+    BitcoinSpvNodeUtil.createActorName(this.getClass))
 
   def receive = LoggingReceive {
     case connectedMsg: Tcp.Connected =>
       //for the case where the first message we receive is a Tcp.Connected message
-      context.become(awaitConnected(Nil,ByteVector.empty))
+      context.become(awaitConnected(Nil, ByteVector.empty))
       self.forward(connectedMsg)
-    case message : Tcp.Message =>
+    case message: Tcp.Message =>
       val remainingBytes = handleTcpMessage(message, ByteVector.empty, sender)
-      context.become(awaitConnected(Nil,remainingBytes))
+      context.become(awaitConnected(Nil, remainingBytes))
     case msg: NetworkMessage =>
       logger.info("Switching to awaitConnected from default receive")
-      context.become(awaitConnected(Seq((sender,msg)), ByteVector.empty))
+      context.become(awaitConnected(Seq((sender, msg)), ByteVector.empty))
     case networkPayload: NetworkPayload =>
-      self.forward(NetworkMessage(Constants.networkParameters,networkPayload))
+      self.forward(NetworkMessage(Constants.networkParameters, networkPayload))
   }
 
   /** Waits for us to receive a [[Tcp.Connected]] message from our [[Client]] */
-  def awaitConnected(requests: Seq[(ActorRef,NetworkMessage)], unalignedBytes: ByteVector): Receive = LoggingReceive {
-    case Tcp.Connected(remote,local) =>
-      val versionMsg = VersionMessage(Constants.networkParameters,local.getAddress)
+  def awaitConnected(
+      requests: Seq[(ActorRef, NetworkMessage)],
+      unalignedBytes: ByteVector): Receive = LoggingReceive {
+    case Tcp.Connected(remote, local) =>
+      val versionMsg =
+        VersionMessage(Constants.networkParameters, local.getAddress)
       peer ! versionMsg
       logger.info("Switching to awaitVersionMessage from awaitConnected")
       context.become(awaitVersionMessage(requests, unalignedBytes))
     case msg: Tcp.Message =>
-      val newUnalignedBytes = handleTcpMessage(msg, unalignedBytes,sender)
+      val newUnalignedBytes = handleTcpMessage(msg, unalignedBytes, sender)
       context.become(awaitConnected(requests, newUnalignedBytes))
     case msg: NetworkMessage =>
-      logger.debug("Received another peer request while waiting for Tcp.Connected: " + msg)
-      context.become(awaitConnected((sender,msg) +: requests, unalignedBytes))
+      logger.debug(
+        "Received another peer request while waiting for Tcp.Connected: " + msg)
+      context.become(awaitConnected((sender, msg) +: requests, unalignedBytes))
     case payload: NetworkPayload =>
-      self ! NetworkMessage(Constants.networkParameters,payload)
+      self ! NetworkMessage(Constants.networkParameters, payload)
   }
 
-
   /** Waits for a peer on the network to send us a [[VersionMessage]] */
-  private def awaitVersionMessage(requests: Seq[(ActorRef,NetworkMessage)], unalignedBytes: ByteVector): Receive = LoggingReceive {
-    case networkMessage : NetworkMessage => networkMessage.payload match {
-      case _ : VersionMessage =>
-        peer ! VerAckMessage
-        //need to wait for the peer to send back a verack message
-        logger.debug("Switching to awaitVerack from awaitVersionMessage")
-        context.become(awaitVerack(requests, unalignedBytes))
-      case msg : NetworkPayload =>
-        context.become(awaitVersionMessage((sender,networkMessage) +: requests, unalignedBytes))
-    }
+  private def awaitVersionMessage(
+      requests: Seq[(ActorRef, NetworkMessage)],
+      unalignedBytes: ByteVector): Receive = LoggingReceive {
+    case networkMessage: NetworkMessage =>
+      networkMessage.payload match {
+        case _: VersionMessage =>
+          peer ! VerAckMessage
+          //need to wait for the peer to send back a verack message
+          logger.debug("Switching to awaitVerack from awaitVersionMessage")
+          context.become(awaitVerack(requests, unalignedBytes))
+        case msg: NetworkPayload =>
+          context.become(
+            awaitVersionMessage((sender, networkMessage) +: requests,
+                                unalignedBytes))
+      }
     case msg: Tcp.Message =>
-      val newUnalignedBytes = handleTcpMessage(msg, unalignedBytes,sender)
-      context.become(awaitVersionMessage(requests,newUnalignedBytes))
+      val newUnalignedBytes = handleTcpMessage(msg, unalignedBytes, sender)
+      context.become(awaitVersionMessage(requests, newUnalignedBytes))
     case payload: NetworkPayload =>
-      self ! NetworkMessage(Constants.networkParameters,payload)
+      self ! NetworkMessage(Constants.networkParameters, payload)
   }
 
   /** Waits for our peer on the network to send us a [[VerAckMessage]] */
-  private def awaitVerack(requests: Seq[(ActorRef,NetworkMessage)], unalignedBytes: ByteVector): Receive = LoggingReceive {
-    case networkMessage : NetworkMessage => networkMessage.payload match {
-      case VerAckMessage =>
-        logger.info("Received verack message, sending queued messages: " + requests)
-        sendPeerRequests(requests)
-        logger.info("Switching to peerMessageHandler from awaitVerack")
-        val controlPayloads = findControlPayloads(requests)
-        context.become(peerMessageHandler(controlPayloads, unalignedBytes))
-      case _ : NetworkPayload =>
-        context.become(awaitVerack((sender,networkMessage) +: requests, unalignedBytes))
-    }
+  private def awaitVerack(
+      requests: Seq[(ActorRef, NetworkMessage)],
+      unalignedBytes: ByteVector): Receive = LoggingReceive {
+    case networkMessage: NetworkMessage =>
+      networkMessage.payload match {
+        case VerAckMessage =>
+          logger.info(
+            "Received verack message, sending queued messages: " + requests)
+          sendPeerRequests(requests)
+          logger.info("Switching to peerMessageHandler from awaitVerack")
+          val controlPayloads = findControlPayloads(requests)
+          context.become(peerMessageHandler(controlPayloads, unalignedBytes))
+        case _: NetworkPayload =>
+          context.become(
+            awaitVerack((sender, networkMessage) +: requests, unalignedBytes))
+      }
     case msg: Tcp.Message =>
-      val newUnalignedBytes = handleTcpMessage(msg,unalignedBytes,sender)
-      context.become(awaitVerack(requests,newUnalignedBytes))
+      val newUnalignedBytes = handleTcpMessage(msg, unalignedBytes, sender)
+      context.become(awaitVerack(requests, newUnalignedBytes))
     case payload: NetworkPayload =>
-      self ! NetworkMessage(Constants.networkParameters,payload)
+      self ! NetworkMessage(Constants.networkParameters, payload)
   }
 
   /**
@@ -106,9 +121,10 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     * @param requests
     * @return
     */
-  private def sendPeerRequests(requests: Seq[(ActorRef,NetworkMessage)]) = for {
-    (sender,peerRequest) <- requests
-  } yield peer ! peerRequest
+  private def sendPeerRequests(requests: Seq[(ActorRef, NetworkMessage)]) =
+    for {
+      (sender, peerRequest) <- requests
+    } yield peer ! peerRequest
 
   /**
     * This is the main receive function inside of [[PeerMessageHandler]]
@@ -116,17 +132,20 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     * actor responsible for handling that specific message
     * @return
     */
-  def peerMessageHandler(controlMessages: Seq[(ActorRef,ControlPayload)], unalignedBytes: ByteVector) : Receive = LoggingReceive {
+  def peerMessageHandler(
+      controlMessages: Seq[(ActorRef, ControlPayload)],
+      unalignedBytes: ByteVector): Receive = LoggingReceive {
     case networkMessage: NetworkMessage =>
       //hack to get around using 'self' as the sender
-      self.tell(networkMessage.payload,sender)
+      self.tell(networkMessage.payload, sender)
     case controlPayload: ControlPayload =>
-      val newControlMsgs = handleControlPayload(controlPayload,sender,controlMessages)
-      context.become(peerMessageHandler(newControlMsgs,unalignedBytes))
-    case dataPayload: DataPayload => handleDataPayload(dataPayload,sender)
+      val newControlMsgs =
+        handleControlPayload(controlPayload, sender, controlMessages)
+      context.become(peerMessageHandler(newControlMsgs, unalignedBytes))
+    case dataPayload: DataPayload => handleDataPayload(dataPayload, sender)
     case msg: Tcp.Message =>
-      val newUnalignedBytes = handleTcpMessage(msg,unalignedBytes,sender)
-      context.become(peerMessageHandler(controlMessages,newUnalignedBytes))
+      val newUnalignedBytes = handleTcpMessage(msg, unalignedBytes, sender)
+      context.become(peerMessageHandler(controlMessages, newUnalignedBytes))
   }
 
   /**
@@ -138,7 +157,10 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     *                       rest of the message
     * @return the new unaligned bytes, if there are any
     */
-  private def handleEvent(event : Tcp.Event, unalignedBytes: ByteVector, sender: ActorRef): ByteVector = event match {
+  private def handleEvent(
+      event: Tcp.Event,
+      unalignedBytes: ByteVector,
+      sender: ActorRef): ByteVector = event match {
     case Tcp.Received(byteString: ByteString) =>
       //logger.debug("Received byte string in peerMessageHandler " + BitcoinSUtil.encodeHex(byteString.toArray))
       //logger.debug("Unaligned bytes: " + BitcoinSUtil.encodeHex(unalignedBytes))
@@ -146,16 +168,19 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
       //need to parse out the individual message
       val bytes: ByteVector = unalignedBytes ++ ByteVector(byteString.toArray)
       //logger.debug("Bytes for message parsing: " + BitcoinSUtil.encodeHex(bytes))
-      val (messages,remainingBytes) = BitcoinSpvNodeUtil.parseIndividualMessages(bytes)
-      for {m <- messages} yield self.tell(m,sender)
+      val (messages, remainingBytes) =
+        BitcoinSpvNodeUtil.parseIndividualMessages(bytes)
+      for { m <- messages } yield self.tell(m, sender)
       remainingBytes
-    case x @ (_ : Tcp.CommandFailed | _ : Tcp.Received | _ : Tcp.Connected) =>
-      logger.debug("Received TCP event the peer message handler actor should not have received: " + x)
+    case x @ (_: Tcp.CommandFailed | _: Tcp.Received | _: Tcp.Connected) =>
+      logger.debug(
+        "Received TCP event the peer message handler actor should not have received: " + x)
       unalignedBytes
     case Tcp.PeerClosed =>
       self ! PoisonPill
       unalignedBytes
-    case closed @ (Tcp.ConfirmedClosed | Tcp.Closed | Tcp.Aborted | Tcp.PeerClosed) =>
+    case closed @ (Tcp.ConfirmedClosed | Tcp.Closed | Tcp.Aborted |
+        Tcp.PeerClosed) =>
       context.parent ! closed
       self ! PoisonPill
       unalignedBytes
@@ -165,13 +190,16 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     * This function is responsible for handling a [[Tcp.Command]] algebraic data type
     * @param command
     */
-  private def handleCommand(command : Tcp.Command) = command match {
+  private def handleCommand(command: Tcp.Command) = command match {
     case close @ (Tcp.ConfirmedClose | Tcp.Close | Tcp.Abort) =>
       peer ! close
   }
 
-  private def handleTcpMessage(message: Tcp.Message, unalignedBytes: ByteVector, sender: ActorRef): ByteVector = message match {
-    case event: Tcp.Event => handleEvent(event, unalignedBytes,sender)
+  private def handleTcpMessage(
+      message: Tcp.Message,
+      unalignedBytes: ByteVector,
+      sender: ActorRef): ByteVector = message match {
+    case event: Tcp.Event => handleEvent(event, unalignedBytes, sender)
     case command: Tcp.Command =>
       handleCommand(command)
       ByteVector.empty
@@ -184,7 +212,9 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     * @param payload
     * @param sender
     */
-  private def handleDataPayload(payload: DataPayload, sender: ActorRef): Unit = {
+  private def handleDataPayload(
+      payload: DataPayload,
+      sender: ActorRef): Unit = {
     val destination = deriveDestination(sender)
     destination ! payload
   }
@@ -195,8 +225,11 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     * @param requests the @payload may be a response to a request inside this sequence
     * @return the requests with the request removed for which the @payload is responding too
     */
-  private def handleControlPayload(payload: ControlPayload, sender: ActorRef,
-                                   requests: Seq[(ActorRef,ControlPayload)]): Seq[(ActorRef,ControlPayload)] = {
+  private def handleControlPayload(
+      payload: ControlPayload,
+      sender: ActorRef,
+      requests: Seq[(ActorRef, ControlPayload)]): Seq[
+    (ActorRef, ControlPayload)] = {
     logger.debug("Control payload before derive: " + payload)
     val destination = deriveDestination(sender)
     payload match {
@@ -205,7 +238,9 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
           //means that our peer sent us a ping message, we respond with a pong
           peer ! PongMessage(pingMsg.nonce)
           //remove ping message from requests
-          requests.filterNot { case (sender,msg) => msg.isInstanceOf[PingMessage] }
+          requests.filterNot {
+            case (sender, msg) => msg.isInstanceOf[PingMessage]
+          }
         } else {
           //means we initialized the ping message, send it to our peer
           logger.debug("Sending ping message to peer: " + pingMsg)
@@ -217,25 +252,30 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
       case addrMessage: AddrMessage =>
         //figure out if this was a solicited AddrMessage or an Unsolicited AddrMessage
         //see https://bitcoin.org/en/developer-reference#addr
-        val getAddrMessage: Option[(ActorRef,ControlPayload)] = requests.find{ case (sender,msg) => msg == GetAddrMessage}
+        val getAddrMessage: Option[(ActorRef, ControlPayload)] = requests.find {
+          case (sender, msg) => msg == GetAddrMessage
+        }
         if (getAddrMessage.isDefined) {
           destination ! addrMessage
           //remove the GetAddrMessage request
-          requests.filterNot{ case (sender,msg) => msg == GetAddrMessage }
+          requests.filterNot { case (sender, msg) => msg == GetAddrMessage }
         } else requests
-      case filterMsg @ (_: FilterAddMessage | _: FilterLoadMessage | FilterClearMessage) =>
-        logger.debug("Sending filter message: " + filterMsg + " to " + "destination")
+      case filterMsg @ (_: FilterAddMessage | _: FilterLoadMessage |
+          FilterClearMessage) =>
+        logger.debug(
+          "Sending filter message: " + filterMsg + " to " + "destination")
         destination ! filterMsg
         requests
-      case controlMsg @ (GetAddrMessage | VerAckMessage | _ : VersionMessage | _ : PongMessage) =>
+      case controlMsg @ (GetAddrMessage | VerAckMessage | _: VersionMessage |
+          _: PongMessage) =>
         destination ! controlMsg
         requests
       case rejectMsg: RejectMessage =>
-        logger.error("Received a reject message from the p2p network: " + rejectMsg)
+        logger.error(
+          "Received a reject message from the p2p network: " + rejectMsg)
         requests
     }
   }
-
 
   /**
     * Figures out the actor that is the destination for a message
@@ -246,10 +286,12 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     */
   private def deriveDestination(sender: ActorRef): ActorRef = {
     if (sender == context.parent) {
-      logger.debug("The sender was context.parent, therefore we are sending this message to our peer on the network")
+      logger.debug(
+        "The sender was context.parent, therefore we are sending this message to our peer on the network")
       peer
     } else {
-      logger.debug("The sender was the peer on the network, therefore we need to send to context.parent")
+      logger.debug(
+        "The sender was the peer on the network, therefore we need to send to context.parent")
       context.parent
     }
   }
@@ -259,30 +301,38 @@ sealed trait PeerMessageHandler extends Actor with BitcoinSLogger {
     * @param requests
     * @return
     */
-  private def findControlPayloads(requests: Seq[(ActorRef,NetworkMessage)]): Seq[(ActorRef,ControlPayload)] = {
-    val controlPayloads = requests.filter { case (sender,msg) => msg.payload.isInstanceOf[ControlPayload] }
-    controlPayloads.map { case (sender, msg) => (sender, msg.payload.asInstanceOf[ControlPayload]) }
+  private def findControlPayloads(
+      requests: Seq[(ActorRef, NetworkMessage)]): Seq[
+    (ActorRef, ControlPayload)] = {
+    val controlPayloads = requests.filter {
+      case (sender, msg) => msg.payload.isInstanceOf[ControlPayload]
+    }
+    controlPayloads.map {
+      case (sender, msg) => (sender, msg.payload.asInstanceOf[ControlPayload])
+    }
   }
 }
 
-
-
 object PeerMessageHandler {
-  private case class PeerMessageHandlerImpl(seed: InetSocketAddress) extends PeerMessageHandler {
+  private case class PeerMessageHandlerImpl(seed: InetSocketAddress)
+      extends PeerMessageHandler {
     peer ! Tcp.Connect(seed)
   }
 
   def props: Props = {
-    val seed = new InetSocketAddress(Constants.networkParameters.dnsSeeds(2), Constants.networkParameters.port)
+    val seed = new InetSocketAddress(Constants.networkParameters.dnsSeeds(2),
+                                     Constants.networkParameters.port)
     props(seed)
   }
 
-  def props(seed: InetSocketAddress): Props = Props(classOf[PeerMessageHandlerImpl],seed)
+  def props(seed: InetSocketAddress): Props =
+    Props(classOf[PeerMessageHandlerImpl], seed)
 
-  def apply(context : ActorRefFactory): ActorRef = context.actorOf(props, BitcoinSpvNodeUtil.createActorName(this.getClass))
+  def apply(context: ActorRefFactory): ActorRef =
+    context.actorOf(props, BitcoinSpvNodeUtil.createActorName(this.getClass))
 
   def apply(context: ActorRefFactory, seed: InetSocketAddress): ActorRef = {
-    context.actorOf(props(seed), BitcoinSpvNodeUtil.createActorName(this.getClass))
+    context.actorOf(props(seed),
+                    BitcoinSpvNodeUtil.createActorName(this.getClass))
   }
 }
-

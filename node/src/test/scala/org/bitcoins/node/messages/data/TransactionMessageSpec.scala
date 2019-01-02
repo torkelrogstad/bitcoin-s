@@ -9,8 +9,9 @@ import org.scalacheck.{Prop, Properties}
 class TransactionMessageSpec extends Properties("TransactionMessageSpec") {
 
   property("serialization symmetry") = {
-    Prop.forAll(DataMessageGenerator.transactionMessage) { case txMsg =>
-      TransactionMessage.fromHex(txMsg.hex) == txMsg
+    Prop.forAll(DataMessageGenerator.transactionMessage) {
+      case txMsg =>
+        TransactionMessage.fromHex(txMsg.hex) == txMsg
     }
   }
 

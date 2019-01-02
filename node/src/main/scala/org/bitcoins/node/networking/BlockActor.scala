@@ -11,8 +11,18 @@ import org.bitcoins.node.constant.Constants
 import org.bitcoins.node.messages.data.{GetDataMessage, Inventory}
 import org.bitcoins.node.messages.{BlockMessage, MsgBlock}
 import org.bitcoins.node.NetworkMessage
-import org.bitcoins.node.messages.{BlockMessage, GetBlocksMessage, InventoryMessage, MsgBlock}
-import org.bitcoins.node.messages.data.{GetBlocksMessage, GetDataMessage, Inventory, InventoryMessage}
+import org.bitcoins.node.messages.{
+  BlockMessage,
+  GetBlocksMessage,
+  InventoryMessage,
+  MsgBlock
+}
+import org.bitcoins.node.messages.data.{
+  GetBlocksMessage,
+  GetDataMessage,
+  Inventory,
+  InventoryMessage
+}
 import org.bitcoins.node.util.BitcoinSpvNodeUtil
 
 /**
@@ -23,9 +33,10 @@ sealed trait BlockActor extends Actor with BitcoinSLogger {
   def receive: Receive = LoggingReceive {
     case hash: DoubleSha256Digest =>
       val peerMsgHandler = PeerMessageHandler(context)
-      val inv = Inventory(MsgBlock,hash)
+      val inv = Inventory(MsgBlock, hash)
       val getDataMessage = GetDataMessage(inv)
-      val networkMessage = NetworkMessage(Constants.networkParameters, getDataMessage)
+      val networkMessage =
+        NetworkMessage(Constants.networkParameters, getDataMessage)
       peerMsgHandler ! networkMessage
       context.become(awaitBlockMsg)
     case blockHeader: BlockHeader =>
@@ -38,7 +49,6 @@ sealed trait BlockActor extends Actor with BitcoinSLogger {
       context.stop(self)
   }
 }
-
 
 object BlockActor {
   private case class BlockActorImpl() extends BlockActor

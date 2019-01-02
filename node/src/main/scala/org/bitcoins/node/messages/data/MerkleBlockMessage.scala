@@ -14,11 +14,13 @@ import scodec.bits.ByteVector
   */
 object MerkleBlockMessage extends Factory[MerkleBlockMessage] {
 
-  private case class MerkleBlockMessageImpl(merkleBlock : MerkleBlock) extends MerkleBlockMessage
+  private case class MerkleBlockMessageImpl(merkleBlock: MerkleBlock)
+      extends MerkleBlockMessage
 
-  def fromBytes(bytes : ByteVector) : MerkleBlockMessage = RawMerkleBlockMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): MerkleBlockMessage =
+    RawMerkleBlockMessageSerializer.read(bytes)
 
-  def apply(merkleBlock: MerkleBlock) : MerkleBlockMessage = {
+  def apply(merkleBlock: MerkleBlock): MerkleBlockMessage = {
     MerkleBlockMessageImpl(merkleBlock)
   }
 }

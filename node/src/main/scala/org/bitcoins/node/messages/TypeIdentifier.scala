@@ -13,7 +13,7 @@ import scodec.bits.ByteVector
   * https://bitcoin.org/en/developer-reference#data-messages
   */
 sealed trait TypeIdentifier extends NetworkElement {
-  def num : UInt32
+  def num: UInt32
   override def bytes: ByteVector = RawTypeIdentifierSerializer.write(this)
 }
 
@@ -33,16 +33,17 @@ sealed trait MsgUnassigned extends TypeIdentifier
 
 object TypeIdentifier extends Factory[TypeIdentifier] {
 
-  private case class MsgUnassignedImpl(num : UInt32) extends MsgUnassigned
+  private case class MsgUnassignedImpl(num: UInt32) extends MsgUnassigned
 
-  override def fromBytes(bytes : ByteVector) : TypeIdentifier = RawTypeIdentifierSerializer.read(bytes)
+  override def fromBytes(bytes: ByteVector): TypeIdentifier =
+    RawTypeIdentifierSerializer.read(bytes)
 
-  def apply(num : Long) : TypeIdentifier = TypeIdentifier(UInt32(num))
+  def apply(num: Long): TypeIdentifier = TypeIdentifier(UInt32(num))
 
-  def apply(uInt32 : UInt32) : TypeIdentifier = uInt32 match {
-    case UInt32.one => MsgTx
+  def apply(uInt32: UInt32): TypeIdentifier = uInt32 match {
+    case UInt32.one                 => MsgTx
     case x if (uInt32 == UInt32(2)) => MsgBlock
     case x if (uInt32 == UInt32(3)) => MsgFilteredBlock
-    case x : UInt32 => MsgUnassignedImpl(x)
+    case x: UInt32                  => MsgUnassignedImpl(x)
   }
 }

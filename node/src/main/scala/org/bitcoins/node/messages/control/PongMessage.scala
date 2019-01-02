@@ -20,4 +20,3 @@ object PongMessage extends Factory[PongMessage] {
 
   def apply(nonce: UInt64): PongMessage = PongMessageImpl(nonce)
 }
-

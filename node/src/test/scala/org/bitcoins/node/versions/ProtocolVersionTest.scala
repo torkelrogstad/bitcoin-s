@@ -8,7 +8,6 @@ import org.scalatest.{FlatSpec, MustMatchers}
 class ProtocolVersionTest extends FlatSpec with MustMatchers {
 
   "ProtocolVersion" must "give us the correct protocol version back from its hex format" in {
-    ProtocolVersion("72110100") must be (ProtocolVersion70002)
+    ProtocolVersion("72110100") must be(ProtocolVersion70002)
   }
 }
-

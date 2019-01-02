@@ -14,10 +14,16 @@ import scodec.bits.ByteVector
   */
 object FilterAddMessage extends Factory[FilterAddMessage] {
 
-  private case class FilterAddMessageImpl(elementSize: CompactSizeUInt, element: ByteVector) extends FilterAddMessage
-  override def fromBytes(bytes: ByteVector): FilterAddMessage = RawFilterAddMessageSerializer.read(bytes)
+  private case class FilterAddMessageImpl(
+      elementSize: CompactSizeUInt,
+      element: ByteVector)
+      extends FilterAddMessage
+  override def fromBytes(bytes: ByteVector): FilterAddMessage =
+    RawFilterAddMessageSerializer.read(bytes)
 
-  def apply(elementSize: CompactSizeUInt, element: ByteVector): FilterAddMessage = {
-    FilterAddMessageImpl(elementSize,element)
+  def apply(
+      elementSize: CompactSizeUInt,
+      element: ByteVector): FilterAddMessage = {
+    FilterAddMessageImpl(elementSize, element)
   }
 }

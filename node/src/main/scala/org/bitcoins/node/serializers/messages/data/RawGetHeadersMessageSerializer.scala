@@ -16,13 +16,16 @@ import scala.annotation.tailrec
 /**
   * Created by chris on 6/29/16.
   */
-trait RawGetHeadersMessageSerializer extends RawBitcoinSerializer[GetHeadersMessage] {
+trait RawGetHeadersMessageSerializer
+    extends RawBitcoinSerializer[GetHeadersMessage] {
 
   override def read(bytes: ByteVector): GetHeadersMessage = {
     val version = ProtocolVersion(bytes.take(4))
-    val hashCount = CompactSizeUInt.parseCompactSizeUInt(bytes.slice(4, bytes.length))
+    val hashCount =
+      CompactSizeUInt.parseCompactSizeUInt(bytes.slice(4, bytes.length))
     val hashesStartIndex = (hashCount.size + 4).toInt
-    val (hashes, remainingBytes) = parseHashes(bytes.slice(hashesStartIndex, bytes.length), hashCount)
+    val (hashes, remainingBytes) =
+      parseHashes(bytes.slice(hashesStartIndex, bytes.length), hashCount)
     val hashStop = DoubleSha256Digest(remainingBytes.take(32))
     GetHeadersMessage(version, hashCount, hashes, hashStop)
   }
@@ -34,7 +37,6 @@ trait RawGetHeadersMessageSerializer extends RawBitcoinSerializer[GetHeadersMess
     getHeadersMessage.hashStop.bytes
   }
 
-
   /**
     * Parses hashes inside of [[GetHeadersMessage]]
     *
@@ -42,13 +44,20 @@ trait RawGetHeadersMessageSerializer extends RawBitcoinSerializer[GetHeadersMess
     * @param numHashes the number of hases that need to be parsed
     * @return the parsed hases and the remaining bytes in the network message
     */
-  private def parseHashes(bytes: ByteVector, numHashes: CompactSizeUInt): (List[DoubleSha256Digest], ByteVector) = {
+  private def parseHashes(
+      bytes: ByteVector,
+      numHashes: CompactSizeUInt): (List[DoubleSha256Digest], ByteVector) = {
     @tailrec
-    def loop(remainingBytes: ByteVector, remainingHashes: Long, accum: List[DoubleSha256Digest]): (List[DoubleSha256Digest], ByteVector) = {
+    def loop(
+        remainingBytes: ByteVector,
+        remainingHashes: Long,
+        accum: List[DoubleSha256Digest]): (List[DoubleSha256Digest], ByteVector) = {
       if (remainingHashes <= 0) (accum.reverse, remainingBytes)
       else {
         val hash = DoubleSha256Digest(remainingBytes.take(32))
-        loop(remainingBytes.slice(32, remainingBytes.length), remainingHashes - 1, hash :: accum)
+        loop(remainingBytes.slice(32, remainingBytes.length),
+             remainingHashes - 1,
+             hash :: accum)
       }
     }
 

@@ -16,25 +16,28 @@ import scodec.bits.ByteVector
   * Represents an entire p2p network message in bitcoins
   */
 sealed trait NetworkMessage extends NetworkElement {
-  def header : NetworkHeader
-  def payload : NetworkPayload
+  def header: NetworkHeader
+  def payload: NetworkPayload
   override def bytes: ByteVector = RawNetworkMessageSerializer.write(this)
 }
 
-
 object NetworkMessage extends Factory[NetworkMessage] {
-  private case class NetworkMessageImpl(header : NetworkHeader, payload : NetworkPayload) extends NetworkMessage
+  private case class NetworkMessageImpl(
+      header: NetworkHeader,
+      payload: NetworkPayload)
+      extends NetworkMessage
 
+  def fromBytes(bytes: ByteVector): NetworkMessage =
+    RawNetworkMessageSerializer.read(bytes)
 
-  def fromBytes(bytes : ByteVector) : NetworkMessage = RawNetworkMessageSerializer.read(bytes)
   /**
     * Creates a network message from it's [[NetworkHeader]] and [[NetworkPayload]]
     * @param header the [[NetworkHeader]] which is being sent across the network
     * @param payload the [[NetworkPayload]] which contains the information being sent across the network
     * @return
     */
-  def apply(header : NetworkHeader, payload : NetworkPayload) : NetworkMessage = {
-    NetworkMessageImpl(header,payload)
+  def apply(header: NetworkHeader, payload: NetworkPayload): NetworkMessage = {
+    NetworkMessageImpl(header, payload)
   }
 
   /**
@@ -43,8 +46,10 @@ object NetworkMessage extends Factory[NetworkMessage] {
     * @param payload the payload that needs to be sent across the network
     * @return
     */
-  def apply(network : NetworkParameters, payload : NetworkPayload) : NetworkMessage = {
+  def apply(
+      network: NetworkParameters,
+      payload: NetworkPayload): NetworkMessage = {
     val header = NetworkHeader(network, payload)
-    NetworkMessage(header,payload)
+    NetworkMessage(header, payload)
   }
 }

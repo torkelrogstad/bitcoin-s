@@ -16,16 +16,17 @@ class RawRejectMessageSerializerTest extends FlatSpec with MustMatchers {
 
   "RawRejectMessageSerializer" must "read in a reject message example" in {
     val rejectMsg = RawRejectMessageSerializer.read(hex)
-    rejectMsg.messageSize must be (CompactSizeUInt(UInt64(2)))
-    rejectMsg.message must be ("tx")
-    rejectMsg.code must be (0x12.toChar)
-    rejectMsg.reasonSize must be (CompactSizeUInt(UInt64(21)))
-    rejectMsg.reason must be ("bad-txns-inputs-spent")
-    BitcoinSUtil.encodeHex(rejectMsg.extra) must be ("394715fcab51093be7bfca5a31005972947baf86a31017939575fb2354222821")
+    rejectMsg.messageSize must be(CompactSizeUInt(UInt64(2)))
+    rejectMsg.message must be("tx")
+    rejectMsg.code must be(0x12.toChar)
+    rejectMsg.reasonSize must be(CompactSizeUInt(UInt64(21)))
+    rejectMsg.reason must be("bad-txns-inputs-spent")
+    BitcoinSUtil.encodeHex(rejectMsg.extra) must be(
+      "394715fcab51093be7bfca5a31005972947baf86a31017939575fb2354222821")
   }
 
   it must "read then write a reject message" in {
     val rejectMsg = RawRejectMessageSerializer.read(hex)
-    rejectMsg.hex must be (hex)
+    rejectMsg.hex must be(hex)
   }
 }

@@ -19,19 +19,29 @@ import scodec.bits.ByteVector
   */
 object GetBlocksMessage extends Factory[GetBlocksMessage] {
 
-  private case class GetBlocksMessageImpl(protocolVersion: ProtocolVersion, hashCount : CompactSizeUInt,
-                                          blockHeaderHashes : Seq[DoubleSha256Digest],
-                                          stopHash : DoubleSha256Digest) extends GetBlocksMessage
+  private case class GetBlocksMessageImpl(
+      protocolVersion: ProtocolVersion,
+      hashCount: CompactSizeUInt,
+      blockHeaderHashes: Seq[DoubleSha256Digest],
+      stopHash: DoubleSha256Digest)
+      extends GetBlocksMessage
 
-  def apply(version : ProtocolVersion, hashCount : CompactSizeUInt, blockHeaderHashes : Seq[DoubleSha256Digest],
-            stopHash : DoubleSha256Digest) : GetBlocksMessage = {
-    GetBlocksMessageImpl(version,hashCount,blockHeaderHashes,stopHash)
+  def apply(
+      version: ProtocolVersion,
+      hashCount: CompactSizeUInt,
+      blockHeaderHashes: Seq[DoubleSha256Digest],
+      stopHash: DoubleSha256Digest): GetBlocksMessage = {
+    GetBlocksMessageImpl(version, hashCount, blockHeaderHashes, stopHash)
   }
 
-  def apply(version: ProtocolVersion, blockHeaderHashes: Seq[DoubleSha256Digest], stopHash: DoubleSha256Digest): GetBlocksMessage = {
+  def apply(
+      version: ProtocolVersion,
+      blockHeaderHashes: Seq[DoubleSha256Digest],
+      stopHash: DoubleSha256Digest): GetBlocksMessage = {
     val hashCount = CompactSizeUInt(UInt64(blockHeaderHashes.length))
     GetBlocksMessage(version, hashCount, blockHeaderHashes, stopHash)
   }
 
-  def fromBytes(bytes : ByteVector) : GetBlocksMessage = RawGetBlocksMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): GetBlocksMessage =
+    RawGetBlocksMessageSerializer.read(bytes)
 }

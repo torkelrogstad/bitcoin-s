@@ -17,17 +17,18 @@ class RawGetHeadersMessageSerializerTest extends FlatSpec with MustMatchers {
 
   "RawGetHeadersMessageSerializer" must "read a hex string representing a GetHeaderMessage" in {
     val getHeadersMessage = RawGetHeadersMessageSerializer.read(hex)
-    getHeadersMessage.version must be (ProtocolVersion70002)
-    getHeadersMessage.hashCount must be (CompactSizeUInt(UInt64(31),1))
-    getHeadersMessage.hashes.length must be (31)
+    getHeadersMessage.version must be(ProtocolVersion70002)
+    getHeadersMessage.hashCount must be(CompactSizeUInt(UInt64(31), 1))
+    getHeadersMessage.hashes.length must be(31)
 
-    getHeadersMessage.hashStop must be (DoubleSha256Digest("0000000000000000000000000000000000000000000000000000000000000000"))
+    getHeadersMessage.hashStop must be(
+      DoubleSha256Digest(
+        "0000000000000000000000000000000000000000000000000000000000000000"))
   }
 
   it must "write a GetHeaderMessage" in {
     val getHeadersMessage = RawGetHeadersMessageSerializer.read(hex)
-    RawGetHeadersMessageSerializer.write(getHeadersMessage) must be (hex)
+    RawGetHeadersMessageSerializer.write(getHeadersMessage) must be(hex)
   }
-
 
 }

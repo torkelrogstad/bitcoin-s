@@ -10,7 +10,8 @@ import slick.driver.PostgresDriver.api._
 trait TestConstants extends DbConfig {
 
   /** Reads the configuration for the database specified inside of application.conf */
-  def dbConfig: DatabaseConfig[PostgresDriver] = DatabaseConfig.forConfig("unitTestDatabaseUrl")
+  def dbConfig: DatabaseConfig[PostgresDriver] =
+    DatabaseConfig.forConfig("unitTestDatabaseUrl")
 
 }
 

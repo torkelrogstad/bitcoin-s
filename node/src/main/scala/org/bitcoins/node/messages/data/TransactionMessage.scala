@@ -15,9 +15,12 @@ import scodec.bits.ByteVector
   */
 object TransactionMessage extends Factory[TransactionMessage] {
 
-  private case class TransactionMessageImpl(transaction : Transaction) extends TransactionMessage
+  private case class TransactionMessageImpl(transaction: Transaction)
+      extends TransactionMessage
 
-  def fromBytes(bytes : ByteVector) : TransactionMessage = RawTransactionMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): TransactionMessage =
+    RawTransactionMessageSerializer.read(bytes)
 
-  def apply(transaction: Transaction) : TransactionMessage = TransactionMessageImpl(transaction)
+  def apply(transaction: Transaction): TransactionMessage =
+    TransactionMessageImpl(transaction)
 }

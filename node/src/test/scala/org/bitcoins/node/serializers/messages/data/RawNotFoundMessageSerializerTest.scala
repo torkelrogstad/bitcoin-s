@@ -18,13 +18,13 @@ class RawNotFoundMessageSerializerTest extends FlatSpec with MustMatchers {
 
   "RawNotFoundMessageSerializer" must "read a not found message from its hex representation" in {
     val notFoundMessage = RawNotFoundMessageSerializer.read(hex)
-    notFoundMessage.inventoryCount must be (CompactSizeUInt(UInt64(2),1))
-    notFoundMessage.inventories.size must be (2)
+    notFoundMessage.inventoryCount must be(CompactSizeUInt(UInt64(2), 1))
+    notFoundMessage.inventories.size must be(2)
   }
 
   it must "write a not found message and get its original hex representation back" in {
     val notFoundMessage = RawNotFoundMessageSerializer.read(hex)
-    RawNotFoundMessageSerializer.write(notFoundMessage) must be (hex)
+    RawNotFoundMessageSerializer.write(notFoundMessage) must be(hex)
   }
 
 }

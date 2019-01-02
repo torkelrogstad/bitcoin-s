@@ -9,7 +9,7 @@ import org.scalatest.{FlatSpec, MustMatchers}
 /**
   * Created by chris on 7/20/16.
   */
-class RawFilterLoadMessageSerializerTest extends FlatSpec with MustMatchers  {
+class RawFilterLoadMessageSerializerTest extends FlatSpec with MustMatchers {
 
   "RawFilterLoadMessageSerializer" must "deserialize and serialize a filter load message" in {
     //example from the bitcoin developer reference
@@ -17,13 +17,13 @@ class RawFilterLoadMessageSerializerTest extends FlatSpec with MustMatchers  {
     val hex = "02b50f0b0000000000000000"
 
     val filterLoadMsg = RawFilterLoadMessageSerializer.read(hex)
-    filterLoadMsg.bloomFilter.filterSize must be (CompactSizeUInt(UInt64(2)))
-    BitcoinSUtil.encodeHex(filterLoadMsg.bloomFilter.data) must be ("b50f")
-    filterLoadMsg.bloomFilter.hashFuncs must be (UInt32(11))
-    filterLoadMsg.bloomFilter.tweak must be (UInt32.zero)
-    filterLoadMsg.bloomFilter.flags must be (BloomUpdateNone)
+    filterLoadMsg.bloomFilter.filterSize must be(CompactSizeUInt(UInt64(2)))
+    BitcoinSUtil.encodeHex(filterLoadMsg.bloomFilter.data) must be("b50f")
+    filterLoadMsg.bloomFilter.hashFuncs must be(UInt32(11))
+    filterLoadMsg.bloomFilter.tweak must be(UInt32.zero)
+    filterLoadMsg.bloomFilter.flags must be(BloomUpdateNone)
 
-    RawFilterLoadMessageSerializer.write(filterLoadMsg) must be (hex)
+    RawFilterLoadMessageSerializer.write(filterLoadMsg) must be(hex)
 
   }
 }

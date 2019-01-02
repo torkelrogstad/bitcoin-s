@@ -19,12 +19,12 @@ class RawAddrMessageSerializerTest extends FlatSpec with MustMatchers {
   val hex = addressCount + time + services + address + port
   "RawAddrMessageSerializer" must "read a AddrMessage from a hex string" in {
     val addrMessage = RawAddrMessageSerializer.read(hex)
-    addrMessage.ipCount must be (CompactSizeUInt(UInt64.one,1))
-    addrMessage.addresses.size must be (1)
+    addrMessage.ipCount must be(CompactSizeUInt(UInt64.one, 1))
+    addrMessage.addresses.size must be(1)
   }
 
   it must "write a Addr message and get its original hex back" in {
     val addrMessage = RawAddrMessageSerializer.read(hex)
-    RawAddrMessageSerializer.write(addrMessage) must be (hex)
+    RawAddrMessageSerializer.write(addrMessage) must be(hex)
   }
 }

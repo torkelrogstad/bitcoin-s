@@ -20,24 +20,30 @@ trait Inventory extends NetworkElement {
     * The type of object which was hashed
     * @return
     */
-  def typeIdentifier : TypeIdentifier
+  def typeIdentifier: TypeIdentifier
 
   /**
     * SHA256(SHA256()) hash of the object in internal byte order.
     * @return
     */
-  def hash : DoubleSha256Digest
+  def hash: DoubleSha256Digest
 
   override def bytes: ByteVector = RawInventorySerializer.write(this)
 }
 
 object Inventory extends Factory[Inventory] {
 
-  private case class InventoryImpl(typeIdentifier: TypeIdentifier, hash : DoubleSha256Digest) extends Inventory
+  private case class InventoryImpl(
+      typeIdentifier: TypeIdentifier,
+      hash: DoubleSha256Digest)
+      extends Inventory
 
-  override def fromBytes(bytes : ByteVector) : Inventory = RawInventorySerializer.read(bytes)
+  override def fromBytes(bytes: ByteVector): Inventory =
+    RawInventorySerializer.read(bytes)
 
-  def apply(typeIdentifier: TypeIdentifier, hash : DoubleSha256Digest) : Inventory = {
-    InventoryImpl(typeIdentifier,hash)
+  def apply(
+      typeIdentifier: TypeIdentifier,
+      hash: DoubleSha256Digest): Inventory = {
+    InventoryImpl(typeIdentifier, hash)
   }
 }

@@ -12,15 +12,15 @@ import scodec.bits.ByteVector
   * Responsible for serializing and deserializing TransactionMessage network objects
   * https://bitcoin.org/en/developer-reference#tx
   */
-trait RawTransactionMessageSerializer extends RawBitcoinSerializer[TransactionMessage] {
+trait RawTransactionMessageSerializer
+    extends RawBitcoinSerializer[TransactionMessage] {
 
-
-  def read(bytes : ByteVector) : TransactionMessage = {
+  def read(bytes: ByteVector): TransactionMessage = {
     val transaction = Transaction(bytes)
     TransactionMessage(transaction)
   }
 
-  def write(transactionMessage: TransactionMessage) : ByteVector = {
+  def write(transactionMessage: TransactionMessage): ByteVector = {
     transactionMessage.transaction.bytes
   }
 }

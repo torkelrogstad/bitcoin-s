@@ -7,13 +7,14 @@ import org.bitcoins.node.messages.control.FilterAddMessage
 import org.bitcoins.node.messages.FilterAddMessage
 import org.bitcoins.node.messages.control.FilterAddMessage
 import scodec.bits.ByteVector
+
 /**
   * Created by chris on 8/26/16.
   * Responsible for serializing and deserializing a [[FilterAddMessage]]
   * [[https://bitcoin.org/en/developer-reference#filteradd]]
   */
-trait RawFilterAddMessageSerializer extends RawBitcoinSerializer[FilterAddMessage] {
-
+trait RawFilterAddMessageSerializer
+    extends RawBitcoinSerializer[FilterAddMessage] {
 
   override def read(bytes: ByteVector): FilterAddMessage = {
     val elementSize = CompactSizeUInt.parseCompactSizeUInt(bytes)
