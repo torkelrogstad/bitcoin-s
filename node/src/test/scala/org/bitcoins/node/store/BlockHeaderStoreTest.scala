@@ -11,6 +11,12 @@ class BlockHeaderStoreTest
     with MustMatchers
     with BeforeAndAfter {
   val testFile = new java.io.File("src/test/resources/block_header.dat")
+
+
+  before {
+    testFile.createNewFile()
+  }
+
   "BlockHeaderStore" must "write and then read a block header from the database" in {
     val blockHeader = BlockchainElementsGenerator.blockHeader.sample.get
     BlockHeaderStore.append(Seq(blockHeader), testFile)

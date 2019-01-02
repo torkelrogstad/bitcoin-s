@@ -27,6 +27,6 @@ class RawNetworkIpAddressSerializerTest extends FlatSpec with MustMatchers {
 
   it must "write a network ip address from and get its original hex back" in {
     val ipAddress = RawNetworkIpAddressSerializer.read(hex)
-    RawNetworkIpAddressSerializer.write(ipAddress) must be(hex)
+    RawNetworkIpAddressSerializer.write(ipAddress).toHex must be(hex)
   }
 }

@@ -14,18 +14,18 @@ class RawTypeIdentifierSerializerTest extends FlatSpec with MustMatchers {
   "RawTypeIdentifier" must "read/write a MsgTx" in {
     val msg = RawTypeIdentifierSerializer.read(msgTxHex)
     msg must be(MsgTx)
-    RawTypeIdentifierSerializer.write(msg) must be(msgTxHex)
+    RawTypeIdentifierSerializer.write(msg).toHex must be(msgTxHex)
   }
 
   it must "read/write a MsgBlock" in {
     val msg = RawTypeIdentifierSerializer.read(msgBlockHex)
     msg must be(MsgBlock)
-    RawTypeIdentifierSerializer.write(msg) must be(msgBlockHex)
+    RawTypeIdentifierSerializer.write(msg).toHex must be(msgBlockHex)
   }
 
   it must "read/write a MsgFilteredBlock" in {
     val msg = RawTypeIdentifierSerializer.read(msgFilteredBlockHex)
     msg must be(MsgFilteredBlock)
-    RawTypeIdentifierSerializer.write(msg) must be(msgFilteredBlockHex)
+    RawTypeIdentifierSerializer.write(msg).toHex must be(msgFilteredBlockHex)
   }
 }

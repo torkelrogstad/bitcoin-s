@@ -26,6 +26,6 @@ class RawInventorySerializerTest extends FlatSpec with MustMatchers {
 
   it must "write a inventory object to its serialized format" in {
     val inventory = RawInventorySerializer.read(hex)
-    RawInventorySerializer.write(inventory) must be(hex)
+    RawInventorySerializer.write(inventory).toHex must be(hex)
   }
 }

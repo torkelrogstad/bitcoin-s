@@ -40,7 +40,7 @@ class RawHeadersMessageSerializerTest
 
   it must "read then write a HeaderMessage" in {
     val headersMsg = RawHeadersMessageSerializer.read(hex)
-    RawHeadersMessageSerializer.write(headersMsg) must be(hex)
+    RawHeadersMessageSerializer.write(headersMsg).toHex must be(hex)
   }
 
   it must "read the first two block headers from testnet3" in {

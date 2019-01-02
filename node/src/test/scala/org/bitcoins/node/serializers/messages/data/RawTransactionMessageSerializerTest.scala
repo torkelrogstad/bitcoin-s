@@ -20,7 +20,7 @@ class RawTransactionMessageSerializerTest extends FlatSpec with MustMatchers {
   it must "write a TransactionMessage to its hex format" in {
     val txMessage =
       RawTransactionMessageSerializer.read(TestUtil.rawTransaction)
-    RawTransactionMessageSerializer.write(txMessage) must be(
+    RawTransactionMessageSerializer.write(txMessage).toHex must be(
       TestUtil.rawTransaction)
   }
 }

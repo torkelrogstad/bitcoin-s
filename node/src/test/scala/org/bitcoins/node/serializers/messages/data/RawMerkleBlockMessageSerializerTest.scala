@@ -5,6 +5,7 @@ import org.bitcoins.core.number.{UInt32, UInt64}
 import org.bitcoins.core.protocol.CompactSizeUInt
 import org.bitcoins.core.util.BitcoinSUtil
 import org.scalatest.{FlatSpec, MustMatchers}
+import scodec.bits.BitVector
 
 /**
   * Created by chris on 6/2/16.
@@ -40,13 +41,12 @@ class RawMerkleBlockMessageSerializerTest extends FlatSpec with MustMatchers {
           "20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf"))
       ))
 
-    merkleBlockMessage.merkleBlock.partialMerkleTree.bits must be(
-      Seq(true, false, true, true, true, false, false, false))
+    merkleBlockMessage.merkleBlock.partialMerkleTree.bits must be(BitVector.fromValidBin("10111000"))
   }
 
   it must "write a merkle block header message" in {
     val merkleBlockMessage = RawMerkleBlockMessageSerializer.read(hex)
 
-    RawMerkleBlockMessageSerializer.write(merkleBlockMessage) must be(hex)
+    RawMerkleBlockMessageSerializer.write(merkleBlockMessage).toHex must be(hex)
   }
 }

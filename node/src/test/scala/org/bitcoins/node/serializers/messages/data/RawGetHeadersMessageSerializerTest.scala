@@ -28,7 +28,7 @@ class RawGetHeadersMessageSerializerTest extends FlatSpec with MustMatchers {
 
   it must "write a GetHeaderMessage" in {
     val getHeadersMessage = RawGetHeadersMessageSerializer.read(hex)
-    RawGetHeadersMessageSerializer.write(getHeadersMessage) must be(hex)
+    RawGetHeadersMessageSerializer.write(getHeadersMessage).toHex must be(hex)
   }
 
 }

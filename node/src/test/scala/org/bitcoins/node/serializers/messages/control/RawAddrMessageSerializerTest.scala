@@ -25,6 +25,6 @@ class RawAddrMessageSerializerTest extends FlatSpec with MustMatchers {
 
   it must "write a Addr message and get its original hex back" in {
     val addrMessage = RawAddrMessageSerializer.read(hex)
-    RawAddrMessageSerializer.write(addrMessage) must be(hex)
+    RawAddrMessageSerializer.write(addrMessage).toHex must be(hex)
   }
 }

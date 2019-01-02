@@ -54,12 +54,12 @@ class RawVersionMessageSerializerTest extends FlatSpec with MustMatchers {
     versionMessage.timestamp must be(Int64(1415483324))
 
     versionMessage.addressReceiveServices must be(NodeNetwork)
-    BitcoinSpvNodeUtil.writeAddress(versionMessage.addressReceiveIpAddress) must be(
+    BitcoinSpvNodeUtil.writeAddress(versionMessage.addressReceiveIpAddress).toHex must be(
       receivingNodeIpAddress)
     versionMessage.addressReceivePort must be(8333)
 
     versionMessage.addressTransServices must be(NodeNetwork)
-    BitcoinSpvNodeUtil.writeAddress(versionMessage.addressTransIpAddress) must be(
+    BitcoinSpvNodeUtil.writeAddress(versionMessage.addressTransIpAddress).toHex must be(
       transNodeIpAddress)
     versionMessage.addressTransPort must be(8333)
 
@@ -75,7 +75,7 @@ class RawVersionMessageSerializerTest extends FlatSpec with MustMatchers {
 
   it must "write a VersionMessage to its original hex format" in {
     val versionMessage = RawVersionMessageSerializer.read(hex)
-    RawVersionMessageSerializer.write(versionMessage) must be(hex)
+    RawVersionMessageSerializer.write(versionMessage).toHex must be(hex)
   }
 
   it must "read a VersionMessage that bitcoins created" in {
@@ -84,7 +84,7 @@ class RawVersionMessageSerializerTest extends FlatSpec with MustMatchers {
     val hex =
       "7c1101000000000000000000d805833655010000000000000000000000000000000000000000ffff0a940106479d010000000000000000000000000000000000ffff739259bb479d0000000000000000182f626974636f696e732d7370762d6e6f64652f302e302e310000000000"
     val versionMessage = RawVersionMessageSerializer.read(hex)
-    RawVersionMessageSerializer.write(versionMessage) must be(hex)
+    RawVersionMessageSerializer.write(versionMessage).toHex must be(hex)
   }
 
   it must "read a version message from a full node on the network" in {

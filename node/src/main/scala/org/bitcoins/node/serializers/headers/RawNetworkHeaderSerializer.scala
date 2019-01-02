@@ -38,11 +38,11 @@ trait RawNetworkHeaderSerializer
     val network = messageHeader.network
     val commandNameNoPadding = messageHeader.commandName.map(_.toByte)
     //command name needs to be 12 bytes in size, or 24 chars in hex
-    val commandName = ByteVector(commandNameNoPadding).padLeft(12)
+    val commandName = ByteVector(commandNameNoPadding).padRight(12)
     val checksum = messageHeader.checksum
     network ++
       commandName ++
-      messageHeader.payloadSize.bytes ++
+      messageHeader.payloadSize.bytes.reverse ++
       checksum
   }
 

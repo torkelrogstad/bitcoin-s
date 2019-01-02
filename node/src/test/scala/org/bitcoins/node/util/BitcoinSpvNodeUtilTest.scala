@@ -39,7 +39,7 @@ class BitcoinSpvNodeUtilTest
       CompactSizeUInt(UInt64(2), 1),
       List(
         BlockHeader(
-          Int32(3150175941L),
+          Int32(315017594),
           DoubleSha256Digest(
             "177e777f078d2deeaa3ad4b82e78a00ad2f4738c5217f7a36d9cf3bd11e41817"),
           DoubleSha256Digest(

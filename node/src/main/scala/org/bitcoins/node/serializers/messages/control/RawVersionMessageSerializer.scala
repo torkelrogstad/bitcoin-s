@@ -99,7 +99,7 @@ trait RawVersionMessageSerializer
       versionMessage.nonce.bytes ++
       versionMessage.userAgentSize.bytes ++
       ByteVector(versionMessage.userAgent.getBytes) ++
-      versionMessage.startHeight.bytes ++
+      versionMessage.startHeight.bytes.reverse ++
       (if (versionMessage.relay) ByteVector.fromByte(1.toByte)
        else ByteVector.fromByte(0.toByte))
   }

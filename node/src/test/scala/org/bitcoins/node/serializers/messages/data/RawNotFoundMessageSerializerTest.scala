@@ -24,7 +24,7 @@ class RawNotFoundMessageSerializerTest extends FlatSpec with MustMatchers {
 
   it must "write a not found message and get its original hex representation back" in {
     val notFoundMessage = RawNotFoundMessageSerializer.read(hex)
-    RawNotFoundMessageSerializer.write(notFoundMessage) must be(hex)
+    RawNotFoundMessageSerializer.write(notFoundMessage).toHex must be(hex)
   }
 
 }

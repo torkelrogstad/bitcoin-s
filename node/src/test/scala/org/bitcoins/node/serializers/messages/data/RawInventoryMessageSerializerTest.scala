@@ -22,6 +22,6 @@ class RawInventoryMessageSerializerTest extends FlatSpec with MustMatchers {
 
   it must "read and then write an inventory message and get its original hex" in {
     val inventoryMessage = RawInventoryMessageSerializer.read(hex)
-    RawInventoryMessageSerializer.write(inventoryMessage) must be(hex)
+    RawInventoryMessageSerializer.write(inventoryMessage).toHex must be(hex)
   }
 }

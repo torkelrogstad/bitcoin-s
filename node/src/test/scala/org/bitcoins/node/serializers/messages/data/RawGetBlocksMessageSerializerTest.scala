@@ -46,7 +46,7 @@ class RawGetBlocksMessageSerializerTest extends FlatSpec with MustMatchers {
     val getBlocksMessage: GetBlocksMessage =
       RawGetBlocksMessageSerializer.read(hex)
 
-    RawGetBlocksMessageSerializer.write(getBlocksMessage) must be(hex)
+    RawGetBlocksMessageSerializer.write(getBlocksMessage).toHex must be(hex)
   }
 
 }

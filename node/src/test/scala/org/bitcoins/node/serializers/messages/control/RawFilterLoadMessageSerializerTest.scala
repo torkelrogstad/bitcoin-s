@@ -23,7 +23,7 @@ class RawFilterLoadMessageSerializerTest extends FlatSpec with MustMatchers {
     filterLoadMsg.bloomFilter.tweak must be(UInt32.zero)
     filterLoadMsg.bloomFilter.flags must be(BloomUpdateNone)
 
-    RawFilterLoadMessageSerializer.write(filterLoadMsg) must be(hex)
+    RawFilterLoadMessageSerializer.write(filterLoadMsg).toHex must be(hex)
 
   }
 }

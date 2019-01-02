@@ -33,8 +33,8 @@ trait RawGetHeadersMessageSerializer
   override def write(getHeadersMessage: GetHeadersMessage): ByteVector = {
     getHeadersMessage.version.bytes ++
       getHeadersMessage.hashCount.bytes ++
-      RawSerializerHelper.writeNetworkElements(getHeadersMessage.hashes)
-    getHeadersMessage.hashStop.bytes
+      RawSerializerHelper.writeNetworkElements(getHeadersMessage.hashes) ++
+      getHeadersMessage.hashStop.bytes
   }
 
   /**

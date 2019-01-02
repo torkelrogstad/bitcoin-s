@@ -127,15 +127,16 @@ object Deps {
 
   val node = List(
     Compile.akkaActor,
+    Compile.akkaSlf4j,
     Compile.joda,
     Compile.slick,
     Compile.slickHikari,
     Compile.postgres,
-    "org.scalacheck" %% "scalacheck" % V.scalacheck withSources() withJavadoc(),
 
+    Test.akkaTestkit,
+    Test.logback,
     Test.scalaTest,
     Test.scalacheck,
-    Test.akkaTestkit,
     Test.testkit
   )
 
