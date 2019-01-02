@@ -1,11 +1,11 @@
 package org.bitcoins.spvnode.serializers.messages.control
 
 import org.bitcoins.core.protocol.CompactSizeUInt
-import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.util.BitcoinSUtil
+import org.bitcoins.core.serializers.{RawBitcoinSerializer, RawSerializerHelper}
 import org.bitcoins.spvnode.messages.AddrMessage
 import org.bitcoins.spvnode.messages.control.AddrMessage
-import org.bitcoins.spvnode.util.NetworkIpAddress
+import org.bitcoins.spvnode.util.{BitcoinSpvNodeUtil, NetworkIpAddress}
+import scodec.bits.ByteVector
 
 import scala.annotation.tailrec
 
@@ -16,15 +16,17 @@ import scala.annotation.tailrec
   */
 trait RawAddrMessageSerializer extends RawBitcoinSerializer[AddrMessage] {
 
-  def read(bytes : List[Byte]) : AddrMessage = {
+  override def read(bytes : ByteVector) : AddrMessage = {
     val ipCount = CompactSizeUInt.parseCompactSizeUInt(bytes)
     val ipAddressBytes = bytes.slice(ipCount.size.toInt, bytes.size)
-    val (networkIpAddresses, remainingBytes) = parseNetworkIpAddresses(ipCount, ipAddressBytes)
+    val (networkIpAddresses, _) = parseNetworkIpAddresses(ipCount, ipAddressBytes)
     AddrMessage(ipCount, networkIpAddresses)
   }
 
-  def write(addrMessage: AddrMessage) : String = {
-    addrMessage.ipCount.hex + addrMessage.addresses.map(_.hex).mkString
+  override def write(addrMessage: AddrMessage): ByteVector = {
+    addrMessage.ipCount.bytes ++
+      RawSerializerHelper.write(ts = addrMessage.addresses,
+        serializer = RawNetworkIpAddressSerializer.write)
   }
 
 
@@ -34,9 +36,9 @@ trait RawAddrMessageSerializer extends RawBitcoinSerializer[AddrMessage] {
     * @param bytes the bytes from which we need to parse the ip addresses
     * @return the parsed ip addresses and the remaining bytes
     */
-  private def parseNetworkIpAddresses(ipCount : CompactSizeUInt, bytes : Seq[Byte]) : (Seq[NetworkIpAddress], Seq[Byte]) = {
+  private def parseNetworkIpAddresses(ipCount : CompactSizeUInt, bytes : ByteVector) : (Seq[NetworkIpAddress], ByteVector) = {
     @tailrec
-    def loop(remainingAddresses : BigInt, remainingBytes : Seq[Byte], accum : List[NetworkIpAddress]) : (Seq[NetworkIpAddress], Seq[Byte]) = {
+    def loop(remainingAddresses : BigInt, remainingBytes : ByteVector, accum : List[NetworkIpAddress]) : (Seq[NetworkIpAddress], ByteVector) = {
       if (remainingAddresses <= 0) (accum.reverse, remainingBytes)
       else {
         val networkIpAddress = RawNetworkIpAddressSerializer.read(remainingBytes)

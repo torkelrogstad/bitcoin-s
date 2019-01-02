@@ -1,7 +1,6 @@
 package org.bitcoins.spvnode.messages.control
 
 import org.bitcoins.core.util.BitcoinSLogger
-import org.bitcoins.spvnode.gen.ControlMessageGenerator
 import org.scalacheck.{Prop, Properties}
 
 /**

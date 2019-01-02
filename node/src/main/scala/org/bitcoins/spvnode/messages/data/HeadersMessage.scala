@@ -6,6 +6,7 @@ import org.bitcoins.core.protocol.blockchain.BlockHeader
 import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.messages.HeadersMessage
 import org.bitcoins.spvnode.serializers.messages.data.RawHeadersMessageSerializer
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 7/5/16.
@@ -13,7 +14,7 @@ import org.bitcoins.spvnode.serializers.messages.data.RawHeadersMessageSerialize
 object HeadersMessage extends Factory[HeadersMessage] {
   private case class HeadersMessageImpl(count: CompactSizeUInt, headers: Seq[BlockHeader]) extends HeadersMessage
 
-  def fromBytes(bytes: Seq[Byte]): HeadersMessage = RawHeadersMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): HeadersMessage = RawHeadersMessageSerializer.read(bytes)
 
   def apply(count: CompactSizeUInt, headers: Seq[BlockHeader]): HeadersMessage = HeadersMessageImpl(count,headers)
 

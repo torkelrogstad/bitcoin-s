@@ -2,14 +2,13 @@ package org.bitcoins.spvnode.messages
 
 import java.net.InetAddress
 
+import org.bitcoins.core.bloom.BloomFilter
 import org.bitcoins.core.crypto.DoubleSha256Digest
 import org.bitcoins.core.number.{Int32, Int64, UInt64}
-import org.bitcoins.core.protocol.blockchain.{Block, BlockHeader}
+import org.bitcoins.core.protocol.blockchain.{Block, BlockHeader, MerkleBlock}
 import org.bitcoins.core.protocol.transaction.Transaction
 import org.bitcoins.core.protocol.{CompactSizeUInt, NetworkElement}
 import org.bitcoins.core.util.BitcoinSUtil
-import org.bitcoins.spvnode.block.MerkleBlock
-import org.bitcoins.spvnode.bloom.BloomFilter
 import org.bitcoins.spvnode.headers.NetworkHeader
 import org.bitcoins.spvnode.messages.control.ServiceIdentifier
 import org.bitcoins.spvnode.messages.data.Inventory
@@ -17,6 +16,7 @@ import org.bitcoins.spvnode.serializers.messages.control._
 import org.bitcoins.spvnode.serializers.messages.data._
 import org.bitcoins.spvnode.util.NetworkIpAddress
 import org.bitcoins.spvnode.versions.ProtocolVersion
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 5/31/16.
@@ -53,7 +53,7 @@ trait BlockMessage extends DataPayload {
 
   override def commandName = NetworkPayload.blockCommandName
 
-  override def hex = RawBlockMessageSerializer.write(this)
+  override def bytes: ByteVector = RawBlockMessageSerializer.write(this)
 }
 
 /**
@@ -98,7 +98,7 @@ trait GetBlocksMessage extends DataPayload {
 
   override def commandName = NetworkPayload.getBlocksCommandName
 
-  def hex : String = RawGetBlocksMessageSerializer.write(this)
+  override def bytes: ByteVector = RawGetBlocksMessageSerializer.write(this)
 }
 
 /**
@@ -122,7 +122,7 @@ trait GetDataMessage extends DataPayload {
 
   override def commandName = NetworkPayload.getDataCommandName
 
-  def hex = RawGetDataMessageSerializer.write(this)
+  override def bytes: ByteVector = RawGetDataMessageSerializer.write(this)
 }
 
 /**
@@ -139,7 +139,7 @@ trait GetHeadersMessage extends DataPayload {
   def hashStop: DoubleSha256Digest
 
   override def commandName = NetworkPayload.getHeadersCommandName
-  override def hex = RawGetHeadersMessageSerializer.write(this)
+  override def bytes: ByteVector = RawGetHeadersMessageSerializer.write(this)
 }
 
 /**
@@ -167,7 +167,7 @@ trait HeadersMessage extends DataPayload {
 
   override def commandName = NetworkPayload.headersCommandName
 
-  override def hex = RawHeadersMessageSerializer.write(this)
+  override def bytes: ByteVector = RawHeadersMessageSerializer.write(this)
 }
 
 /**
@@ -191,7 +191,7 @@ trait InventoryMessage extends DataPayload {
 
   override def commandName = NetworkPayload.invCommandName
 
-  def hex = RawInventoryMessageSerializer.write(this)
+  override def bytes: ByteVector = RawInventoryMessageSerializer.write(this)
 }
 
 /**
@@ -202,8 +202,8 @@ trait InventoryMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#mempool]]
   */
 case object MemPoolMessage extends DataPayload {
-  override def commandName = NetworkPayload.memPoolCommandName
-  def hex = ""
+  override val commandName = NetworkPayload.memPoolCommandName
+  override val bytes: ByteVector = ByteVector.empty
 }
 
 /**
@@ -214,12 +214,12 @@ case object MemPoolMessage extends DataPayload {
   * [[https://bitcoin.org/en/developer-reference#merkleblock]]
   */
 trait MerkleBlockMessage extends DataPayload {
-  /** The actual [[org.bitcoins.spvnode.block.MerkleBlock]] that this message represents */
+  /** The actual [[MerkleBlock]] that this message represents */
   def merkleBlock : MerkleBlock
 
   override def commandName = NetworkPayload.merkleBlockCommandName
 
-  def hex = RawMerkleBlockMessageSerializer.write(this)
+  def bytes: ByteVector = RawMerkleBlockMessageSerializer.write(this)
 
 }
 
@@ -232,7 +232,7 @@ trait MerkleBlockMessage extends DataPayload {
   */
 trait NotFoundMessage extends DataPayload with InventoryMessage {
   override def commandName = NetworkPayload.notFoundCommandName
-  override def hex = RawNotFoundMessageSerializer.write(this)
+  override def bytes: ByteVector = RawNotFoundMessageSerializer.write(this)
 }
 
 /**
@@ -247,7 +247,7 @@ trait TransactionMessage extends DataPayload {
     */
   def transaction : Transaction
   override def commandName = NetworkPayload.transactionCommandName
-  override def hex = RawTransactionMessageSerializer.write(this)
+  override def bytes: ByteVector = RawTransactionMessageSerializer.write(this)
 }
 
 
@@ -273,7 +273,7 @@ trait AddrMessage extends ControlPayload {
   def ipCount : CompactSizeUInt
   def addresses : Seq[NetworkIpAddress]
   override def commandName = NetworkPayload.addrCommandName
-  override def hex = RawAddrMessageSerializer.write(this)
+  override def bytes: ByteVector = RawAddrMessageSerializer.write(this)
 }
 
 /**
@@ -299,11 +299,11 @@ trait FilterAddMessage extends ControlPayload {
     * for example, hashes should be sent in internal byte order.
     * @return
     */
-  def element : Seq[Byte]
+  def element : ByteVector
 
   override def commandName = NetworkPayload.filterAddCommandName
 
-  override def hex = RawFilterAddMessageSerializer.write(this)
+  override def bytes: ByteVector = RawFilterAddMessageSerializer.write(this)
 }
 
 
@@ -314,8 +314,8 @@ trait FilterAddMessage extends ControlPayload {
   * [[https://bitcoin.org/en/developer-reference#filterclear]]
   */
 case object FilterClearMessage extends ControlPayload {
-  override def commandName = NetworkPayload.filterClearCommandName
-  override def hex = ""
+  override val commandName = NetworkPayload.filterClearCommandName
+  override val bytes: ByteVector = ByteVector.empty
 }
 
 /**
@@ -332,7 +332,7 @@ trait FilterLoadMessage extends ControlPayload {
 
   override def commandName = NetworkPayload.filterLoadCommandName
 
-  override def hex = RawFilterLoadMessageSerializer.write(this)
+  override def bytes: ByteVector = RawFilterLoadMessageSerializer.write(this)
 }
 
 /**
@@ -343,8 +343,8 @@ trait FilterLoadMessage extends ControlPayload {
   * [[https://bitcoin.org/en/developer-reference#getaddr]]
   */
 case object GetAddrMessage extends ControlPayload {
-  override def commandName = NetworkPayload.getAddrCommandName
-  override def hex = ""
+  override val commandName = NetworkPayload.getAddrCommandName
+  override val bytes: ByteVector = ByteVector.empty
 }
 
 /**
@@ -365,7 +365,7 @@ trait PingMessage extends ControlPayload {
 
   override def commandName = NetworkPayload.pingCommandName
 
-  override def hex = RawPingMessageSerializer.write(this)
+  override def bytes: ByteVector = RawPingMessageSerializer.write(this)
 }
 
 /**
@@ -384,7 +384,7 @@ trait PongMessage extends ControlPayload {
 
   override def commandName = NetworkPayload.pongCommandName
 
-  override def hex = RawPongMessageSerializer.write(this)
+  override def bytes: ByteVector = RawPongMessageSerializer.write(this)
 
 }
 
@@ -432,11 +432,11 @@ trait RejectMessage extends ControlPayload {
     * the hash of the rejected transaction or block header. See the code table below.
     * @return
     */
-  def extra : Seq[Byte]
+  def extra : ByteVector
 
   override def commandName = NetworkPayload.rejectCommandName
 
-  override def hex = RawRejectMessageSerializer.write(this)
+  override def bytes: ByteVector = RawRejectMessageSerializer.write(this)
 }
 
 /**
@@ -448,7 +448,7 @@ trait RejectMessage extends ControlPayload {
   */
 case object SendHeadersMessage extends ControlPayload {
   override def commandName = NetworkPayload.sendHeadersCommandName
-  override def hex = ""
+  override def bytes: ByteVector = ByteVector.empty
 }
 
 
@@ -460,8 +460,8 @@ case object SendHeadersMessage extends ControlPayload {
   * [[https://bitcoin.org/en/developer-reference#verack]]
   */
 case object VerAckMessage extends ControlPayload {
-  override def commandName = NetworkPayload.verAckCommandName
-  override def hex = ""
+  override val commandName = NetworkPayload.verAckCommandName
+  override val bytes: ByteVector = ByteVector.empty
 }
 
 
@@ -578,7 +578,7 @@ trait VersionMessage extends ControlPayload {
 
   override def commandName = NetworkPayload.versionCommandName
 
-  override def hex = RawVersionMessageSerializer.write(this)
+  override def bytes: ByteVector = RawVersionMessageSerializer.write(this)
 }
 
 object NetworkPayload {
@@ -612,27 +612,27 @@ object NetworkPayload {
     *
     * @return
     */
-  def commandNames : Map[String, Seq[Byte] => NetworkPayload] = Map(
+  def commandNames : Map[String, ByteVector => NetworkPayload] = Map(
     blockCommandName -> { RawBlockMessageSerializer.read(_)},
     getBlocksCommandName -> { RawGetBlocksMessageSerializer.read(_) },
     getHeadersCommandName -> { RawGetHeadersMessageSerializer.read(_) },
     getDataCommandName -> { RawGetDataMessageSerializer.read(_) },
     headersCommandName -> { RawHeadersMessageSerializer.read(_) },
     invCommandName -> { RawInventoryMessageSerializer.read(_) },
-    memPoolCommandName -> { x : Seq[Byte] => MemPoolMessage},
+    memPoolCommandName -> { x : ByteVector => MemPoolMessage},
     merkleBlockCommandName -> { RawMerkleBlockMessageSerializer.read(_) },
     notFoundCommandName -> { RawNotFoundMessageSerializer.read(_) },
     transactionCommandName -> { RawTransactionMessageSerializer.read(_) },
     addrCommandName -> { RawAddrMessageSerializer.read(_) },
     filterAddCommandName -> { RawFilterAddMessageSerializer.read(_) },
-    filterClearCommandName -> { x : Seq[Byte] => FilterClearMessage},
+    filterClearCommandName -> { x : ByteVector => FilterClearMessage},
     filterLoadCommandName -> { RawFilterLoadMessageSerializer.read(_)},
-    getAddrCommandName -> { x : Seq[Byte] => GetAddrMessage},
+    getAddrCommandName -> { x : ByteVector => GetAddrMessage},
     pingCommandName -> { RawPingMessageSerializer.read(_)},
     pongCommandName -> { RawPongMessageSerializer.read(_) },
-    rejectCommandName -> { x : Seq[Byte] => ???},
-    sendHeadersCommandName -> { x : Seq[Byte] => SendHeadersMessage},
-    verAckCommandName -> { x : Seq[Byte] => VerAckMessage},
+    rejectCommandName -> { x : ByteVector => ???},
+    sendHeadersCommandName -> { x : ByteVector => SendHeadersMessage},
+    verAckCommandName -> { x : ByteVector => VerAckMessage},
     versionCommandName -> { RawVersionMessageSerializer.read(_) }
   )
 
@@ -643,9 +643,9 @@ object NetworkPayload {
     * @param payloadBytes the payload corresponding to the header on the p2p network
     * @return
     */
-  def apply(networkHeader : NetworkHeader, payloadBytes : Seq[Byte]) : NetworkPayload = {
+  def apply(networkHeader : NetworkHeader, payloadBytes : ByteVector) : NetworkPayload = {
     //the commandName in the network header tells us what payload type this is
-    val deserializer : Seq[Byte] => NetworkPayload = commandNames(networkHeader.commandName)
+    val deserializer : ByteVector => NetworkPayload = commandNames(networkHeader.commandName)
     deserializer(payloadBytes)
   }
 

@@ -10,7 +10,7 @@ object BitcoinSSpvNodeBuild extends Build {
   val logbackV = "1.0.13"
   val akkaV = "2.4.7"
   val slickV = "3.1.1" 
-  val appDependencies = Seq(
+/*  val appDependencies = Seq(
     "org.scalatest" % "scalatest_2.11" % "2.2.0",
     "com.typesafe.akka" %% "akka-actor" % akkaV withSources() withJavadoc(), 
     "com.typesafe.akka" %% "akka-testkit" % akkaV withSources() withJavadoc(), 
@@ -20,7 +20,7 @@ object BitcoinSSpvNodeBuild extends Build {
     "com.typesafe.slick" %% "slick" % slickV withSources() withJavadoc(),
     "com.typesafe.slick" %% "slick-hikaricp" % "3.1.1",
     "org.postgresql" % "postgresql" % "9.4.1210" 
-  )
+  )*/
   
   lazy val root = Project(appName, file(".")).settings(
     version := appV,

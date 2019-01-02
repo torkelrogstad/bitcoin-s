@@ -1,12 +1,10 @@
 package org.bitcoins.spvnode.serializers.messages.control
 
-import org.bitcoins.core.number.UInt32
-import org.bitcoins.core.protocol.CompactSizeUInt
 import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.util.BitcoinSUtil
-import org.bitcoins.spvnode.bloom.{BloomFilter, BloomFlag}
+import org.bitcoins.core.serializers.bloom.RawBloomFilterSerializer
 import org.bitcoins.spvnode.messages.FilterLoadMessage
 import org.bitcoins.spvnode.messages.control.FilterLoadMessage
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 7/19/16.
@@ -15,12 +13,12 @@ import org.bitcoins.spvnode.messages.control.FilterLoadMessage
   */
 trait RawFilterLoadMessageSerializer extends RawBitcoinSerializer[FilterLoadMessage] {
 
-  override def read(bytes: List[Byte]): FilterLoadMessage = {
+  override def read(bytes: ByteVector): FilterLoadMessage = {
     val filter = RawBloomFilterSerializer.read(bytes)
     FilterLoadMessage(filter)
   }
 
-  override def write(filterLoadMessage: FilterLoadMessage): String = {
+  override def write(filterLoadMessage: FilterLoadMessage): ByteVector = {
     RawBloomFilterSerializer.write(filterLoadMessage.bloomFilter)
   }
 }

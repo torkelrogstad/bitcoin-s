@@ -3,10 +3,7 @@ package org.bitcoins.spvnode.models
 import akka.actor.Actor
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.spvnode.constant.DbConfig
-import slick.backend.DatabaseConfig
-import slick.driver.PostgresDriver
-import slick.driver.PostgresDriver.api._
-import slick.jdbc.DataSourceJdbcDataSource
+import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

@@ -6,6 +6,7 @@ import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.headers.NetworkHeader
 import org.bitcoins.spvnode.messages.NetworkPayload
 import org.bitcoins.spvnode.serializers.RawNetworkMessageSerializer
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/10/16.
@@ -14,7 +15,7 @@ import org.bitcoins.spvnode.serializers.RawNetworkMessageSerializer
 sealed trait NetworkMessage extends NetworkElement {
   def header : NetworkHeader
   def payload : NetworkPayload
-  override def hex = RawNetworkMessageSerializer.write(this)
+  override def bytes: ByteVector = RawNetworkMessageSerializer.write(this)
 }
 
 
@@ -22,7 +23,7 @@ object NetworkMessage extends Factory[NetworkMessage] {
   private case class NetworkMessageImpl(header : NetworkHeader, payload : NetworkPayload) extends NetworkMessage
 
 
-  def fromBytes(bytes : Seq[Byte]) : NetworkMessage = RawNetworkMessageSerializer.read(bytes)
+  def fromBytes(bytes : ByteVector) : NetworkMessage = RawNetworkMessageSerializer.read(bytes)
   /**
     * Creates a network message from it's [[NetworkHeader]] and [[NetworkPayload]]
     * @param header the [[NetworkHeader]] which is being sent across the network

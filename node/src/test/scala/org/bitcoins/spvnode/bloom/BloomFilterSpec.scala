@@ -15,7 +15,7 @@ class BloomFilterSpec extends Properties("BloomFilterSpec") {
 
   property("No false negatives") =
     Prop.forAll(BloomFilterGenerator.loadedBloomFilter) {
-      case (loadedFilter: BloomFilter, byteVectors: Seq[Seq[Byte]]) =>
+      case (loadedFilter: BloomFilter, byteVectors: Seq[ByteVector]) =>
         val containsAllHashes = byteVectors.map(bytes => loadedFilter.contains(bytes))
         !containsAllHashes.exists(_ == false)
     }

@@ -7,7 +7,6 @@ import org.bitcoins.core.protocol.blockchain.BlockHeader
 import org.bitcoins.core.util.{BitcoinSLogger, BitcoinSUtil}
 import org.bitcoins.spvnode.NetworkMessage
 import org.bitcoins.spvnode.constant.Constants
-import org.bitcoins.spvnode.gen.DataMessageGenerator
 import org.bitcoins.spvnode.messages.HeadersMessage
 import org.bitcoins.spvnode.messages.data.HeadersMessage
 import org.scalatest.{FlatSpec, MustMatchers}

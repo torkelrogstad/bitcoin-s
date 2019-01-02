@@ -2,8 +2,8 @@ package org.bitcoins.spvnode.serializers.messages
 
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.util.BitcoinSUtil
 import org.bitcoins.spvnode.messages.TypeIdentifier
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 5/31/16.
@@ -12,12 +12,12 @@ import org.bitcoins.spvnode.messages.TypeIdentifier
   */
 trait RawTypeIdentifierSerializer extends RawBitcoinSerializer[TypeIdentifier] {
 
-  override def read(bytes: List[Byte]): TypeIdentifier = {
-    TypeIdentifier(UInt32(BitcoinSUtil.flipEndianness(bytes)))
+  override def read(bytes: ByteVector): TypeIdentifier = {
+    TypeIdentifier(UInt32(bytes.reverse))
   }
 
-  override def write(typeIdentifier: TypeIdentifier): String = {
-    BitcoinSUtil.flipEndianness(typeIdentifier.num.bytes)
+  override def write(typeIdentifier: TypeIdentifier): ByteVector = {
+    typeIdentifier.num.bytes.reverse
   }
 }
 object RawTypeIdentifierSerializer extends RawTypeIdentifierSerializer

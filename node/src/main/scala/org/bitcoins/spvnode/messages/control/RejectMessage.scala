@@ -5,6 +5,7 @@ import org.bitcoins.core.protocol.CompactSizeUInt
 import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.messages.RejectMessage
 import org.bitcoins.spvnode.serializers.messages.control.RawRejectMessageSerializer
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 8/31/16.
@@ -13,17 +14,17 @@ import org.bitcoins.spvnode.serializers.messages.control.RawRejectMessageSeriali
   */
 object RejectMessage extends Factory[RejectMessage] {
   private case class RejectMessageImpl(messageSize: CompactSizeUInt, message: String, code: Char, reasonSize: CompactSizeUInt,
-                                       reason: String, extra: Seq[Byte]) extends RejectMessage
+                                       reason: String, extra: ByteVector) extends RejectMessage
 
   def apply(messageSize: CompactSizeUInt, message: String, code: Char, reasonSize: CompactSizeUInt,
-            reason: String, extra: Seq[Byte]): RejectMessage = {
+            reason: String, extra: ByteVector): RejectMessage = {
     RejectMessageImpl(messageSize, message, code, reasonSize, reason, extra)
   }
 
-  def fromBytes(bytes: Seq[Byte]): RejectMessage = RawRejectMessageSerializer.read(bytes)
+  def fromBytes(bytes: ByteVector): RejectMessage = RawRejectMessageSerializer.read(bytes)
 
   def apply(message: String, code: Char,
-            reason: String, extra: Seq[Byte]): RejectMessage = {
+            reason: String, extra: ByteVector): RejectMessage = {
     val messageSize: CompactSizeUInt = CompactSizeUInt(UInt64(message.size))
     val reasonSize: CompactSizeUInt = CompactSizeUInt(UInt64(reason.size))
     RejectMessage(messageSize, message, code, reasonSize, reason, extra)

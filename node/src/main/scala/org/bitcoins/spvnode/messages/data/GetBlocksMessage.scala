@@ -7,6 +7,7 @@ import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.messages._
 import org.bitcoins.spvnode.serializers.messages.data.RawGetBlocksMessageSerializer
 import org.bitcoins.spvnode.versions.ProtocolVersion
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/1/16.
@@ -29,5 +30,5 @@ object GetBlocksMessage extends Factory[GetBlocksMessage] {
     GetBlocksMessage(version, hashCount, blockHeaderHashes, stopHash)
   }
 
-  def fromBytes(bytes : Seq[Byte]) : GetBlocksMessage = RawGetBlocksMessageSerializer.read(bytes)
+  def fromBytes(bytes : ByteVector) : GetBlocksMessage = RawGetBlocksMessageSerializer.read(bytes)
 }

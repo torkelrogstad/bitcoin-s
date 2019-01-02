@@ -1,16 +1,11 @@
 package org.bitcoins.spvnode.serializers.messages.data
 
-import org.bitcoins.core.crypto.DoubleSha256Digest
-import org.bitcoins.core.number.UInt32
-import org.bitcoins.core.protocol.CompactSizeUInt
+import org.bitcoins.core.protocol.blockchain.MerkleBlock
 import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.serializers.blockchain.RawBlockHeaderSerializer
-import org.bitcoins.core.util.{BitcoinSLogger, BitcoinSUtil}
-import org.bitcoins.spvnode.block.MerkleBlock
+import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.spvnode.messages.MerkleBlockMessage
 import org.bitcoins.spvnode.messages.data.MerkleBlockMessage
-
-import scala.annotation.tailrec
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/2/16.
@@ -19,12 +14,12 @@ import scala.annotation.tailrec
   */
 trait RawMerkleBlockMessageSerializer extends RawBitcoinSerializer[MerkleBlockMessage] with BitcoinSLogger {
 
-  def read(bytes : List[Byte]) : MerkleBlockMessage = {
+  def read(bytes : ByteVector) : MerkleBlockMessage = {
     val merkleBlock = MerkleBlock(bytes)
     MerkleBlockMessage(merkleBlock)
   }
 
-  def write(merkleBlockMessage: MerkleBlockMessage) : String = merkleBlockMessage.merkleBlock.hex
+  def write(merkleBlockMessage: MerkleBlockMessage) : ByteVector = merkleBlockMessage.merkleBlock.bytes
 
 }
 

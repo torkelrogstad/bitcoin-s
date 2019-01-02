@@ -1,6 +1,5 @@
 package org.bitcoins.spvnode.messages.data
 
-import org.bitcoins.spvnode.gen.DataMessageGenerator
 import org.bitcoins.spvnode.messages.MerkleBlockMessage
 import org.scalacheck.{Prop, Properties}
 

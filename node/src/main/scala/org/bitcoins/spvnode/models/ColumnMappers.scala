@@ -1,9 +1,9 @@
 package org.bitcoins.spvnode.models
 
 import org.bitcoins.core.crypto.DoubleSha256Digest
-import org.bitcoins.core.number.UInt32
+import org.bitcoins.core.number.{Int32, UInt32}
 import org.bitcoins.core.protocol.transaction.TransactionOutput
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 
 /**
   * Created by chris on 9/9/16.
@@ -20,15 +20,21 @@ trait ColumnMappers {
 
   /** Responsible for mapping a [[UInt32]] to a long in Slick, and vice versa */
   implicit val uInt32Mapper: BaseColumnType[UInt32] = MappedColumnType.base[UInt32,Long](
-    _.underlying,
-    UInt32(_)
+    tmap = _.toLong,
+    tcomap = UInt32(_)
   )
 
+  implicit val int32Mapper: BaseColumnType[Int32] = {
+    MappedColumnType.base[Int32,Long](tmap = _.toLong, tcomap = Int32(_))
+  }
+
   /** Responsible for mapping a [[TransactionOutput]] to hex in Slick, and vice versa */
-  implicit val transactionOutputMapper: BaseColumnType[TransactionOutput] = MappedColumnType.base[TransactionOutput, String](
-    _.hex,
-    TransactionOutput(_)
-  )
+  implicit val transactionOutputMapper: BaseColumnType[TransactionOutput] = {
+    MappedColumnType.base[TransactionOutput, String](
+      _.hex,
+      TransactionOutput(_)
+    )
+  }
 }
 
 object ColumnMappers extends ColumnMappers

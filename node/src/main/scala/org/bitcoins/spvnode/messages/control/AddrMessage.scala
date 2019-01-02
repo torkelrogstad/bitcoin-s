@@ -5,6 +5,7 @@ import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.messages.AddrMessage
 import org.bitcoins.spvnode.serializers.messages.control.RawAddrMessageSerializer
 import org.bitcoins.spvnode.util.NetworkIpAddress
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/3/16.
@@ -15,7 +16,7 @@ object AddrMessage extends Factory[AddrMessage] {
 
   private case class AddrMessageImpl(ipCount : CompactSizeUInt, addresses : Seq[NetworkIpAddress]) extends AddrMessage
 
-  def fromBytes(bytes : Seq[Byte]) : AddrMessage = RawAddrMessageSerializer.read(bytes)
+  def fromBytes(bytes : ByteVector) : AddrMessage = RawAddrMessageSerializer.read(bytes)
 
   def apply(ipCount : CompactSizeUInt, addresses : Seq[NetworkIpAddress]) : AddrMessage = AddrMessageImpl(ipCount,addresses)
 

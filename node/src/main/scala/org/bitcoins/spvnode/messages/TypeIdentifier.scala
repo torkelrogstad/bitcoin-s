@@ -4,6 +4,7 @@ import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.NetworkElement
 import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.serializers.messages.RawTypeIdentifierSerializer
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 5/31/16.
@@ -12,19 +13,19 @@ import org.bitcoins.spvnode.serializers.messages.RawTypeIdentifierSerializer
   */
 sealed trait TypeIdentifier extends NetworkElement {
   def num : UInt32
-  override def hex = RawTypeIdentifierSerializer.write(this)
+  override def bytes: ByteVector = RawTypeIdentifierSerializer.write(this)
 }
 
 case object MsgTx extends TypeIdentifier {
-  override def num = UInt32.one
+  override val num = UInt32.one
 }
 
 case object MsgBlock extends TypeIdentifier {
-  override def num = UInt32(2)
+  override val num = UInt32(2)
 }
 
 case object MsgFilteredBlock extends TypeIdentifier {
-  override def num = UInt32(3)
+  override val num = UInt32(3)
 }
 
 sealed trait MsgUnassigned extends TypeIdentifier
@@ -33,7 +34,7 @@ object TypeIdentifier extends Factory[TypeIdentifier] {
 
   private case class MsgUnassignedImpl(num : UInt32) extends MsgUnassigned
 
-  override def fromBytes(bytes : Seq[Byte]) : TypeIdentifier = RawTypeIdentifierSerializer.read(bytes)
+  override def fromBytes(bytes : ByteVector) : TypeIdentifier = RawTypeIdentifierSerializer.read(bytes)
 
   def apply(num : Long) : TypeIdentifier = TypeIdentifier(UInt32(num))
 

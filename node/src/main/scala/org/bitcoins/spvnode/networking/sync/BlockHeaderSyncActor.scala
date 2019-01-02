@@ -107,7 +107,7 @@ trait BlockHeaderSyncActor extends Actor with BitcoinSLogger {
     * @param headers
     * @return
     */
-  def awaitCheckHeaders(lastHeader: Option[BlockHeader], headers: Seq[BlockHeader]) = LoggingReceive {
+  def awaitCheckHeaders(lastHeader: Option[BlockHeader], headers: Seq[BlockHeader]): Receive = LoggingReceive {
     case maxHeight: BlockHeaderDAO.MaxHeightReply =>
       val result = BlockHeaderSyncActor.checkHeaders(lastHeader,headers,maxHeight.height,networkParameters)
       context.unbecome()

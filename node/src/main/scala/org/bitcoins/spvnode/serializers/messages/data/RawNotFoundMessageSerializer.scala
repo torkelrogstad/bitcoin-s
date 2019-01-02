@@ -3,6 +3,7 @@ package org.bitcoins.spvnode.serializers.messages.data
 import org.bitcoins.core.serializers.RawBitcoinSerializer
 import org.bitcoins.spvnode.messages.NotFoundMessage
 import org.bitcoins.spvnode.messages.data.{InventoryMessage, NotFoundMessage}
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/2/16.
@@ -12,7 +13,7 @@ import org.bitcoins.spvnode.messages.data.{InventoryMessage, NotFoundMessage}
 trait RawNotFoundMessageSerializer extends RawBitcoinSerializer[NotFoundMessage] {
 
 
-  def read(bytes : List[Byte]) : NotFoundMessage = {
+  override def read(bytes : ByteVector) : NotFoundMessage = {
     //this seems funky, but according to the documentation inventory messages
     //and NotFoundMessages have the same structure, therefore we can piggy back
     //off of the serializer used by InventoryMessage
@@ -21,12 +22,12 @@ trait RawNotFoundMessageSerializer extends RawBitcoinSerializer[NotFoundMessage]
 
   }
 
-  def write(notFoundMessage: NotFoundMessage) : String = {
+  override def write(notFoundMessage: NotFoundMessage) : ByteVector = {
     //Since InventoryMessages and NotFoundMessages have the same format
     //we can just create an inventory message then piggy back off of the
     //serializer used by inventory message
     val inventoryMessage = InventoryMessage(notFoundMessage.inventoryCount, notFoundMessage.inventories)
-    inventoryMessage.hex
+    inventoryMessage.bytes
   }
 
 }

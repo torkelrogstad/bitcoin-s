@@ -124,9 +124,14 @@ object Deps {
 
   val node = List(
     Compile.akkaActor,
+    Compile.joda,
     Compile.slick,
     Compile.slickHikari,
-    Compile.postgres
+    Compile.postgres,
+    "org.scalacheck" %% "scalacheck" % V.scalacheck withSources() withJavadoc(),
+
+    Test.scalaTest,
+    Test.scalacheck
   )
 
   val testkit = List(

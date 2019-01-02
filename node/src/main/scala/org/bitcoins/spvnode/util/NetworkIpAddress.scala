@@ -7,6 +7,7 @@ import org.bitcoins.core.protocol.NetworkElement
 import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.messages.control.ServiceIdentifier
 import org.bitcoins.spvnode.serializers.messages.control.RawNetworkIpAddressSerializer
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 5/31/16.
@@ -52,7 +53,7 @@ sealed trait NetworkIpAddress extends NetworkElement {
     */
   def port : Int
 
-  override def hex = RawNetworkIpAddressSerializer.write(this)
+  override def bytes: ByteVector = RawNetworkIpAddressSerializer.write(this)
 }
 
 
@@ -64,7 +65,7 @@ object NetworkIpAddress extends Factory[NetworkIpAddress] {
     NetworkIpAddressImpl(time,services,address,port)
   }
 
-  def fromBytes(bytes : Seq[Byte]) : NetworkIpAddress = RawNetworkIpAddressSerializer.read(bytes)
+  def fromBytes(bytes : ByteVector) : NetworkIpAddress = RawNetworkIpAddressSerializer.read(bytes)
 }
 
 

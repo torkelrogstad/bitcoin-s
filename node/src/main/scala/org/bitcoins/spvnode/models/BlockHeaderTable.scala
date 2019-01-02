@@ -1,10 +1,10 @@
 package org.bitcoins.spvnode.modelsd
 
 import org.bitcoins.core.crypto.DoubleSha256Digest
-import org.bitcoins.core.number.UInt32
+import org.bitcoins.core.number.{Int32, UInt32}
 import org.bitcoins.core.protocol.blockchain.BlockHeader
 import org.bitcoins.spvnode.models.ColumnMappers
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 /**
   * Created by chris on 9/7/16.
   */
@@ -15,7 +15,7 @@ class BlockHeaderTable(tag: Tag) extends Table[BlockHeader](tag,"block_headers")
 
   def hash = column[DoubleSha256Digest]("hash", O.PrimaryKey)
 
-  def version = column[UInt32]("version")
+  def version = column[Int32]("version")
 
   def previousBlockHash = column[DoubleSha256Digest]("previous_block_hash")
 
@@ -32,13 +32,17 @@ class BlockHeaderTable(tag: Tag) extends Table[BlockHeader](tag,"block_headers")
   /** The sql index for searching based on [[height]] */
   def heightIndex = index("height_index",height)
 
-  def * = (height.?, hash, version, previousBlockHash, merkleRootHash, time, nBits, nonce,hex).<>[BlockHeader,
-    (Option[Long],DoubleSha256Digest, UInt32, DoubleSha256Digest, DoubleSha256Digest, UInt32, UInt32, UInt32,String)](blockHeaderApply,blockHeaderUnapply)
+  def * = {
+    ???
+/*    (height.?, hash, version, previousBlockHash, merkleRootHash, time, nBits, nonce,hex).<>[BlockHeader,
+      (Option[Long],DoubleSha256Digest, Int32, DoubleSha256Digest, DoubleSha256Digest,
+        UInt32, UInt32, UInt32,String)](blockHeaderApply,blockHeaderUnapply)*/
+  }
 
   /** Creates a block header from a tuple */
-  private val blockHeaderApply : ((Option[Long], DoubleSha256Digest, UInt32, DoubleSha256Digest, DoubleSha256Digest,
+  private val blockHeaderApply : ((Option[Long], DoubleSha256Digest, Int32, DoubleSha256Digest, DoubleSha256Digest,
     UInt32, UInt32, UInt32,String)) => BlockHeader = {
-    case (height: Option[Long], hash: DoubleSha256Digest, version: UInt32, previousBlockHash: DoubleSha256Digest,
+    case (height: Option[Long], hash: DoubleSha256Digest, version: Int32, previousBlockHash: DoubleSha256Digest,
       merkleRootHash: DoubleSha256Digest, time: UInt32, nBits: UInt32, nonce: UInt32, hex : String) =>
       val header = BlockHeader(version,previousBlockHash,merkleRootHash,time,nBits,nonce)
       require(header.hash == hash && header.hex == hex, "Block header is not giving us the same hash that was stored in the database, " +
@@ -47,7 +51,7 @@ class BlockHeaderTable(tag: Tag) extends Table[BlockHeader](tag,"block_headers")
   }
 
   /** Destructs a block header to a tuple */
-  private val blockHeaderUnapply: BlockHeader => Option[(Option[Long], DoubleSha256Digest, UInt32, DoubleSha256Digest,
+  private val blockHeaderUnapply: BlockHeader => Option[(Option[Long], DoubleSha256Digest, Int32, DoubleSha256Digest,
     DoubleSha256Digest, UInt32, UInt32, UInt32,String)] = {
     blockHeader: BlockHeader =>
       Some((None,blockHeader.hash, blockHeader.version, blockHeader.previousBlockHash, blockHeader.merkleRootHash,

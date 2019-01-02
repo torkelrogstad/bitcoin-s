@@ -2,11 +2,11 @@ package org.bitcoins.spvnode.serializers.messages.data
 
 import org.bitcoins.core.crypto.DoubleSha256Digest
 import org.bitcoins.core.protocol.CompactSizeUInt
-import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.util.BitcoinSUtil
+import org.bitcoins.core.serializers.{RawBitcoinSerializer, RawSerializerHelper}
 import org.bitcoins.spvnode.messages.GetBlocksMessage
 import org.bitcoins.spvnode.messages.data.GetBlocksMessage
 import org.bitcoins.spvnode.versions.ProtocolVersion
+import scodec.bits.ByteVector
 
 import scala.annotation.tailrec
 
@@ -18,7 +18,7 @@ import scala.annotation.tailrec
   */
 trait RawGetBlocksMessageSerializer extends RawBitcoinSerializer[GetBlocksMessage] {
 
-  def read(bytes : List[Byte]) : GetBlocksMessage = {
+  def read(bytes : ByteVector) : GetBlocksMessage = {
     val version = ProtocolVersion(bytes.take(4))
     val hashCount = CompactSizeUInt.parseCompactSizeUInt(bytes.slice(4,bytes.size))
     val blockHeaderStartByte = (hashCount.size + 4).toInt
@@ -28,10 +28,11 @@ trait RawGetBlocksMessageSerializer extends RawBitcoinSerializer[GetBlocksMessag
     GetBlocksMessage(version,hashCount,blockHashHeaders,stopHash)
   }
 
-  def write(getBlocksMessage: GetBlocksMessage) : String = {
-    getBlocksMessage.protocolVersion.hex + getBlocksMessage.hashCount.hex +
-    getBlocksMessage.blockHeaderHashes.map(_.hex).mkString +
-    getBlocksMessage.stopHash.hex
+  def write(getBlocksMessage: GetBlocksMessage) : ByteVector = {
+    getBlocksMessage.protocolVersion.bytes ++
+      getBlocksMessage.hashCount.bytes ++
+    RawSerializerHelper.writeNetworkElements(getBlocksMessage.blockHeaderHashes) ++
+    getBlocksMessage.stopHash.bytes
   }
 
   /**
@@ -41,15 +42,20 @@ trait RawGetBlocksMessageSerializer extends RawBitcoinSerializer[GetBlocksMessag
     * @param compactSizeUInt the p2p network object used to indicate how many block header hashes there are
     * @return the sequence of hashes and the remaining bytes that need to be parsed
     */
-  private def parseBlockHeaders(bytes : Seq[Byte],compactSizeUInt: CompactSizeUInt) : (Seq[DoubleSha256Digest],Seq[Byte]) = {
+  private def parseBlockHeaders(bytes : ByteVector,compactSizeUInt: CompactSizeUInt) : (List[DoubleSha256Digest],ByteVector) = {
     @tailrec
     def loop(remainingHeaders : Long, accum : List[DoubleSha256Digest],
-             remainingBytes : Seq[Byte]) : (List[DoubleSha256Digest], Seq[Byte]) = {
+             remainingBytes : ByteVector) : (List[DoubleSha256Digest], ByteVector) = {
       if (remainingHeaders <= 0) (accum.reverse,remainingBytes)
-      else loop(remainingHeaders - 1, DoubleSha256Digest(remainingBytes.slice(0,32)) :: accum,
-        remainingBytes.slice(32,remainingBytes.size))
+      else {
+        val dsha256 = DoubleSha256Digest(remainingBytes.slice(0, 32))
+        val rem = remainingBytes.slice(32, remainingBytes.size)
+        loop(remainingHeaders = remainingHeaders - 1,
+          accum =  dsha256 :: accum,
+          remainingBytes = rem)
+      }
     }
-    loop(compactSizeUInt.num.toInt, List(), bytes)
+    loop(compactSizeUInt.num.toInt, List.empty, bytes)
   }
 }
 

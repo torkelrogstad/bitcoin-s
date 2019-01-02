@@ -8,9 +8,10 @@ import org.bitcoins.core.protocol.CompactSizeUInt
 import org.bitcoins.core.util.Factory
 import org.bitcoins.spvnode.messages._
 import org.bitcoins.spvnode.serializers.messages.control.RawVersionMessageSerializer
-import org.bitcoins.spvnode.versions.{ProtocolVersion}
+import org.bitcoins.spvnode.versions.ProtocolVersion
 import org.bitcoins.spvnode.constant.Constants
 import org.joda.time.DateTime
+import scodec.bits.ByteVector
 
 
 
@@ -28,18 +29,36 @@ object VersionMessage extends Factory[VersionMessage] {
                                                nonce : UInt64, userAgentSize : CompactSizeUInt, userAgent : String,
                                                startHeight : Int32, relay : Boolean) extends VersionMessage
 
-  override def fromBytes(bytes : Seq[Byte]) : VersionMessage = RawVersionMessageSerializer.read(bytes)
+  override def fromBytes(bytes : ByteVector) : VersionMessage = RawVersionMessageSerializer.read(bytes)
 
-  def apply(version : ProtocolVersion, services : ServiceIdentifier, timestamp : Int64,
-            addressReceiveServices : ServiceIdentifier, addressReceiveIpAddress : InetAddress,
-            addressReceivePort : Int, addressTransServices : ServiceIdentifier,
-            addressTransIpAddress : InetAddress, addressTransPort : Int,
-            nonce : UInt64,  userAgent : String,
-            startHeight : Int32, relay : Boolean) : VersionMessage = {
-    val userAgentSize : CompactSizeUInt = CompactSizeUInt.calculateCompactSizeUInt(userAgent.getBytes)
-    VersionMessageImpl(version, services, timestamp, addressReceiveServices, addressReceiveIpAddress,
-      addressReceivePort, addressTransServices, addressTransIpAddress, addressTransPort,
-      nonce, userAgentSize, userAgent, startHeight, relay)
+  def apply(version : ProtocolVersion,
+            services : ServiceIdentifier,
+            timestamp : Int64,
+            addressReceiveServices : ServiceIdentifier,
+            addressReceiveIpAddress : InetAddress,
+            addressReceivePort : Int,
+            addressTransServices : ServiceIdentifier,
+            addressTransIpAddress : InetAddress,
+            addressTransPort : Int,
+            nonce : UInt64,
+            userAgent : String,
+            startHeight : Int32,
+            relay : Boolean) : VersionMessage = {
+    val userAgentSize : CompactSizeUInt = CompactSizeUInt.calculateCompactSizeUInt(ByteVector(userAgent.getBytes))
+    VersionMessageImpl(version = version,
+      services = services,
+      timestamp = timestamp,
+      addressReceiveServices = addressReceiveServices,
+      addressReceiveIpAddress = addressReceiveIpAddress,
+      addressReceivePort = addressReceivePort,
+      addressTransServices = addressTransServices,
+      addressTransIpAddress = addressTransIpAddress,
+      addressTransPort = addressTransPort,
+      nonce = nonce,
+      userAgentSize = userAgentSize,
+      userAgent = userAgent,
+      startHeight = startHeight,
+      relay = relay)
   }
 
   def apply(network : NetworkParameters, receivingIpAddress : InetAddress) : VersionMessage = {

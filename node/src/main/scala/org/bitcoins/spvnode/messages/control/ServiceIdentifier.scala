@@ -4,6 +4,7 @@ import org.bitcoins.core.number.UInt64
 import org.bitcoins.core.protocol.NetworkElement
 import org.bitcoins.core.util.{BitcoinSLogger, Factory}
 import org.bitcoins.spvnode.serializers.messages.control.RawServiceIdentifierSerializer
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/2/16.
@@ -12,7 +13,7 @@ import org.bitcoins.spvnode.serializers.messages.control.RawServiceIdentifierSer
   */
 sealed trait ServiceIdentifier extends NetworkElement {
   def num : UInt64
-  override def hex = RawServiceIdentifierSerializer.write(this)
+  override def bytes: ByteVector = RawServiceIdentifierSerializer.write(this)
 }
 
 /**
@@ -20,7 +21,7 @@ sealed trait ServiceIdentifier extends NetworkElement {
   * It may not be able to provide any data except for the transactions it originates.
   */
 case object UnnamedService extends ServiceIdentifier {
-  def num = UInt64.zero
+  override val num = UInt64.zero
 }
 
 /**
@@ -28,7 +29,7 @@ case object UnnamedService extends ServiceIdentifier {
   * It should implement all protocol features available in its self-reported protocol version.
   */
 case object NodeNetwork extends ServiceIdentifier {
-  def num = UInt64.one
+  override val num = UInt64.one
 }
 
 /**
@@ -36,11 +37,11 @@ case object NodeNetwork extends ServiceIdentifier {
   */
 sealed trait UnknownService extends ServiceIdentifier
 
-object ServiceIdentifier extends Factory[ServiceIdentifier] with BitcoinSLogger {
+object ServiceIdentifier extends Factory[ServiceIdentifier] {
 
   private case class UnknownServiceImpl(num : UInt64) extends UnknownService
 
-  def fromBytes(bytes : Seq[Byte]) : ServiceIdentifier = RawServiceIdentifierSerializer.read(bytes)
+  def fromBytes(bytes : ByteVector) : ServiceIdentifier = RawServiceIdentifierSerializer.read(bytes)
 
   def apply(num : BigInt): ServiceIdentifier = ServiceIdentifier(UInt64(num))
 

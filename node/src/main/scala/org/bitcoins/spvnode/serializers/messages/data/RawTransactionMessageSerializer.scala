@@ -4,6 +4,7 @@ import org.bitcoins.core.protocol.transaction.Transaction
 import org.bitcoins.core.serializers.RawBitcoinSerializer
 import org.bitcoins.spvnode.messages.TransactionMessage
 import org.bitcoins.spvnode.messages.data.TransactionMessage
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 6/2/16.
@@ -13,13 +14,13 @@ import org.bitcoins.spvnode.messages.data.TransactionMessage
 trait RawTransactionMessageSerializer extends RawBitcoinSerializer[TransactionMessage] {
 
 
-  def read(bytes : List[Byte]) : TransactionMessage = {
+  def read(bytes : ByteVector) : TransactionMessage = {
     val transaction = Transaction(bytes)
     TransactionMessage(transaction)
   }
 
-  def write(transactionMessage: TransactionMessage) : String = {
-    transactionMessage.transaction.hex
+  def write(transactionMessage: TransactionMessage) : ByteVector = {
+    transactionMessage.transaction.bytes
   }
 }
 

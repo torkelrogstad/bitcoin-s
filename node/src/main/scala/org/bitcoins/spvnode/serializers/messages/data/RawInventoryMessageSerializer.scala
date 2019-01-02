@@ -1,10 +1,10 @@
 package org.bitcoins.spvnode.serializers.messages.data
 
 import org.bitcoins.core.protocol.CompactSizeUInt
-import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.util.BitcoinSUtil
+import org.bitcoins.core.serializers.{RawBitcoinSerializer, RawSerializerHelper}
 import org.bitcoins.spvnode.messages.InventoryMessage
 import org.bitcoins.spvnode.messages.data.{Inventory, InventoryMessage}
+import scodec.bits.ByteVector
 
 import scala.annotation.tailrec
 
@@ -20,7 +20,7 @@ trait RawInventoryMessageSerializer extends RawBitcoinSerializer[InventoryMessag
     * @param bytes
     * @return
     */
-  override def read(bytes : List[Byte]) : InventoryMessage = {
+  override def read(bytes : ByteVector) : InventoryMessage = {
     val inventoryCount = CompactSizeUInt.parseCompactSizeUInt(bytes)
     val inventoryStart = inventoryCount.size.toInt
     val remainingBytes = bytes.slice(inventoryStart,bytes.size)
@@ -33,8 +33,9 @@ trait RawInventoryMessageSerializer extends RawBitcoinSerializer[InventoryMessag
     * @param inventoryMessage
     * @return
     */
-  override def write(inventoryMessage: InventoryMessage) : String = {
-    inventoryMessage.inventoryCount.hex + inventoryMessage.inventories.map(_.hex).mkString
+  override def write(inventoryMessage: InventoryMessage) : ByteVector = {
+    val msgBytes = RawSerializerHelper.writeNetworkElements(inventoryMessage.inventories)
+    inventoryMessage.inventoryCount.bytes ++ msgBytes
   }
 
 
@@ -44,16 +45,16 @@ trait RawInventoryMessageSerializer extends RawBitcoinSerializer[InventoryMessag
     * @param requiredInventories the num of inventories inside this sequence of bytes
     * @return the sequence of inventories and the remaining bytes
     */
-  private def parseInventories(bytes : Seq[Byte], requiredInventories : CompactSizeUInt) : (Seq[Inventory], Seq[Byte]) = {
+  private def parseInventories(bytes : ByteVector, requiredInventories : CompactSizeUInt) : (List[Inventory], ByteVector) = {
     @tailrec
-    def loop(remainingInventories : Long, remainingBytes : Seq[Byte], accum : List[Inventory]) : (Seq[Inventory], Seq[Byte]) = {
+    def loop(remainingInventories : Long, remainingBytes : ByteVector, accum : List[Inventory]) : (List[Inventory], ByteVector) = {
       if (remainingInventories <= 0) (accum.reverse,remainingBytes)
       else {
         val inventory = RawInventorySerializer.read(remainingBytes.slice(0,36))
         loop(remainingInventories - 1, remainingBytes.slice(36,remainingBytes.size), inventory :: accum )
       }
     }
-    loop(requiredInventories.num.toInt, bytes, List())
+    loop(requiredInventories.num.toInt, bytes, List.empty)
   }
 }
 

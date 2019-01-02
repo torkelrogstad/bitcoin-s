@@ -39,7 +39,7 @@ trait BlockHeaderStore {
   }
 
 
-  private def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+  private def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit): Unit = {
     val p = new java.io.PrintWriter(new FileOutputStream(f,true))
     try { op(p) } finally { p.close() }
   }

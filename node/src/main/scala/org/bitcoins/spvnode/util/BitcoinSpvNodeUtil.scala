@@ -3,8 +3,9 @@ package org.bitcoins.spvnode.util
 import java.net.InetAddress
 
 import akka.util.{ByteString, CompactByteString}
-import org.bitcoins.core.util.{BitcoinSLogger, BitcoinSUtil}
+import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.spvnode.NetworkMessage
+import scodec.bits.ByteVector
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
@@ -22,18 +23,20 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
     * @param iNetAddress
     * @return
     */
-  def writeAddress(iNetAddress: InetAddress) : String = {
+  def writeAddress(iNetAddress: InetAddress) : ByteVector = {
     if (iNetAddress.getAddress.size == 4) {
       //this means we need to convert the IPv4 address to an IPv6 address
       //first we have an 80 bit prefix of zeros
-      val zeroBytes = for ( _ <- 0 until 10) yield 0.toByte
+      val zeroBytes = Array.fill(10)(0.toByte)
       //the next 16 bits are ones
-      val oneBytes : Seq[Byte] = Seq(0xff.toByte,0xff.toByte)
+      val oneBytes = List(0xff.toByte,0xff.toByte)
 
-      val prefix : Seq[Byte] = zeroBytes ++ oneBytes
-      val addr = BitcoinSUtil.encodeHex(prefix) + BitcoinSUtil.encodeHex(iNetAddress.getAddress)
+      val prefix : ByteVector = ByteVector(zeroBytes) ++ ByteVector(oneBytes)
+      val addr = prefix ++ ByteVector(iNetAddress.getAddress)
       addr
-    } else BitcoinSUtil.encodeHex(iNetAddress.getAddress)
+    } else {
+      ByteVector(iNetAddress.getAddress)
+    }
   }
 
   /**
@@ -42,9 +45,9 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
     * @param bytes the bytes that need to be parsed into individual messages
     * @return the parsed [[NetworkMessage]]'s and the unaligned bytes that did not parse to a message
     */
-  def parseIndividualMessages(bytes: Seq[Byte]): (Seq[NetworkMessage],Seq[Byte]) = {
+  def parseIndividualMessages(bytes: ByteVector): (List[NetworkMessage],ByteVector) = {
     @tailrec
-    def loop(remainingBytes : Seq[Byte], accum : Seq[NetworkMessage]): (Seq[NetworkMessage],Seq[Byte]) = {
+    def loop(remainingBytes : ByteVector, accum : List[NetworkMessage]): (List[NetworkMessage],ByteVector) = {
       if (remainingBytes.length <= 0) (accum.reverse,remainingBytes)
       else {
         val messageTry = Try(NetworkMessage(remainingBytes))
@@ -56,7 +59,7 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
               (accum.reverse,remainingBytes)
             } else {
               val newRemainingBytes = remainingBytes.slice(message.bytes.length, remainingBytes.length)
-              loop(newRemainingBytes, message +: accum)
+              loop(newRemainingBytes, message :: accum)
             }
           case Failure(exception) =>
             logger.debug("Failed to parse network message, could be because tcp frame isn't aligned")
@@ -69,16 +72,16 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
       }
     }
     val (messages,remainingBytes) = loop(bytes, Nil)
-    logger.debug("Parsed messages: " + messages)
+    logger.debug(s"Parsed messages: ${messages}")
     (messages,remainingBytes)
   }
 
   /**
-    * Wraps our Seq[Byte] into an akka [[ByteString]] object
+    * Wraps our ByteVector into an akka [[ByteString]] object
     * @param bytes
     * @return
     */
-  def buildByteString(bytes: Seq[Byte]) : ByteString = {
+  def buildByteString(bytes: ByteVector) : ByteString = {
     CompactByteString(bytes.toArray)
   }
 
@@ -88,7 +91,7 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
     * @return
     */
   def createActorName(className : String): String = {
-    className.replace(" ","")  + "-" + scala.util.Random.nextInt
+    className.replace(" ","")  + s"-${System.currentTimeMillis()}"
   }
 
   /**

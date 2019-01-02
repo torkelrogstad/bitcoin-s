@@ -2,8 +2,9 @@ package org.bitcoins.spvnode.serializers.headers
 
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.serializers.RawBitcoinSerializer
-import org.bitcoins.core.util.{BitcoinSLogger, BitcoinSUtil}
+import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.spvnode.headers.NetworkHeader
+import scodec.bits.ByteVector
 
 /**
   * Created by chris on 5/31/16.
@@ -17,10 +18,10 @@ trait RawNetworkHeaderSerializer extends RawBitcoinSerializer[NetworkHeader] wit
     * @param bytes the byte representation for a MessageHeader on the peer-to-peer network
     * @return the native object for the MessageHeader
     */
-  def read(bytes : List[Byte]) : NetworkHeader = {
+  def read(bytes : ByteVector) : NetworkHeader = {
     val network = bytes.take(4)
     //.trim removes the null characters appended to the command name
-    val commandName = bytes.slice(4,16).map(_.toChar).mkString.trim
+    val commandName = bytes.slice(4,16).toArray.map(_.toChar).mkString.trim
     val payloadSize = UInt32(bytes.slice(16,20).reverse)
     val checksum = bytes.slice(20,24)
     NetworkHeader(network,commandName,payloadSize,checksum)
@@ -31,13 +32,16 @@ trait RawNetworkHeaderSerializer extends RawBitcoinSerializer[NetworkHeader] wit
     * @param messageHeader the message header to be serialized
     * @return the hexadecimal representation of the message header
     */
-  def write(messageHeader: NetworkHeader) : String = {
-    val network = BitcoinSUtil.encodeHex(messageHeader.network)
-    val commandNameNoPadding = BitcoinSUtil.encodeHex(messageHeader.commandName.map(_.toByte))
+  def write(messageHeader: NetworkHeader) : ByteVector = {
+    val network = messageHeader.network
+    val commandNameNoPadding = messageHeader.commandName.map(_.toByte)
     //command name needs to be 12 bytes in size, or 24 chars in hex
-    val commandName = addPadding(24, commandNameNoPadding)
-    val checksum = BitcoinSUtil.encodeHex(messageHeader.checksum)
-    network + commandName + BitcoinSUtil.flipEndianness(messageHeader.payloadSize.bytes) + checksum
+    val commandName = ByteVector(commandNameNoPadding).padLeft(12)
+    val checksum = messageHeader.checksum
+    network ++
+      commandName ++
+      messageHeader.payloadSize.bytes ++
+      checksum
   }
 
 }

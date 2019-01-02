@@ -3,9 +3,10 @@ package org.bitcoins.spvnode.headers
 import org.bitcoins.core.config.NetworkParameters
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.NetworkElement
-import org.bitcoins.core.util.{BitcoinSLogger, CryptoUtil, Factory}
+import org.bitcoins.core.util.{CryptoUtil, Factory}
 import org.bitcoins.spvnode.messages.NetworkPayload
 import org.bitcoins.spvnode.serializers.headers.RawNetworkHeaderSerializer
+import scodec.bits.ByteVector
 
 
 /**
@@ -13,16 +14,16 @@ import org.bitcoins.spvnode.serializers.headers.RawNetworkHeaderSerializer
   * Represents a message header on the peer-to-peer network
   * https://bitcoin.org/en/developer-reference#message-headers
   */
-sealed trait NetworkHeader extends NetworkElement with BitcoinSLogger {
+sealed trait NetworkHeader extends NetworkElement {
 
-  override def hex = RawNetworkHeaderSerializer.write(this)
+  override def bytes: ByteVector = RawNetworkHeaderSerializer.write(this)
 
   /**
     * Magic bytes indicating the originating network;
     * used to seek to next message when stream state is unknown.
     * @return
     */
-  def network : Seq[Byte]
+  def network : ByteVector
 
   /**
     * ASCII string which identifies what message type is contained in the payload.
@@ -48,19 +49,19 @@ sealed trait NetworkHeader extends NetworkElement with BitcoinSLogger {
     *
     * @return
     */
-  def checksum : Seq[Byte]
+  def checksum : ByteVector
 
 }
 
 
 object NetworkHeader extends Factory[NetworkHeader] {
 
-  private case class NetworkHeaderImpl(network : Seq[Byte], commandName : String,
-                                       payloadSize : UInt32, checksum : Seq[Byte]) extends NetworkHeader {
+  private case class NetworkHeaderImpl(network : ByteVector, commandName : String,
+                                       payloadSize : UInt32, checksum : ByteVector) extends NetworkHeader {
     require(bytes.length == 24,"NetworkHeaders must be 24 bytes")
   }
 
-  override def fromBytes(bytes : Seq[Byte]) : NetworkHeader = RawNetworkHeaderSerializer.read(bytes)
+  override def fromBytes(bytes : ByteVector) : NetworkHeader = RawNetworkHeaderSerializer.read(bytes)
 
   /**
     * Creates a [[NetworkHeader]] from all of its individual components
@@ -70,7 +71,7 @@ object NetworkHeader extends Factory[NetworkHeader] {
     * @param checksum the checksum of the payload to ensure that the entire payload was sent
     * @return
     */
-  def apply(network : Seq[Byte], commandName : String, payloadSize : UInt32, checksum : Seq[Byte]) : NetworkHeader = {
+  def apply(network : ByteVector, commandName : String, payloadSize : UInt32, checksum : ByteVector) : NetworkHeader = {
     NetworkHeaderImpl(network, commandName, payloadSize, checksum)
   }
 
