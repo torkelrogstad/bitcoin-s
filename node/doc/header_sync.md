@@ -5,13 +5,13 @@ To start syncing our block headers, we need to indicate a header to start at. Cu
 Here is some example code to start syncing our spv node with all block headers on the network 
 
 ```scala
-package org.bitcoins.spvnode
+package org.bitcoins.node
 
 import akka.actor.ActorRef
 import org.bitcoins.core.protocol.blockchain.TestNetChainParams
-import org.bitcoins.spvnode.constant.Constants
-import org.bitcoins.spvnode.modelsd.BlockHeaderTable
-import org.bitcoins.spvnode.networking.sync.BlockHeaderSyncActor
+import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.models.BlockHeaderTable
+import org.bitcoins.node.networking.sync.BlockHeaderSyncActor
 import slick.driver.PostgresDriver.api._
 
 import scala.concurrent.Await
@@ -45,10 +45,10 @@ You will start receiving block headers from a node on the peer to peer network, 
 Another scenario users can have is that they have powered down their node for awhile, and want to sync all blockheaders from the network to get the current state of the blockchain. You can do this with this code
 
 ```scala
-package org.bitcoins.spvnode
+package org.bitcoins.node
 
-import org.bitcoins.spvnode.constant.Constants
-import org.bitcoins.spvnode.networking.sync.BlockHeaderSyncActor
+import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.networking.sync.BlockHeaderSyncActor
 object Main extends App {
   override def main(args : Array[String]) = {
     val blockHeaderSyncActor = BlockHeaderSyncActor(Constants.actorSystem, Constants.dbConfig, Constants.networkParameters)

@@ -5,7 +5,7 @@ object BitcoinSSpvNodeBuild extends Build {
   val appName = "bitcoins-spv-node"
   val appV = "0.0.1" 
   val scalaV = "2.11.7"
-  val organization = "org.bitcoins.spvnode"
+  val organization = "org.bitcoins.node"
   val slf4jV = "1.7.5"
   val logbackV = "1.0.13"
   val akkaV = "2.4.7"
@@ -28,7 +28,7 @@ object BitcoinSSpvNodeBuild extends Build {
     resolvers += Resolver.sonatypeRepo("releases"),  
     libraryDependencies ++= appDependencies,
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
-    mainClass := Some("org.bitcoins.spvnode.Main"),
+    mainClass := Some("org.bitcoins.node.Main"),
     parallelExecution in Test := false,
     //hints for testOptions config here: http://stackoverflow.com/questions/7237824/how-can-i-get-complete-stacktraces-for-exceptions-thrown-in-tests-when-using-sbt 
     testOptions in Test += Tests.Argument("-oF")

@@ -8,16 +8,16 @@ Our implementation relies heavily on [Akka](http://akka.io/), which has an imple
 Look inside of [Main.scala](https://github.com/Christewart/bitcoin-s-spv-node/blob/networking/src/main/scala/org/bitcoins/spvnode/Main.scala) for example of creating a [`PaymentActor`](https://github.com/Christewart/bitcoin-s-spv-node/blob/networking/src/main/scala/org/bitcoins/spvnode/networking/PaymentActor.scala), that montiors an address. Once a transaction that pays to the address is included in a block, it sends a message back to your actor saying a payment was successful. 
 
 ```scala
-package org.bitcoins.spvnode
+package org.bitcoins.node
 
 import org.bitcoins.core.config.TestNet3
 import org.bitcoins.core.crypto.{DoubleSha256Digest, Sha256Hash160Digest}
 import org.bitcoins.core.protocol.blockchain.TestNetChainParams
 import org.bitcoins.core.protocol.{BitcoinAddress, P2PKHAddress}
 import org.bitcoins.core.util.BitcoinSUtil
-import org.bitcoins.spvnode.constant.Constants
-import org.bitcoins.spvnode.networking.PaymentActor
-import org.bitcoins.spvnode.networking.sync.BlockHeaderSyncActor
+import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.networking.PaymentActor
+import org.bitcoins.node.networking.sync.BlockHeaderSyncActor
 
 /**
   * Created by chris on 8/29/16.

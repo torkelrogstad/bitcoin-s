@@ -1,6 +1,7 @@
 import sbt._
 
 object Deps {
+
   object V {
     val bouncyCastle = "1.55"
     val logback = "1.0.13"
@@ -20,7 +21,7 @@ object Deps {
     val postgresV = "9.4.1210"
     val akkaActorV = akkaStreamv
     val slickV = "3.2.3"
-    val bitcoinsV = "0.0.1-SNAPSHOT"
+    val bitcoinsV = "0.0.3-SNAPSHOT"
   }
 
   object Compile {
@@ -52,11 +53,13 @@ object Deps {
     val logback = "ch.qos.logback" % "logback-classic" % V.logback % "test" withSources() withJavadoc()
     val scalacheck = "org.scalacheck" %% "scalacheck" % V.scalacheck % "test" withSources() withJavadoc()
     val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test" withSources() withJavadoc()
-    val spray = "io.spray" %% "spray-json" % V.spray  % "test" withSources() withJavadoc()
+    val spray = "io.spray" %% "spray-json" % V.spray % "test" withSources() withJavadoc()
     val akkaHttp = "com.typesafe.akka" %% "akka-http-testkit" % V.akkav % "test" withSources() withJavadoc()
     val akkaStream = "com.typesafe.akka" %% "akka-stream-testkit" % V.akkaStreamv % "test" withSources() withJavadoc()
 
     val testkit = "org.bitcoins" %% "bitcoin-s-testkit" % V.bitcoinsV withSources() withJavadoc()
+
+    val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % V.akkaActorV withSources() withJavadoc()
   }
 
   val core = List(
@@ -131,7 +134,9 @@ object Deps {
     "org.scalacheck" %% "scalacheck" % V.scalacheck withSources() withJavadoc(),
 
     Test.scalaTest,
-    Test.scalacheck
+    Test.scalacheck,
+    Test.akkaTestkit,
+    Test.testkit
   )
 
   val testkit = List(

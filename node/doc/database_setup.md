@@ -11,8 +11,8 @@ Note, that bitcoins-spv-node is for mainnet. Inside our codebase, we have a trai
 Here is an example of creating a table in a database. 
 
 ```scala
-import org.bitcoins.spvnode.constant.Constants
-import org.bitcoins.spvnode.modelsd.BlockHeaderTable
+import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.models.BlockHeaderTable
 import slick.driver.PostgresDriver.api._
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -30,8 +30,8 @@ object Main extends App {
 now if we wanted to drop that same table, we could use this snippet of code: 
 
 ```scala 
-import org.bitcoins.spvnode.constant.Constants
-import org.bitcoins.spvnode.modelsd.BlockHeaderTable
+import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.models.BlockHeaderTable
 import slick.driver.PostgresDriver.api._
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
