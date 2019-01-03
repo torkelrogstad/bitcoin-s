@@ -69,8 +69,7 @@ class PeerMessageHandlerTest
 
   "PeerMessageHandler" must "be able to send a GetHeadersMessage then receive a list of headers back" in {
 
-    val hashStart = DoubleSha256Digest(
-      "0000000000000000000000000000000000000000000000000000000000000000")
+    val hashStart = DoubleSha256Digest.empty
     //this is the hash of block 2, so this test will send two blocks
     val hashStop = DoubleSha256Digest(
       BitcoinSUtil.flipEndianness(

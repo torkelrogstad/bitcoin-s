@@ -321,7 +321,7 @@ object PeerMessageHandler {
 
   def props: Props = {
     val seed = {
-      val randIndex = scala.util.Random.nextInt() % Constants.networkParameters.dnsSeeds.size
+      val randIndex = Math.abs(scala.util.Random.nextInt()) % Constants.networkParameters.dnsSeeds.size
       val seed = Constants.networkParameters.dnsSeeds(randIndex)
       new InetSocketAddress(seed,Constants.networkParameters.port)
     }

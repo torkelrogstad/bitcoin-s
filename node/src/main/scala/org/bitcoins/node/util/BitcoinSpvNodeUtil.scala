@@ -99,7 +99,7 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
     * @return
     */
   def createActorName(className: String): String = {
-    className.replace(" ", "") + s"-${System.currentTimeMillis()}"
+    s"${className}-${System.currentTimeMillis()}"
   }
 
   /**
@@ -108,7 +108,7 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
     * @return
     */
   def createActorName(className: Class[_]): String =
-    createActorName(className.toString)
+    createActorName(className.getSimpleName)
 }
 
 object BitcoinSpvNodeUtil extends BitcoinSpvNodeUtil

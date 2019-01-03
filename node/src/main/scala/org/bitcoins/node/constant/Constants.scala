@@ -1,28 +1,18 @@
 package org.bitcoins.node.constant
 
-import java.util.concurrent.Executors
-
 import akka.actor.ActorSystem
 import org.bitcoins.core.config.{MainNet, NetworkParameters, RegTest, TestNet3}
-import org.bitcoins.core.protocol.blockchain.{
-  ChainParams,
-  MainNetChainParams,
-  RegTestNetChainParams,
-  TestNetChainParams
-}
+import org.bitcoins.core.protocol.blockchain.{ChainParams, MainNetChainParams, RegTestNetChainParams, TestNetChainParams}
 import org.bitcoins.node.messages.control.VersionMessage
 import org.bitcoins.node.versions.ProtocolVersion70012
-import org.bitcoins.node.versions.ProtocolVersion70012
+import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.duration.DurationInt
-import slick.driver.PostgresDriver.api._
-
-import scala.concurrent.ExecutionContext
 
 /**
   * Created by chris on 7/1/16.
   */
-trait Constants {
+sealed abstract class Constants {
   lazy val actorSystem = ActorSystem("BitcoinSpvNode")
   def networkParameters: NetworkParameters = TestNet3
   def version = ProtocolVersion70012
