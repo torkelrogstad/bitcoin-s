@@ -8,17 +8,13 @@ import akka.stream.ActorMaterializer
 import org.bitcoins.core.config.RegTest
 import org.bitcoins.core.crypto.DoubleSha256Digest
 import org.bitcoins.core.util.BitcoinSLogger
-import org.bitcoins.rpc.client.BitcoindRpcClient
+import org.bitcoins.rpc.client.common.RpcOpts.AddNodeArgument
+import org.bitcoins.rpc.client.common.{BitcoindRpcClient, BitcoindVersion}
 import org.bitcoins.rpc.config.{BitcoindAuthCredentials, BitcoindInstance}
 
+import scala.concurrent._
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{
-  ExecutionContext,
-  ExecutionContextExecutor,
-  Future,
-  Promise
-}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Properties, Success, Try}
 
 trait BitcoindRpcTestUtil extends BitcoinSLogger {
 
@@ -68,21 +64,76 @@ trait BitcoindRpcTestUtil extends BitcoinSLogger {
 
   lazy val network = RegTest
 
+  def v16Instance(
+      port: Int = randomPort,
+      rpcPort: Int = randomPort,
+      zmqPort: Int = randomPort,
+      pruneMode: Boolean = false,
+  ): BitcoindInstance =
+    instance(port = port,
+             rpcPort = rpcPort,
+             zmqPort = zmqPort,
+             pruneMode = pruneMode,
+             versionOpt = Some(BitcoindVersion.V16))
+
+  def v17Instance(
+      port: Int = randomPort,
+      rpcPort: Int = randomPort,
+      zmqPort: Int = randomPort,
+      pruneMode: Boolean = false,
+  ): BitcoindInstance =
+    instance(port = port,
+             rpcPort = rpcPort,
+             zmqPort = zmqPort,
+             pruneMode = pruneMode,
+             versionOpt = Some(BitcoindVersion.V17))
+
   def instance(
       port: Int = randomPort,
       rpcPort: Int = randomPort,
       zmqPort: Int = randomPort,
-      pruneMode: Boolean = false): BitcoindInstance = {
+      pruneMode: Boolean = false,
+      versionOpt: Option[BitcoindVersion] = None
+  ): BitcoindInstance = {
     val uri = new URI("http://localhost:" + port)
     val rpcUri = new URI("http://localhost:" + rpcPort)
     val auth = authCredentials(uri, rpcUri, zmqPort, pruneMode)
-    val instance = BitcoindInstance(network = network,
+
+    versionOpt match {
+      case Some(version) =>
+        val binary = getBinary(version)
+        BitcoindInstance(
+          network = network,
+                                    uri = uri,
+                                    rpcUri = rpcUri,
+                                    authCredentials = auth,
+          zmqPortOpt = Some(zmqPort),
+          binary = binary
+        )
+      case None =>
+        BitcoindInstance(network = network,
                                     uri = uri,
                                     rpcUri = rpcUri,
                                     authCredentials = auth,
                                     zmqPortOpt = Some(zmqPort))
+    }
 
-    instance
+  }
+
+  private val V16_ENV = "BITCOIND_V16_PATH"
+  private val V17_ENV = "BITCOIND_V17_PATH"
+
+  private def getFileFromEnv(env: String) =
+    new File(
+      Properties
+        .envOrNone(env)
+        .getOrElse(throw new IllegalArgumentException(
+          s"$env environment variable is not set")))
+
+  private def getBinary(version: BitcoindVersion): File = version match {
+    case BitcoindVersion.V16     => getFileFromEnv(V16_ENV)
+    case BitcoindVersion.V17     => getFileFromEnv(V17_ENV)
+    case BitcoindVersion.Unknown => BitcoindInstance.DEFAULT_BITCOIND_LOCATION
   }
 
   def randomPort: Int = {

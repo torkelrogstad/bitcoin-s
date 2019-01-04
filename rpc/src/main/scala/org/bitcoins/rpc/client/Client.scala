@@ -47,9 +47,10 @@ trait Client {
   def getDaemon: BitcoindInstance = instance
 
   def start(): String = {
+    val binaryPath = instance.binary.getAbsolutePath
 
     if (version != BitcoindVersion.Unknown) {
-      val foundVersion = Seq("bitcoind", "--version").!!.split("\n").head
+      val foundVersion = Seq(binaryPath, "--version").!!.split("\n").head
         .split(" ")
         .last
 
@@ -59,7 +60,7 @@ trait Client {
       }
     }
 
-    val cmd = Seq("bitcoind",
+    val cmd = Seq(binaryPath,
                   "-datadir=" + instance.authCredentials.datadir,
                   "-rpcport=" + instance.rpcUri.getPort,
                   "-port=" + instance.uri.getPort)
