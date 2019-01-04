@@ -1,4 +1,4 @@
-package org.bitcoins.node.constant
+package org.bitcoins.node.db
 
 import slick.basic.DatabaseConfig
 import slick.jdbc.PostgresProfile
@@ -33,3 +33,12 @@ trait RegTestDbConfig extends DbConfig {
     DatabaseConfig.forConfig("regTestDatabaseUrl")
 }
 object RegTestDbConfig extends RegTestDbConfig
+
+
+trait UnitTestDbConfig extends DbConfig {
+  /** Reads the configuration for the database specified inside of application.conf */
+  lazy val dbConfig: DatabaseConfig[PostgresProfile] =
+    DatabaseConfig.forConfig("unitTestDatabaseUrl")
+}
+
+object UnitTestDbConfig extends UnitTestDbConfig

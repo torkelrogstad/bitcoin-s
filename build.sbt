@@ -18,10 +18,10 @@ lazy val compilerOpts = Seq(
   "-feature",
   "-deprecation",
   "-Xfuture",
-  //"-Ywarn-dead-code",
-  //"-Ywarn-unused-import",
-  //"-Ywarn-value-discard",
-  //"-Ywarn-unused",
+  "-Ywarn-dead-code",
+  "-Ywarn-unused-import",
+  "-Ywarn-value-discard",
+  "-Ywarn-unused",
   "-unchecked",
   "-deprecation",
   "-feature"
@@ -166,7 +166,8 @@ lazy val node = project
   .settings(commonSettings: _*)
   .settings(
     name := "bitcoin-s-node",
-    libraryDependencies ++= Deps.node
+    libraryDependencies ++= Deps.node,
+    parallelExecution in Test := false
   )
   .dependsOn(
     core

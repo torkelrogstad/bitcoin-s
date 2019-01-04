@@ -1,16 +1,8 @@
 package org.bitcoins.node
 
-import org.bitcoins.core.protocol.blockchain.TestNetChainParams
 import org.bitcoins.node.constant.Constants
 import org.bitcoins.node.networking.sync.BlockHeaderSyncActor
 import org.bitcoins.node.networking.sync.BlockHeaderSyncActor.StartAtLastSavedHeader
-import org.bitcoins.node.constant.Constants
-import org.bitcoins.node.models.BlockHeaderTable
-import org.bitcoins.node.networking.sync.BlockHeaderSyncActor
-import slick.jdbc.PostgresProfile.api._
-
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
 
 /**
   * Created by chris on 8/29/16.

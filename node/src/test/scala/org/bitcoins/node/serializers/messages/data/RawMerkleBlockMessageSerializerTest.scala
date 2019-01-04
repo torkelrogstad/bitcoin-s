@@ -41,7 +41,8 @@ class RawMerkleBlockMessageSerializerTest extends FlatSpec with MustMatchers {
           "20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf"))
       ))
 
-    merkleBlockMessage.merkleBlock.partialMerkleTree.bits must be(BitVector.fromValidBin("10111000"))
+    merkleBlockMessage.merkleBlock.partialMerkleTree.bits must be(
+      BitVector.fromValidBin("10111000"))
   }
 
   it must "write a merkle block header message" in {

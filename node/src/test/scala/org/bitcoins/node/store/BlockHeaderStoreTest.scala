@@ -12,7 +12,6 @@ class BlockHeaderStoreTest
     with BeforeAndAfter {
   val testFile = new java.io.File("src/test/resources/block_header.dat")
 
-
   before {
     testFile.createNewFile()
   }

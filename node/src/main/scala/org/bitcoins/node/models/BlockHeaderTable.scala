@@ -57,7 +57,7 @@ class BlockHeaderTable(tag: Tag)
           UInt32,
           UInt32,
           String)) => BlockHeader = {
-    case (height: Option[Long],
+    case (_: Option[Long],
           hash: DoubleSha256Digest,
           version: Int32,
           previousBlockHash: DoubleSha256Digest,

@@ -52,7 +52,7 @@ sealed abstract class PeerMessageHandler extends Actor with BitcoinSLogger {
   def awaitConnected(
       requests: Seq[(ActorRef, NetworkMessage)],
       unalignedBytes: ByteVector): Receive = LoggingReceive {
-    case Tcp.Connected(remote, local) =>
+    case Tcp.Connected(_, local) =>
       val versionMsg =
         VersionMessage(Constants.networkParameters, local.getAddress)
       peer ! versionMsg
@@ -80,7 +80,7 @@ sealed abstract class PeerMessageHandler extends Actor with BitcoinSLogger {
           //need to wait for the peer to send back a verack message
           logger.debug("Switching to awaitVerack from awaitVersionMessage")
           context.become(awaitVerack(requests, unalignedBytes))
-        case msg: NetworkPayload =>
+        case _: NetworkPayload =>
           context.become(
             awaitVersionMessage((sender, networkMessage) +: requests,
                                 unalignedBytes))
@@ -239,7 +239,7 @@ sealed abstract class PeerMessageHandler extends Actor with BitcoinSLogger {
           peer ! PongMessage(pingMsg.nonce)
           //remove ping message from requests
           requests.filterNot {
-            case (sender, msg) => msg.isInstanceOf[PingMessage]
+            case (_, msg) => msg.isInstanceOf[PingMessage]
           }
         } else {
           //means we initialized the ping message, send it to our peer
@@ -253,12 +253,12 @@ sealed abstract class PeerMessageHandler extends Actor with BitcoinSLogger {
         //figure out if this was a solicited AddrMessage or an Unsolicited AddrMessage
         //see https://bitcoin.org/en/developer-reference#addr
         val getAddrMessage: Option[(ActorRef, ControlPayload)] = requests.find {
-          case (sender, msg) => msg == GetAddrMessage
+          case (_, msg) => msg == GetAddrMessage
         }
         if (getAddrMessage.isDefined) {
           destination ! addrMessage
           //remove the GetAddrMessage request
-          requests.filterNot { case (sender, msg) => msg == GetAddrMessage }
+          requests.filterNot { case (_, msg) => msg == GetAddrMessage }
         } else requests
       case filterMsg @ (_: FilterAddMessage | _: FilterLoadMessage |
           FilterClearMessage) =>
@@ -305,7 +305,7 @@ sealed abstract class PeerMessageHandler extends Actor with BitcoinSLogger {
       requests: Seq[(ActorRef, NetworkMessage)]): Seq[
     (ActorRef, ControlPayload)] = {
     val controlPayloads = requests.filter {
-      case (sender, msg) => msg.payload.isInstanceOf[ControlPayload]
+      case (_, msg) => msg.payload.isInstanceOf[ControlPayload]
     }
     controlPayloads.map {
       case (sender, msg) => (sender, msg.payload.asInstanceOf[ControlPayload])

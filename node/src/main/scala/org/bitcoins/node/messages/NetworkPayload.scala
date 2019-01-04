@@ -175,7 +175,7 @@ trait HeadersMessage extends DataPayload {
     * doesn’t include any transactions, the transaction count is always zero.
     * @return
     */
-  def headers: Seq[BlockHeader]
+  def headers: List[BlockHeader]
 
   override def commandName = NetworkPayload.headersCommandName
 
@@ -623,14 +623,14 @@ object NetworkPayload {
     *
     * @return
     */
-  def commandNames: Map[String, ByteVector => NetworkPayload] = Map(
+  val commandNames: Map[String, ByteVector => NetworkPayload] = Map(
     blockCommandName -> { RawBlockMessageSerializer.read(_) },
     getBlocksCommandName -> { RawGetBlocksMessageSerializer.read(_) },
     getHeadersCommandName -> { RawGetHeadersMessageSerializer.read(_) },
     getDataCommandName -> { RawGetDataMessageSerializer.read(_) },
     headersCommandName -> { RawHeadersMessageSerializer.read(_) },
     invCommandName -> { RawInventoryMessageSerializer.read(_) },
-    memPoolCommandName -> { x: ByteVector =>
+    memPoolCommandName -> { _: ByteVector =>
       MemPoolMessage
     },
     merkleBlockCommandName -> { RawMerkleBlockMessageSerializer.read(_) },
@@ -638,22 +638,22 @@ object NetworkPayload {
     transactionCommandName -> { RawTransactionMessageSerializer.read(_) },
     addrCommandName -> { RawAddrMessageSerializer.read(_) },
     filterAddCommandName -> { RawFilterAddMessageSerializer.read(_) },
-    filterClearCommandName -> { x: ByteVector =>
+    filterClearCommandName -> { _: ByteVector =>
       FilterClearMessage
     },
     filterLoadCommandName -> { RawFilterLoadMessageSerializer.read(_) },
-    getAddrCommandName -> { x: ByteVector =>
+    getAddrCommandName -> { _: ByteVector =>
       GetAddrMessage
     },
     pingCommandName -> { RawPingMessageSerializer.read(_) },
     pongCommandName -> { RawPongMessageSerializer.read(_) },
-    rejectCommandName -> { x: ByteVector =>
+    rejectCommandName -> { _: ByteVector =>
       ???
     },
-    sendHeadersCommandName -> { x: ByteVector =>
+    sendHeadersCommandName -> { _: ByteVector =>
       SendHeadersMessage
     },
-    verAckCommandName -> { x: ByteVector =>
+    verAckCommandName -> { _: ByteVector =>
       VerAckMessage
     },
     versionCommandName -> { RawVersionMessageSerializer.read(_) }

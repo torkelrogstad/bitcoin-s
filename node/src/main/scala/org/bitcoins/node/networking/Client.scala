@@ -19,7 +19,7 @@ import org.bitcoins.node.util.BitcoinSpvNodeUtil
   * relaying messages and closing a connection to our peer on
   * the p2p network
   */
-sealed trait Client extends Actor with BitcoinSLogger {
+sealed abstract class Client extends Actor with BitcoinSLogger {
 
   /**
     * The manager is an actor that handles the underlying low level I/O resources (selectors, channels)
@@ -57,43 +57,48 @@ sealed trait Client extends Actor with BitcoinSLogger {
     * @param message
     * @return
     */
-  private def handleTcpMessage(message: Tcp.Message, peer: Option[ActorRef]) =
+  private def handleTcpMessage(message: Tcp.Message, peer: Option[ActorRef]): Unit = {
     message match {
       case event: Tcp.Event     => handleEvent(event)
       case command: Tcp.Command => handleCommand(command, peer)
     }
+  }
+
 
   /**
     * This function is responsible for handling a [[Tcp.Event]] algebraic data type
     * @param event
     */
-  private def handleEvent(event: Tcp.Event) = event match {
-    case Tcp.Bound(localAddress) =>
-      logger.debug("Actor is now bound to the local address: " + localAddress)
-      context.parent ! Tcp.Bound(localAddress)
-    case Tcp.CommandFailed(command) =>
-      logger.debug("Client Command failed:" + command)
-    case Tcp.Connected(remote, local) =>
-      logger.debug("Tcp connection to: " + remote)
-      logger.debug("Local: " + local)
-      sender ! Tcp.Register(context.parent)
-      context.parent ! Tcp.Connected(remote, local)
-      context.become(awaitNetworkRequest(sender))
-    case closeCmd @ (Tcp.ConfirmedClosed | Tcp.Closed | Tcp.Aborted |
-        Tcp.PeerClosed) =>
-      logger.debug("Closed command received: " + closeCmd)
-      context.parent ! closeCmd
-      context.stop(self)
+  private def handleEvent(event: Tcp.Event): Unit = {
+    event match {
+      case Tcp.Bound(localAddress) =>
+        logger.debug("Actor is now bound to the local address: " + localAddress)
+        context.parent ! Tcp.Bound(localAddress)
+      case Tcp.CommandFailed(command) =>
+        logger.debug("Client Command failed:" + command)
+      case Tcp.Connected(remote, local) =>
+        logger.debug("Tcp connection to: " + remote)
+        logger.debug("Local: " + local)
+        sender ! Tcp.Register(context.parent)
+        context.parent ! Tcp.Connected(remote, local)
+        context.become(awaitNetworkRequest(sender))
+      case closeCmd @ (Tcp.ConfirmedClosed | Tcp.Closed | Tcp.Aborted |
+                       Tcp.PeerClosed) =>
+        logger.debug("Closed command received: " + closeCmd)
+        context.parent ! closeCmd
+        context.stop(self)
+    }
   }
 
   /**
     * This function is responsible for handling a [[Tcp.Command]] algebraic data type
     * @param command
     */
-  private def handleCommand(command: Tcp.Command, peer: Option[ActorRef]) =
+  private def handleCommand(command: Tcp.Command, peer: Option[ActorRef]): Unit =
     command match {
       case closeCmd @ (Tcp.ConfirmedClose | Tcp.Close | Tcp.Abort) =>
         peer.map(p => p ! closeCmd)
+        ()
       case connectCmd: Tcp.Connect =>
         manager ! connectCmd
       case bind: Tcp.Bind =>
@@ -105,7 +110,7 @@ sealed trait Client extends Actor with BitcoinSLogger {
     * @param message
     * @return
     */
-  private def sendNetworkMessage(message: NetworkMessage, peer: ActorRef) = {
+  private def sendNetworkMessage(message: NetworkMessage, peer: ActorRef): Unit = {
     val byteMessage = BitcoinSpvNodeUtil.buildByteString(message.bytes)
     logger.debug("Network message: " + message)
     peer ! Tcp.Write(byteMessage)

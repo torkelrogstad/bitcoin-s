@@ -1,16 +1,14 @@
 package org.bitcoins.node.constant
 
-import slick.basic.DatabaseConfig
-import slick.jdbc.PostgresProfile
+import org.bitcoins.node.db.{DbConfig, UnitTestDbConfig}
 
 /**
   * Created by chris on 9/11/16.
   */
-trait TestConstants extends DbConfig {
+trait TestConstants {
 
   /** Reads the configuration for the database specified inside of application.conf */
-  def dbConfig: DatabaseConfig[PostgresProfile] =
-    DatabaseConfig.forConfig("unitTestDatabaseUrl")
+  def dbConfig: DbConfig = UnitTestDbConfig
 
 }
 

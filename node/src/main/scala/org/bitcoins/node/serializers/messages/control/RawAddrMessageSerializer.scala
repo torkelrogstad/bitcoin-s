@@ -5,8 +5,6 @@ import org.bitcoins.core.serializers.{RawBitcoinSerializer, RawSerializerHelper}
 import org.bitcoins.node.messages.AddrMessage
 import org.bitcoins.node.messages.control.AddrMessage
 import org.bitcoins.node.util.NetworkIpAddress
-import org.bitcoins.node.messages.AddrMessage
-import org.bitcoins.node.util.{BitcoinSpvNodeUtil, NetworkIpAddress}
 import scodec.bits.ByteVector
 
 import scala.annotation.tailrec

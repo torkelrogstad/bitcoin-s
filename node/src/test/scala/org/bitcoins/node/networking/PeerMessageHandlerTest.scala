@@ -54,6 +54,7 @@ class PeerMessageHandlerTest
     with BeforeAndAfterAll
     with BitcoinSLogger {
   private val timeout = 15.seconds
+
   def peerMsgHandlerRef: (ActorRef, TestProbe) = {
     val probe = TestProbe(
       "TestProbe-" + BitcoinSpvNodeUtil.createActorName(this.getClass))
@@ -97,7 +98,7 @@ class PeerMessageHandlerTest
     probe.expectMsg(Tcp.Closed)
 
   }
-/*
+
   it must "send a getblocks message and receive a list of blocks back" in {
     val hashStart = DoubleSha256Digest(
       "0000000000000000000000000000000000000000000000000000000000000000")
@@ -193,7 +194,7 @@ class PeerMessageHandlerTest
 
     peerMsgHandler ! Tcp.Close
     probe.expectMsg(Tcp.Closed)
-  }*/
+  }
 
   private def buildPeerRequest(payload: NetworkPayload): NetworkMessage =
     NetworkMessage(Constants.networkParameters, payload)

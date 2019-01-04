@@ -53,8 +53,9 @@ trait BitcoinSpvNodeUtil extends BitcoinSLogger {
     def loop(
         remainingBytes: ByteVector,
         accum: List[NetworkMessage]): (List[NetworkMessage], ByteVector) = {
-      if (remainingBytes.length <= 0) (accum.reverse, remainingBytes)
-      else {
+      if (remainingBytes.length <= 0) {
+        (accum.reverse, remainingBytes)
+      } else {
         val messageTry = Try(NetworkMessage(remainingBytes))
         messageTry match {
           case Success(message) =>

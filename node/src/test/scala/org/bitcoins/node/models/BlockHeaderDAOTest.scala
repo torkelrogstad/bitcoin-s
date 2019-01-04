@@ -1,264 +1,226 @@
 package org.bitcoins.node.models
 
-import akka.actor.{ActorSystem, PoisonPill}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.bitcoins.core.crypto.{DoubleSha256Digest, ECPrivateKey}
 import org.bitcoins.core.gen.BlockchainElementsGenerator
 import org.bitcoins.core.number.{Int32, UInt32}
 import org.bitcoins.core.protocol.blockchain.BlockHeader
-import org.bitcoins.node.constant.{Constants, TestConstants}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, MustMatchers}
-import slick.jdbc.PostgresProfile.api._
+import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.db.{DbConfig, NodeDbManagement, UnitTestDbConfig}
+import org.scalatest._
 
-import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
   * Created by chris on 9/8/16.
   */
 class BlockHeaderDAOTest
-    extends TestKit(ActorSystem("BlockHeaderDAOTest"))
-    with ImplicitSender
-    with FlatSpecLike
+    extends AsyncFlatSpec
     with MustMatchers
     with BeforeAndAfter
     with BeforeAndAfterAll {
-
-  val table = TableQuery[BlockHeaderTable]
-  val database: Database = TestConstants.database
+  implicit val ec: ExecutionContext =
+    scala.concurrent.ExecutionContext.Implicits.global
+  val timeout = 10.seconds
+  val dbConfig: DbConfig = UnitTestDbConfig
   val genesisHeader = Constants.chainParams.genesisBlock.blockHeader
+
+  val blockHeaderDAO = BlockHeaderDAO(dbConfig = dbConfig)
   before {
     //Awaits need to be used to make sure this is fully executed before the next test case starts
     //TODO: Figure out a way to make this asynchronous
-    Await.result(database.run(table.schema.create), 10.seconds)
-    //we need to seed our database with the genesis header to be able to insert subsequent headers
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
-    blockHeaderDAO ! BlockHeaderDAO.Create(genesisHeader)
-    probe.expectMsgType[BlockHeaderDAO.CreateReply](10.seconds)
-    blockHeaderDAO ! PoisonPill
+    Await.result(NodeDbManagement.createBlockHeaderTable(dbConfig), timeout)
+    Await.result(blockHeaderDAO.create(genesisHeader), timeout)
   }
 
-  "BlockHeaderDAO" must "insert and read the genesis block header back" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
+  behavior of "BlockHeaderDAO"
 
-    blockHeaderDAO ! BlockHeaderDAO.Read(genesisHeader.hash)
-    val readHeader = probe.expectMsgType[BlockHeaderDAO.ReadReply]
-    readHeader.hash.get must be(genesisHeader)
+  it should "insert and read the genesis block header back" in {
+    val readF = blockHeaderDAO.read(genesisHeader.hash)
 
-    //also make sure we can query it by height
-    blockHeaderDAO ! BlockHeaderDAO.GetAtHeight(0)
-    val headersAtHeight0 = probe.expectMsgType[BlockHeaderDAO.GetAtHeightReply]
-    headersAtHeight0.headers must be(Seq(genesisHeader))
-    blockHeaderDAO ! PoisonPill
-  }
+    val assert1 = readF.map { readHeader =>
+      assert(readHeader.get.hash == genesisHeader.hash)
+    }
+    val read1F = blockHeaderDAO.getAtHeight(0)
 
-  it must "store a blockheader in the database, then read it from the database" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
-    val blockHeader = buildHeader(genesisHeader.hash)
+    val assert2 = {
+      read1F.map { headersAtHeight0 =>
+        assert(headersAtHeight0._2 == List(genesisHeader))
+      }
+    }
 
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
-    val createReply = probe.expectMsgType[BlockHeaderDAO.CreateReply]
-    createReply.blockHeader must be(blockHeader)
+    assert1.flatMap(_ => assert2.map(_ => succeed))
 
-    blockHeaderDAO ! BlockHeaderDAO.Read(blockHeader.hash)
-    val readHeader = probe.expectMsgType[BlockHeaderDAO.ReadReply]
-    readHeader.hash.get must be(blockHeader)
-    blockHeaderDAO ! PoisonPill
-  }
-
-  it must "be able to create multiple block headers in our database at once" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
-    val blockHeader1 = buildHeader(genesisHeader.hash)
-    val blockHeader2 = buildHeader(blockHeader1.hash)
-
-    val headers = List(blockHeader1, blockHeader2)
-
-    blockHeaderDAO ! BlockHeaderDAO.CreateAll(headers)
-
-    val actualBlockHeaders = probe.expectMsgType[BlockHeaderDAO.CreateAllReply]
-    actualBlockHeaders.headers must be(headers)
-    blockHeaderDAO ! PoisonPill
   }
 
   it must "delete a block header in the database" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
+
     val blockHeader = buildHeader(genesisHeader.hash)
 
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
-    val CreateReply = probe.expectMsgType[BlockHeaderDAO.CreateReply]
-
+    val createdF = blockHeaderDAO.create(blockHeader)
     //delete the header in the db
-    blockHeaderDAO ! BlockHeaderDAO.Delete(blockHeader)
-    val deleteReply = probe.expectMsgType[BlockHeaderDAO.DeleteReply]
-    deleteReply.blockHeader.get must be(blockHeader)
+    val deletedF = {
+      createdF.flatMap { _ =>
+        blockHeaderDAO.delete(blockHeader)
+      }
+    }
 
-    //make sure we cannot read our deleted header
-    blockHeaderDAO ! BlockHeaderDAO.Read(blockHeader.hash)
-    val readHeader = probe.expectMsgType[BlockHeaderDAO.ReadReply]
-    readHeader.hash must be(None)
-    blockHeaderDAO ! PoisonPill
+    deletedF.flatMap { _ =>
+      blockHeaderDAO
+        .read(blockHeader.hash)
+        .map(opt => assert(opt.isEmpty))
+    }
+
   }
 
-  it must "retrieve the last block header saved in the database" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
+  it must "retrieve the chain tip saved in the database" in {
+
     val blockHeader = buildHeader(genesisHeader.hash)
 
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val createdF = blockHeaderDAO.create(blockHeader)
 
-    blockHeaderDAO ! BlockHeaderDAO.LastSavedHeader
-    val lastSavedHeader =
-      probe.expectMsgType[BlockHeaderDAO.LastSavedHeaderReply]
-    lastSavedHeader.headers.head must be(blockHeader)
+    val chainTip1F = createdF.flatMap { _ =>
+      blockHeaderDAO.chainTips
+    }
 
-    //insert another header and make sure that is the new last header
+    val assert1F = chainTip1F.map { tips =>
+      assert(tips.length == 1)
+      assert(tips.head.hash == blockHeader.hash)
+    }
+
     val blockHeader2 =
       BlockchainElementsGenerator.blockHeader(blockHeader.hash).sample.get
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader2)
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
 
-    blockHeaderDAO ! BlockHeaderDAO.LastSavedHeader
-    val lastSavedHeader2 =
-      probe.expectMsgType[BlockHeaderDAO.LastSavedHeaderReply]
-    lastSavedHeader2.headers.head must be(blockHeader2)
-    blockHeaderDAO ! PoisonPill
+    //insert another header and make sure that is the new last header
+    assert1F.flatMap { _ =>
+      val created2F = blockHeaderDAO.create(blockHeader2)
+      val chainTip2F = created2F.flatMap(_ => blockHeaderDAO.chainTips)
+
+      chainTip2F.map { tips =>
+        assert(tips.length == 1)
+        assert(tips.head.hash == blockHeader2.hash)
+      }
+    }
+
   }
 
   it must "return the genesis block when retrieving block headers from an empty database" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
-    blockHeaderDAO ! BlockHeaderDAO.LastSavedHeader
-    val lastSavedHeader =
-      probe.expectMsgType[BlockHeaderDAO.LastSavedHeaderReply]
-    lastSavedHeader.headers.headOption must be(Some(genesisHeader))
-    blockHeaderDAO ! PoisonPill
+    val chainTipsF = blockHeaderDAO.chainTips
+    chainTipsF.map { tips =>
+      assert(tips.headOption == Some(genesisHeader))
+    }
   }
 
   it must "retrieve a block header by height" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
     val blockHeader = buildHeader(genesisHeader.hash)
 
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
+    val createdF = blockHeaderDAO.create(blockHeader)
 
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val getAtHeightF: Future[(Long, Vector[BlockHeader])] = {
+      createdF.flatMap { _ =>
+        blockHeaderDAO.getAtHeight(1)
+      }
+    }
 
-    blockHeaderDAO ! BlockHeaderDAO.GetAtHeight(1)
-
-    val blockHeaderAtHeight =
-      probe.expectMsgType[BlockHeaderDAO.GetAtHeightReply]
-    blockHeaderAtHeight.headers.head must be(blockHeader)
-    blockHeaderAtHeight.height must be(1)
+    val assert1F = getAtHeightF.map {
+      case (height, headers) =>
+        assert(headers.head == blockHeader)
+        assert(height == 1)
+    }
 
     //create one at height 2
     val blockHeader2 =
       BlockchainElementsGenerator.blockHeader(blockHeader.hash).sample.get
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader2)
+    val created2F = blockHeaderDAO.create(blockHeader2)
 
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val getAtHeight2F: Future[(Long, Vector[BlockHeader])] = {
+      created2F.flatMap(_ => blockHeaderDAO.getAtHeight(2))
+    }
 
-    blockHeaderDAO ! BlockHeaderDAO.GetAtHeight(2)
+    val assert2F = getAtHeight2F.map {
+      case (height, headers) =>
+        assert(headers.head == blockHeader2)
+        assert(height == 2)
+    }
 
-    val blockHeaderAtHeight2 =
-      probe.expectMsgType[BlockHeaderDAO.GetAtHeightReply]
-
-    blockHeaderAtHeight2.headers.head must be(blockHeader2)
-    blockHeaderAtHeight2.height must be(2)
-    blockHeaderDAO ! PoisonPill
+    assert1F.flatMap(_ => assert2F.map(_ => succeed))
   }
 
   it must "find the height of a block header" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
     val blockHeader = buildHeader(genesisHeader.hash)
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
+    val createdF = blockHeaderDAO.create(blockHeader)
 
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val findHeightF = createdF.flatMap { _ =>
+      blockHeaderDAO.findHeight(blockHeader.hash)
+    }
 
-    blockHeaderDAO ! BlockHeaderDAO.FindHeight(blockHeader.hash)
-    val foundMessage = probe.expectMsgType[BlockHeaderDAO.FoundHeight]
-
-    foundMessage.headerAtHeight.get._1 must be(1)
-    foundMessage.headerAtHeight.get._2 must be(blockHeader)
-    blockHeaderDAO ! PoisonPill
+    findHeightF.map { findHeightOpt =>
+      assert(findHeightOpt.get._1 == 1)
+      assert(findHeightOpt.get._2 == blockHeader)
+    }
   }
 
   it must "not find the height of a header that DNE in the database" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
     val blockHeader = buildHeader(genesisHeader.hash)
 
-    blockHeaderDAO ! BlockHeaderDAO.FindHeight(blockHeader.hash)
+    val foundHashF = blockHeaderDAO.findHeight(blockHeader.hash)
 
-    val foundMessage = probe.expectMsgType[BlockHeaderDAO.FoundHeight]
-
-    foundMessage.headerAtHeight must be(None)
-    blockHeaderDAO ! PoisonPill
+    foundHashF.map(f => assert(f == None))
   }
 
   it must "find the height of the longest chain" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
     val blockHeader = buildHeader(genesisHeader.hash)
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
+    val createdF = blockHeaderDAO.create(blockHeader)
 
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
-
-    blockHeaderDAO ! BlockHeaderDAO.MaxHeight
-
-    val heightReply1 = probe.expectMsgType[BlockHeaderDAO.MaxHeightReply]
-    heightReply1.height must be(1)
+    val maxHeightF = createdF.flatMap(_ => blockHeaderDAO.maxHeight)
 
     val blockHeader2 = buildHeader(blockHeader.hash)
 
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader2)
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val created2F = maxHeightF.flatMap(_ => blockHeaderDAO.create(blockHeader2))
 
-    blockHeaderDAO ! BlockHeaderDAO.MaxHeight
-    val heightReply2 = probe.expectMsgType[BlockHeaderDAO.MaxHeightReply]
-    heightReply2.height must be(2)
-    blockHeaderDAO ! PoisonPill
+    val maxHeight2F = created2F.flatMap(_ => blockHeaderDAO.maxHeight)
+
+    maxHeightF.flatMap { h1 =>
+      maxHeight2F.map { h2 =>
+        assert(h1 == 1)
+        assert(h2 == 2)
+
+      }
+    }
+
   }
 
   it must "find the height of two headers that are competing to be the longest chain" in {
-    val (blockHeaderDAO, probe) = blockHeaderDAORef
     val blockHeader = buildHeader(genesisHeader.hash)
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader)
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val createdF = blockHeaderDAO.create(blockHeader)
 
     val blockHeader1 = buildHeader(genesisHeader.hash)
-    blockHeaderDAO ! BlockHeaderDAO.Create(blockHeader1)
-    probe.expectMsgType[BlockHeaderDAO.CreateReply]
+    val created2F = createdF.flatMap(_ => blockHeaderDAO.create(blockHeader1))
 
     //now make sure they are both at height 1
-    blockHeaderDAO ! BlockHeaderDAO.GetAtHeight(1)
+    val getHeightF = created2F.flatMap(_ => blockHeaderDAO.getAtHeight(1))
 
-    val getAtHeightReply = probe.expectMsgType[BlockHeaderDAO.GetAtHeightReply]
-    getAtHeightReply must be(
-      BlockHeaderDAO.GetAtHeightReply(1, Seq(blockHeader, blockHeader1)))
-    blockHeaderDAO ! PoisonPill
-  }
+    getHeightF.map {
+      case (height, headers) =>
+        assert(height == 1)
+        assert(headers == Seq(blockHeader, blockHeader1))
+    }
 
-  private def blockHeaderDAORef: (TestActorRef[BlockHeaderDAO], TestProbe) = {
-    val probe = TestProbe()
-    val blockHeaderDAO: TestActorRef[BlockHeaderDAO] =
-      TestActorRef(BlockHeaderDAO.props(TestConstants), probe.ref)
-    (blockHeaderDAO, probe)
   }
 
   after {
     //Awaits need to be used to make sure this is fully executed before the next test case starts
     //TODO: Figure out a way to make this asynchronous
-    Await.result(database.run(table.schema.drop), 10.seconds)
-  }
-
-  override def afterAll = {
-    database.close()
-    TestKit.shutdownActorSystem(system)
+    Await.result(NodeDbManagement.dropBlockHeaderTable(dbConfig), timeout)
   }
 
   private def buildHeader(prevHash: DoubleSha256Digest): BlockHeader = {
     BlockHeader(
       version = Int32.one,
       previousBlockHash = prevHash,
-
       //get random 32 bytes
-      merkleRootHash = DoubleSha256Digest.fromBytes(ECPrivateKey.freshPrivateKey.bytes),
+      merkleRootHash =
+        DoubleSha256Digest.fromBytes(ECPrivateKey.freshPrivateKey.bytes),
       time = UInt32.one,
       nBits = UInt32.one,
       nonce = UInt32.one

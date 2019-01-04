@@ -2,15 +2,13 @@ package org.bitcoins.node.serializers.messages.control
 
 import org.bitcoins.core.serializers.RawBitcoinSerializer
 import org.bitcoins.core.serializers.bloom.RawBloomFilterSerializer
-import org.bitcoins.node.messages
 import org.bitcoins.node.messages.FilterLoadMessage
 import org.bitcoins.node.messages.control.FilterLoadMessage
-import org.bitcoins.node.messages.FilterLoadMessage
 import scodec.bits.ByteVector
 
 /**
   * Created by chris on 7/19/16.
-  * Serializes and deserializes a [[messages.FilterLoadMessage]]
+  * Serializes and deserializes a [[FilterLoadMessage]]
   * https://bitcoin.org/en/developer-reference#filterload
   */
 trait RawFilterLoadMessageSerializer

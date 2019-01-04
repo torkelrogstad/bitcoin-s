@@ -15,7 +15,7 @@ import scodec.bits.ByteVector
   * Created by chris on 6/10/16.
   * Represents an entire p2p network message in bitcoins
   */
-sealed trait NetworkMessage extends NetworkElement {
+sealed abstract class NetworkMessage extends NetworkElement {
   def header: NetworkHeader
   def payload: NetworkPayload
   override def bytes: ByteVector = RawNetworkMessageSerializer.write(this)

@@ -3,6 +3,7 @@ package org.bitcoins.node.constant
 import akka.actor.ActorSystem
 import org.bitcoins.core.config.{MainNet, NetworkParameters, RegTest, TestNet3}
 import org.bitcoins.core.protocol.blockchain.{ChainParams, MainNetChainParams, RegTestNetChainParams, TestNetChainParams}
+import org.bitcoins.node.db.{DbConfig, MainNetDbConfig, RegTestDbConfig, TestNet3DbConfig}
 import org.bitcoins.node.messages.control.VersionMessage
 import org.bitcoins.node.versions.ProtocolVersion70012
 import slick.jdbc.PostgresProfile.api._

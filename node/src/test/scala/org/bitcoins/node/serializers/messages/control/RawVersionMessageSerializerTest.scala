@@ -54,13 +54,15 @@ class RawVersionMessageSerializerTest extends FlatSpec with MustMatchers {
     versionMessage.timestamp must be(Int64(1415483324))
 
     versionMessage.addressReceiveServices must be(NodeNetwork)
-    BitcoinSpvNodeUtil.writeAddress(versionMessage.addressReceiveIpAddress).toHex must be(
-      receivingNodeIpAddress)
+    BitcoinSpvNodeUtil
+      .writeAddress(versionMessage.addressReceiveIpAddress)
+      .toHex must be(receivingNodeIpAddress)
     versionMessage.addressReceivePort must be(8333)
 
     versionMessage.addressTransServices must be(NodeNetwork)
-    BitcoinSpvNodeUtil.writeAddress(versionMessage.addressTransIpAddress).toHex must be(
-      transNodeIpAddress)
+    BitcoinSpvNodeUtil
+      .writeAddress(versionMessage.addressTransIpAddress)
+      .toHex must be(transNodeIpAddress)
     versionMessage.addressTransPort must be(8333)
 
     versionMessage.nonce.toBigInt must be(

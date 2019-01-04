@@ -5,10 +5,12 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.bitcoins.core.config.{MainNet, TestNet3}
 import org.bitcoins.core.gen.BlockchainElementsGenerator
 import org.bitcoins.core.protocol.blockchain.{
+  BlockHeader,
   MainNetChainParams,
   TestNetChainParams
 }
 import org.bitcoins.node.constant.{Constants, TestConstants}
+import org.bitcoins.node.db.NodeDbManagement
 import org.bitcoins.node.messages.data.HeadersMessage
 import org.bitcoins.node.models.BlockHeaderTable
 import org.bitcoins.node.util.TestUtil
@@ -20,7 +22,7 @@ import org.scalatest.{
 }
 import slick.jdbc.PostgresProfile.api._
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.DurationInt
 
 /**
@@ -33,21 +35,23 @@ class BlockHeaderSyncActorTest
     with MustMatchers
     with BeforeAndAfter
     with BeforeAndAfterAll {
-
+  implicit val ec: ExecutionContext =
+    scala.concurrent.ExecutionContext.Implicits.global
+  val timeout = 10.seconds
   val genesisBlockHash = TestNetChainParams.genesisBlock.blockHeader.hash
-  val table = TableQuery[BlockHeaderTable]
-  val database: Database = TestConstants.database
 
   before {
-    Await.result(database.run(table.schema.create), 10.seconds)
+    Await.result(
+      NodeDbManagement.createBlockHeaderTable(TestConstants.dbConfig),
+      timeout)
   }
 
   "BlockHeaderSyncActor" must "send us an error if we receive two block headers that are not connected" in {
     val (b, probe) = blockHeaderSyncActor
     val blockHeader1 = BlockchainElementsGenerator.blockHeader.sample.get
     val blockHeader2 = BlockchainElementsGenerator.blockHeader.sample.get
-    val headersMsg = HeadersMessage(Seq(blockHeader2))
-    b ! BlockHeaderSyncActor.StartHeaders(Seq(blockHeader1))
+    val headersMsg = HeadersMessage(List(blockHeader2))
+    b ! BlockHeaderSyncActor.StartHeaders(List(blockHeader1))
     b ! headersMsg
     val errorMsg =
       probe.expectMsgType[BlockHeaderSyncActor.BlockHeadersDoNotConnect]
@@ -72,11 +76,11 @@ class BlockHeaderSyncActorTest
     val headersReply =
       probe.expectMsgType[BlockHeaderSyncActor.GetHeadersReply](5.seconds)
     //note the hash we started the sync at is not included in the expected blockheaders we recevie from our peer
-    val expectedHashes = Seq(firstBlockHash,
-                             secondBlockHash,
-                             thirdBlockHash,
-                             fourthBlockHash,
-                             fifthBlockHash)
+    val expectedHashes = List(firstBlockHash,
+                              secondBlockHash,
+                              thirdBlockHash,
+                              fourthBlockHash,
+                              fifthBlockHash)
     val actualHashes = headersReply.headers.map(_.hash)
 
     actualHashes.size must be(expectedHashes.size)
@@ -102,7 +106,7 @@ class BlockHeaderSyncActorTest
   it must "stop syncing when we do not receive 2000 block headers from our peer" in {
     val (b, probe) = blockHeaderSyncActor
     b ! BlockHeaderSyncActor.StartHeaders(
-      Seq(TestNetChainParams.genesisBlock.blockHeader))
+      List(TestNetChainParams.genesisBlock.blockHeader))
     val headersMsg = HeadersMessage(TestUtil.firstFiveTestNetBlockHeaders)
     b ! headersMsg
     val reply =
@@ -128,32 +132,32 @@ class BlockHeaderSyncActorTest
       .blockHeader(firstHeader.hash, firstHeader.nBits)
       .sample
       .get
-    val checkHeaderResult = BlockHeaderSyncActor.checkHeaders(Some(firstHeader),
-                                                              Seq(secondHeader),
-                                                              0,
-                                                              MainNet)
+    val checkHeaderResult =
+      BlockHeaderSyncActor.checkHeaders(Some(firstHeader),
+                                        List(secondHeader),
+                                        0,
+                                        MainNet)
 
     checkHeaderResult.error.isDefined must be(false)
-    checkHeaderResult.headers must be(Seq(secondHeader))
+    checkHeaderResult.headers must be(List(secondHeader))
   }
 
   it must "successfully check the header of ONLY the genesis block" in {
     val genesisBlockHeader = MainNetChainParams.genesisBlock.blockHeader
     val checkHeaderResult =
       BlockHeaderSyncActor.checkHeaders(None,
-                                        Seq(genesisBlockHeader),
+                                        List(genesisBlockHeader),
                                         0,
                                         MainNet)
     checkHeaderResult.error.isDefined must be(false)
-    checkHeaderResult.headers must be(Seq(genesisBlockHeader))
+    checkHeaderResult.headers must be(List(genesisBlockHeader))
   }
 
   it must "successfully check a sequence of headers if their is a difficulty change on the 2016 block" in {
-    val firstHeaders =
-      BlockchainElementsGenerator.validHeaderChain(2015).sample.get
+    val firstHeaders = genValidHeaderChain(2015)
     val lastHeader =
       BlockchainElementsGenerator.blockHeader(firstHeaders.last.hash).sample.get
-    val headers = firstHeaders ++ Seq(lastHeader)
+    val headers = firstHeaders ++ List(lastHeader)
     val checkHeaderResult =
       BlockHeaderSyncActor.checkHeaders(None, headers, 0, MainNet)
     checkHeaderResult.error must be(None)
@@ -161,11 +165,11 @@ class BlockHeaderSyncActorTest
   }
 
   it must "fail a checkHeader on a sequence of headers if their is a difficulty change on the 2015 or 2017 block" in {
-    val firstHeaders =
-      BlockchainElementsGenerator.validHeaderChain(2014).sample.get
+    val firstHeaders = genValidHeaderChain(2014)
+
     val lastHeader =
       BlockchainElementsGenerator.blockHeader(firstHeaders.last.hash).sample.get
-    val headers = firstHeaders ++ Seq(lastHeader)
+    val headers = firstHeaders ++ List(lastHeader)
     val checkHeaderResult =
       BlockHeaderSyncActor.checkHeaders(None, headers, 0, MainNet)
     checkHeaderResult.error.isDefined must be(true)
@@ -177,7 +181,7 @@ class BlockHeaderSyncActorTest
       .blockHeader(firstHeaders2.last.hash)
       .sample
       .get
-    val headers2 = firstHeaders ++ Seq(lastHeader2)
+    val headers2 = firstHeaders ++ List(lastHeader2)
     val checkHeaderResult2 =
       BlockHeaderSyncActor.checkHeaders(None, headers2, 0, MainNet)
     checkHeaderResult2.error.isDefined must be(true)
@@ -189,10 +193,11 @@ class BlockHeaderSyncActorTest
     //note that this header properly references the previous header, but nBits are different
     val secondHeader =
       BlockchainElementsGenerator.blockHeader(firstHeader.hash).sample.get
-    val checkHeaderResult = BlockHeaderSyncActor.checkHeaders(Some(firstHeader),
-                                                              Seq(secondHeader),
-                                                              0,
-                                                              MainNet)
+    val checkHeaderResult =
+      BlockHeaderSyncActor.checkHeaders(Some(firstHeader),
+                                        List(secondHeader),
+                                        0,
+                                        MainNet)
 
     val errorMsg = checkHeaderResult.error.get
       .asInstanceOf[BlockHeaderSyncActor.BlockHeaderDifficultyFailure]
@@ -207,17 +212,21 @@ class BlockHeaderSyncActorTest
       TestProbe) = {
     val probe = TestProbe()
     val blockHeaderSyncActor: TestActorRef[BlockHeaderSyncActor] = TestActorRef(
-      BlockHeaderSyncActor.props(TestConstants, TestNet3),
+      BlockHeaderSyncActor.props(TestConstants.dbConfig, TestNet3),
       probe.ref)
     (blockHeaderSyncActor, probe)
   }
 
+  private def genValidHeaderChain(num: Long): List[BlockHeader] = {
+    BlockchainElementsGenerator.validHeaderChain(num).sample.get.toList
+  }
+
   after {
-    Await.result(database.run(table.schema.drop), 10.seconds)
+    Await.result(NodeDbManagement.dropBlockHeaderTable(TestConstants.dbConfig),
+                 timeout)
   }
 
   override def afterAll = {
-    database.close()
     TestKit.shutdownActorSystem(system)
   }
 }

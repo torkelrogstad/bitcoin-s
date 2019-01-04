@@ -2,7 +2,7 @@ package org.bitcoins.node.messages.control
 
 import org.bitcoins.core.number.UInt64
 import org.bitcoins.core.protocol.NetworkElement
-import org.bitcoins.core.util.{BitcoinSLogger, Factory}
+import org.bitcoins.core.util.Factory
 import org.bitcoins.node.serializers.messages.control.RawServiceIdentifierSerializer
 import scodec.bits.ByteVector
 
