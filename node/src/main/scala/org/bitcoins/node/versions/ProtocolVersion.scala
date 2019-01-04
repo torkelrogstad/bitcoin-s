@@ -30,7 +30,7 @@ object ProtocolVersion extends Factory[ProtocolVersion] {
 
   def fromBytes(bytes: ByteVector): ProtocolVersion = {
     //TODO: Should we default to the latest protocol version if the bytes don't match???
-    versions.find(v => v.bytes == bytes).getOrElse(ProtocolVersion70012)
+    versions.find(v => v.bytes == bytes).getOrElse(ProtocolVersion70015)
   }
 }
 
@@ -130,3 +130,34 @@ case object ProtocolVersion70002 extends ProtocolVersion {
 case object ProtocolVersion70012 extends ProtocolVersion {
   override val bytes: ByteVector = ByteVector.fromHex("7c110100").get
 }
+
+/**
+  * Added feefilter message.
+  * Removed alert message system. See Alert System Retirement
+  * Bitcoin Core 0.13.0 (August 2016)
+  */
+case object ProtocolVersion70013 extends ProtocolVersion {
+  override val bytes: ByteVector = ByteVector.fromHex("7d110100").get
+}
+
+/**
+  * BIP152
+  * Added sendcmpct, cmpctblock, getblocktxn, blocktxn messages
+  * Added MSG_CMPCT_BLOCK inventory type to getdata message.
+  * Bitcoin Core 0.13.0 (August 2016)
+  */
+case object ProtocolVersion70014 extends ProtocolVersion {
+  override val bytes: ByteVector = ByteVector.fromHex("7e110100").get
+}
+
+/**
+  * New banning behavior for invalid compact blocks #9026 in v0.14.0, Backported to v0.13.2 in #9048.
+  * Bitcoin Core 0.13.2 (January 2017)
+  */
+case object ProtocolVersion70015 extends ProtocolVersion {
+  override val bytes: ByteVector = ByteVector.fromHex("7f110100").get
+}
+
+
+
+

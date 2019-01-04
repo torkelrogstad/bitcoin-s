@@ -1,46 +1,22 @@
-package org.bitcoins.node.networking
+package org.bitcoins.node.networking.peer
 
 import java.net.InetSocketAddress
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.io.Tcp
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
-import org.bitcoins.core.config.TestNet3
+import akka.util.Timeout
 import org.bitcoins.core.crypto.DoubleSha256Digest
-import org.bitcoins.core.number.UInt64
-import org.bitcoins.core.protocol.CompactSizeUInt
 import org.bitcoins.core.util.{BitcoinSLogger, BitcoinSUtil}
 import org.bitcoins.node.NetworkMessage
 import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.db.UnitTestDbConfig
 import org.bitcoins.node.messages._
-import org.bitcoins.node.messages.control.PingMessage
-import org.bitcoins.node.messages.data.{
-  GetBlocksMessage,
-  GetDataMessage,
-  GetHeadersMessage,
-  Inventory
-}
+import org.bitcoins.node.messages.data.GetHeadersMessage
 import org.bitcoins.node.util.BitcoinSpvNodeUtil
-import org.bitcoins.node.NetworkMessage
-import org.bitcoins.node.constant.Constants
-import org.bitcoins.node.messages._
-import org.bitcoins.node.messages.control.PingMessage
-import org.bitcoins.node.messages.data.{
-  GetBlocksMessage,
-  GetDataMessage,
-  GetHeadersMessage,
-  Inventory
-}
-import org.bitcoins.node.util.BitcoinSpvNodeUtil
-import org.scalatest.{
-  BeforeAndAfter,
-  BeforeAndAfterAll,
-  FlatSpecLike,
-  MustMatchers
-}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, MustMatchers}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext}
 
 /**
   * Created by chris on 7/1/16.
@@ -54,6 +30,9 @@ class PeerMessageHandlerTest
     with BeforeAndAfterAll
     with BitcoinSLogger {
   private val timeout = 15.seconds
+  private implicit val akkaTimeout = Timeout(timeout)
+
+  implicit val ec: ExecutionContext = system.dispatcher
 
   def peerMsgHandlerRef: (ActorRef, TestProbe) = {
     val probe = TestProbe(
@@ -68,6 +47,13 @@ class PeerMessageHandlerTest
     (testActor, probe)
   }
 
+  def peer: Peer = {
+    val randIndex = Math.abs(scala.util.Random.nextInt()) % Constants.networkParameters.dnsSeeds.size
+    val seed = Constants.networkParameters.dnsSeeds(randIndex)
+    val socket = new InetSocketAddress(seed,Constants.networkParameters.port)
+    Peer(socket,Constants.networkParameters)
+  }
+
   "PeerMessageHandler" must "be able to send a GetHeadersMessage then receive a list of headers back" in {
 
     val hashStart = DoubleSha256Digest.empty
@@ -78,13 +64,16 @@ class PeerMessageHandlerTest
     val getHeadersMessage =
       GetHeadersMessage(Constants.version, Seq(hashStart), hashStop)
 
-    val (peerMsgHandler, probe) = peerMsgHandlerRef
+    val peerHandler = new PeerHandler(dbConfig = UnitTestDbConfig, peer = peer)
 
-    probe.send(peerMsgHandler, getHeadersMessage)
+    val connectedF = peerHandler.connect()
 
-    val headersMsg = probe.expectMsgType[HeadersMessage](timeout)
+    val _ = connectedF.map(_ => peerHandler.getHeaders(getHeadersMessage))
+
     headersMsg.commandName must be(NetworkPayload.headersCommandName)
+
     val firstHeader = headersMsg.headers.head
+
     firstHeader.hash.hex must be(
       BitcoinSUtil.flipEndianness(
         "00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"))
@@ -93,13 +82,13 @@ class PeerMessageHandlerTest
     secondHeader.hash.hex must be(
       BitcoinSUtil.flipEndianness(
         "000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820"))
-    peerMsgHandler ! Tcp.Close
 
-    probe.expectMsg(Tcp.Closed)
+
+    peerHandler.close()
 
   }
 
-  it must "send a getblocks message and receive a list of blocks back" in {
+/*  it must "send a getblocks message and receive a list of blocks back" in {
     val hashStart = DoubleSha256Digest(
       "0000000000000000000000000000000000000000000000000000000000000000")
     //this is the hash of block 2, so this test will send two blocks
@@ -194,7 +183,7 @@ class PeerMessageHandlerTest
 
     peerMsgHandler ! Tcp.Close
     probe.expectMsg(Tcp.Closed)
-  }
+  }*/
 
   private def buildPeerRequest(payload: NetworkPayload): NetworkMessage =
     NetworkMessage(Constants.networkParameters, payload)

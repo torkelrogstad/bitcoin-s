@@ -11,8 +11,8 @@ import org.bitcoins.node.db.DbConfig
 import org.bitcoins.node.messages.HeadersMessage
 import org.bitcoins.node.messages.data.GetHeadersMessage
 import org.bitcoins.node.models.BlockHeaderDAO
-import org.bitcoins.node.networking.PeerMessageHandler
-import org.bitcoins.node.networking.sync.BlockHeaderSyncActor.{CheckHeaderResult, GetHeaders, StartAtLastSavedHeader, StartHeaders}
+import org.bitcoins.node.networking.peer.PeerMessageHandler
+import org.bitcoins.node.networking.sync.BlockHeaderSyncActor.{CheckHeaderResult, GetHeaders, StartAtLastSavedHeader}
 import org.bitcoins.node.util.BitcoinSpvNodeUtil
 
 import scala.annotation.tailrec
@@ -46,7 +46,7 @@ trait BlockHeaderSyncActor extends Actor with BitcoinSLogger {
   def maxHeightF: Future[Long] = blockHeaderDAO.maxHeight
 
   /** Helper function to connect to a new peer on the network */
-  private def peerMessageHandler: ActorRef = PeerMessageHandler(context)
+  private def peerMessageHandler: ActorRef = PeerMessageHandler(dbConfig)(context.system)
 
   def receive = LoggingReceive {
     case startHeader: BlockHeaderSyncActor.StartHeaders =>

@@ -9,6 +9,7 @@ import org.bitcoins.core.protocol.blockchain.{Block, BlockHeader, MerkleBlock}
 import org.bitcoins.core.protocol.transaction.Transaction
 import org.bitcoins.core.protocol.{CompactSizeUInt, NetworkElement}
 import org.bitcoins.core.util.BitcoinSUtil
+import org.bitcoins.core.wallet.fee.{SatoshisPerByte, SatoshisPerKiloByte}
 import org.bitcoins.node.headers.NetworkHeader
 import org.bitcoins.node.messages.control.ServiceIdentifier
 import org.bitcoins.node.messages.data.Inventory
@@ -47,6 +48,7 @@ sealed trait NetworkPayload extends NetworkElement {
   * [[https://bitcoin.org/en/developer-reference#data-messages]]
   */
 sealed trait DataPayload extends NetworkPayload
+
 
 /**
   * The block message transmits a single serialized block
@@ -285,6 +287,36 @@ trait AddrMessage extends ControlPayload {
   def addresses: Seq[NetworkIpAddress]
   override def commandName = NetworkPayload.addrCommandName
   override def bytes: ByteVector = RawAddrMessageSerializer.write(this)
+}
+
+
+/**
+  * The feefilter message is a request to the receiving peer to not relay any transaction inv messages
+  * to the sending peer where the fee rate for the transaction is below the fee rate specified in the
+  * feefilter message.
+  *
+  * feefilter was introduced in Bitcoin Core 0.13.0 following the introduction of mempool limiting in
+  * Bitcoin Core 0.12.0. Mempool limiting provides protection against attacks and spam transactions
+  * that have low fee rates and are unlikely to be included in mined blocks. The feefilter messages
+  * allows a node to inform its peers that it will not accept transactions below a specified fee rate
+  * into its mempool, and therefore that the peers can skip relaying inv messages for transactions below
+  * that fee rate to that node.
+  */
+trait FeeFilterMessage extends ControlPayload {
+
+  /** The raw fee rate, in satoshis per kb. This is what is defined in the p2p message */
+  def feeRate: SatoshisPerKiloByte
+
+
+  def satPerByte: SatoshisPerByte = {
+    feeRate.toSatPerByte
+  }
+
+  override def commandName: String = NetworkPayload.feeFilterCommandName
+
+  override def bytes: ByteVector = {
+    RawFeeFilterMessageSerializer.write(this)
+  }
 }
 
 /**
@@ -592,28 +624,29 @@ trait VersionMessage extends ControlPayload {
 }
 
 object NetworkPayload {
-
-  def blockCommandName = "block"
-  def getBlocksCommandName = "getblocks"
-  def getHeadersCommandName = "getheaders"
-  def headersCommandName = "headers"
-  def invCommandName = "inv"
-  def getDataCommandName = "getdata"
-  def memPoolCommandName = "mempool"
-  def merkleBlockCommandName = "merkleblock"
-  def notFoundCommandName = "notfound"
-  def transactionCommandName = "tx"
-  def addrCommandName = "addr"
-  def filterAddCommandName = "filteradd"
-  def filterClearCommandName = "filterclear"
-  def filterLoadCommandName = "filterload"
-  def getAddrCommandName = "getaddr"
-  def pingCommandName = "ping"
-  def pongCommandName = "pong"
-  def rejectCommandName = "reject"
-  def sendHeadersCommandName = "sendheaders"
-  def verAckCommandName = "verack"
-  def versionCommandName = "version"
+  val alertCommandName = "alert"
+  val blockCommandName = "block"
+  val getBlocksCommandName = "getblocks"
+  val getHeadersCommandName = "getheaders"
+  val headersCommandName = "headers"
+  val invCommandName = "inv"
+  val getDataCommandName = "getdata"
+  val memPoolCommandName = "mempool"
+  val merkleBlockCommandName = "merkleblock"
+  val notFoundCommandName = "notfound"
+  val transactionCommandName = "tx"
+  val addrCommandName = "addr"
+  val feeFilterCommandName = "feefilter"
+  val filterAddCommandName = "filteradd"
+  val filterClearCommandName = "filterclear"
+  val filterLoadCommandName = "filterload"
+  val getAddrCommandName = "getaddr"
+  val pingCommandName = "ping"
+  val pongCommandName = "pong"
+  val rejectCommandName = "reject"
+  val sendHeadersCommandName = "sendheaders"
+  val verAckCommandName = "verack"
+  val versionCommandName = "version"
 
   /**
     * Contains all the valid command names with their deserializer on the p2p protocol
@@ -637,6 +670,8 @@ object NetworkPayload {
     notFoundCommandName -> { RawNotFoundMessageSerializer.read(_) },
     transactionCommandName -> { RawTransactionMessageSerializer.read(_) },
     addrCommandName -> { RawAddrMessageSerializer.read(_) },
+
+    feeFilterCommandName -> { RawFeeFilterMessageSerializer.read(_) },
     filterAddCommandName -> { RawFilterAddMessageSerializer.read(_) },
     filterClearCommandName -> { _: ByteVector =>
       FilterClearMessage

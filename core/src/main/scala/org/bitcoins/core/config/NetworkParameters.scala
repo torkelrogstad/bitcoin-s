@@ -76,7 +76,7 @@ sealed abstract class TestNet3 extends BitcoinNetwork {
       "seed.tbtc.petertodd.org",
       "seed.testnet.bitcoin.sprovoost.nl",
       "testnet-seed.bluematt.me"
-    )
+    ).tail
   }
 
   override def magicBytes = ByteVector(0x0b, 0x11, 0x09, 0x07)

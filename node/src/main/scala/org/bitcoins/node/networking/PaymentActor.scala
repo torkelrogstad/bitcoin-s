@@ -11,15 +11,11 @@ import org.bitcoins.core.protocol.blockchain.MerkleBlock
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.node.NetworkMessage
 import org.bitcoins.node.constant.Constants
-import org.bitcoins.node.messages.control.FilterLoadMessage
-import org.bitcoins.node.messages._
-import org.bitcoins.node.messages.data.{GetDataMessage, Inventory}
-import org.bitcoins.node.util.BitcoinSpvNodeUtil
-import org.bitcoins.node.NetworkMessage
-import org.bitcoins.node.constant.Constants
+import org.bitcoins.node.db.DbConfig
 import org.bitcoins.node.messages._
 import org.bitcoins.node.messages.control.FilterLoadMessage
 import org.bitcoins.node.messages.data.{GetDataMessage, Inventory}
+import org.bitcoins.node.networking.peer.PeerMessageHandler
 import org.bitcoins.node.util.BitcoinSpvNodeUtil
 
 /**
@@ -39,6 +35,8 @@ import org.bitcoins.node.util.BitcoinSpvNodeUtil
   */
 sealed trait PaymentActor extends Actor with BitcoinSLogger {
 
+  def dbConfig: DbConfig
+
   def receive = LoggingReceive {
     case hash: Sha256Hash160Digest =>
       paymentToHash(hash)
@@ -52,7 +50,7 @@ sealed trait PaymentActor extends Actor with BitcoinSLogger {
     val bloomFilter =
       BloomFilter(10, 0.0001, UInt32.zero, BloomUpdateNone).insert(hash)
     val filterLoadMsg = FilterLoadMessage(bloomFilter)
-    val peerMsgHandler = PeerMessageHandler(context)
+    val peerMsgHandler = PeerMessageHandler(dbConfig)(context.system)
     val bloomFilterNetworkMsg =
       NetworkMessage(Constants.networkParameters, filterLoadMsg)
     peerMsgHandler ! bloomFilterNetworkMsg
@@ -167,12 +165,12 @@ sealed trait PaymentActor extends Actor with BitcoinSLogger {
 }
 
 object PaymentActor {
-  private case class PaymentActorImpl() extends PaymentActor
+  private case class PaymentActorImpl(dbConfig: DbConfig) extends PaymentActor
 
-  def props = Props(classOf[PaymentActorImpl])
+  def props(dbConfig: DbConfig): Props = Props(classOf[PaymentActorImpl], dbConfig)
 
-  def apply(context: ActorRefFactory): ActorRef =
-    context.actorOf(props, BitcoinSpvNodeUtil.createActorName(this.getClass))
+  def apply(dbConfig: DbConfig)(implicit context: ActorRefFactory): ActorRef =
+    context.actorOf(props(dbConfig), BitcoinSpvNodeUtil.createActorName(this.getClass))
 
   sealed trait PaymentActorMessage
   case class SuccessfulPayment(

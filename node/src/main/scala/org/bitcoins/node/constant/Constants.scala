@@ -5,7 +5,7 @@ import org.bitcoins.core.config.{MainNet, NetworkParameters, RegTest, TestNet3}
 import org.bitcoins.core.protocol.blockchain.{ChainParams, MainNetChainParams, RegTestNetChainParams, TestNetChainParams}
 import org.bitcoins.node.db.{DbConfig, MainNetDbConfig, RegTestDbConfig, TestNet3DbConfig}
 import org.bitcoins.node.messages.control.VersionMessage
-import org.bitcoins.node.versions.ProtocolVersion70012
+import org.bitcoins.node.versions.{ProtocolVersion70013, ProtocolVersion70015}
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.duration.DurationInt
@@ -16,7 +16,7 @@ import scala.concurrent.duration.DurationInt
 sealed abstract class Constants {
   lazy val actorSystem = ActorSystem("BitcoinSpvNode")
   def networkParameters: NetworkParameters = TestNet3
-  def version = ProtocolVersion70012
+  def version = ProtocolVersion70013
   def versionMessage = VersionMessage(networkParameters)
   def timeout = 5.seconds
   def userAgent = "/bitcoins-spv-node/0.0.1"
