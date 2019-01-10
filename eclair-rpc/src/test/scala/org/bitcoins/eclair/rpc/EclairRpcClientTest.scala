@@ -40,6 +40,7 @@ class EclairRpcClientTest extends AsyncFlatSpec with BeforeAndAfterAll {
 
   it should "be able to open and close a channel" in {
 
+    logger.info("open and close")
     val changeAddrF = bitcoindRpcClient.getNewAddress()
     val result: Future[Assertion] = {
       val isOpenedF: Future[(ChannelId, Assertion)] = {

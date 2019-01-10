@@ -9,6 +9,15 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
+import io.netty.buffer.Unpooled
+import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
+import io.netty.handler.codec.http.{
+  HttpResponse => NettyHttpResponse,
+  HttpRequest => NettyHttpRequest,
+  _
+}
+import io.netty.util.CharsetUtil
+import io.netty.util.internal.SocketUtils
 import org.bitcoins.core.crypto.Sha256Digest
 import org.bitcoins.core.currency.CurrencyUnit
 import org.bitcoins.core.protocol.ln.LnInvoice
@@ -442,10 +451,13 @@ class EclairRpcClient(val instance: EclairInstance)(
       parameters: List[JsValue] = List.empty)(
       implicit
       reader: Reads[T]): Future[T] = {
-    val request = buildRequest(getDaemon, command, JsArray(parameters))
-    val responseF = sendRequest(request)
+    // val request = buildRequest(getDaemon, command, JsArray(parameters))
+    // val responseF = sendRequest(request)
 
-    val payloadF: Future[JsValue] = responseF.flatMap(getPayload)
+    val request = buildNettyRequest(instance, command, parameters)
+    val responseF = sendNettyRequest(request, instance.rpcUri.getPort)
+
+    val payloadF: Future[JsValue] = responseF.flatMap(null)
     payloadF.map { payload =>
       val validated: JsResult[T] = (payload \ resultKey).validate[T]
       val parsed: T = parseResult(validated, payload)
@@ -486,6 +498,91 @@ class EclairRpcClient(val instance: EclairInstance)(
   private def sendRequest(req: HttpRequest): Future[HttpResponse] = {
     val respF = Http(m.system).singleRequest(req)
     respF
+  }
+
+  private def sendNettyRequest(
+      req: NettyHttpRequest,
+      port: Int): Future[NettyHttpResponse] = {
+    val bootstrap = new io.netty.bootstrap.Bootstrap()
+
+    val channelFuture =
+      bootstrap.connect(SocketUtils.socketAddress(req.uri, port))
+
+    val p = Promise[NettyHttpResponse]()
+
+    Future({
+      val channel = channelFuture.sync().channel
+      val pipeline = channel.pipeline
+
+      pipeline.addLast(
+        "request",
+        new ChannelInboundHandlerAdapter {
+          override def channelRead(
+              ctx: ChannelHandlerContext,
+              msg: Object): Unit = {
+            msg match {
+              case res: NettyHttpResponse =>
+                logger.info(s"Received HttpRespone")
+                logger.info(s"status: ${res.status}")
+              case lastcontent: LastHttpContent =>
+                logger.info(
+                  s"received last content: ${lastcontent.content.toString(CharsetUtil.UTF_8)}")
+              case content: HttpContent =>
+                logger.info(s"received HttpContent")
+                logger.info(
+                  s"content: ${content.content.toString(CharsetUtil.UTF_8)}")
+              case _ => ()
+            }
+
+          }
+        }
+      )
+
+      channel.writeAndFlush(req)
+    })
+    p.future
+  }
+
+  private def buildNettyRequest(
+      instance: EclairInstance,
+      methodName: String,
+      params: List[JsValue]
+  ): io.netty.handler.codec.http.HttpRequest = {
+    val uuid = UUID.randomUUID().toString
+    val bodyJs: JsObject = JsObject(
+      Map("method" -> JsString(methodName),
+          "params" -> Json.toJson(params),
+          "id" -> JsString(uuid))
+    )
+
+    val uri = instance.rpcUri.toString
+
+    val username = ""
+    val password = instance.authCredentials.password
+    val authString = s"$username:$password"
+    val authStringBytes = Unpooled.wrappedBuffer(authString.getBytes)
+    val authStringBuffer =
+      io.netty.handler.codec.base64.Base64.encode(authStringBytes)
+
+    val bodyBytes = Json.stringify(bodyJs).getBytes()
+    val bodyBuffer = Unpooled.wrappedBuffer(bodyBytes)
+
+    val headers = new ReadOnlyHttpHeaders(
+      false,
+      HttpHeaderNames.AUTHORIZATION,
+      s"Basic: ${authStringBuffer.toString(CharsetUtil.UTF_8)}")
+
+    val emptyTrailingHeaders = new ReadOnlyHttpHeaders(false)
+
+    val req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,
+                               io.netty.handler.codec.http.HttpMethod.POST,
+                               uri,
+                               bodyBuffer,
+                               headers,
+                               emptyTrailingHeaders)
+    logger.info(s"request: $req")
+    logger.info(s"request content: ${req.content().toString(CharsetUtil.UTF_8)}")
+    req
   }
 
   private def buildRequest(
