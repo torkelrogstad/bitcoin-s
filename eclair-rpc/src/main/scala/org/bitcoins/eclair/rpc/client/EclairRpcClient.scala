@@ -23,6 +23,7 @@ import org.bitcoins.eclair.rpc.config.EclairInstance
 import org.bitcoins.eclair.rpc.json._
 import org.bitcoins.eclair.rpc.network.{NodeUri, PeerState}
 import org.bitcoins.rpc.serializers.JsonReaders._
+import org.bitcoins.rpc.util.AsyncUtil
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 
@@ -560,22 +561,42 @@ class EclairRpcClient(val instance: EclairInstance)(
 
   private var process: Option[Process] = None
 
-  def start(): Unit = {
+  def start(): Future[Unit] = {
 
-    if (process.isEmpty) {
-      val p = Process(
-        s"java -jar -Declair.datadir=${instance.authCredentials.datadir.get} $pathToEclairJar &")
-      val result = p.run()
-      logger.info(
-        s"Starting eclair with datadir ${instance.authCredentials.datadir.get}")
+    val _ = {
+      if (process.isEmpty) {
+        val p = Process(
+          s"java -jar -Declair.datadir=${instance.authCredentials.datadir.get} $pathToEclairJar &")
+        val result = p.run()
+        logger.info(
+          s"Starting eclair with datadir ${instance.authCredentials.datadir.get}")
 
-      process = Some(result)
-      ()
-    } else {
-      logger.info(s"Eclair was already started!")
-      ()
+        process = Some(result)
+        ()
+      } else {
+        logger.info(s"Eclair was already started!")
+        ()
+      }
     }
 
+
+    def isStartedF(): Future[Boolean] = {
+      val started: Promise[Boolean] = Promise()
+      getInfo.onComplete {
+        case Success(_) => started.success(true)
+        case Failure(_) => started.success(false)
+      }
+
+      started.future
+    }
+
+    val started = AsyncUtil.retryUntilSatisfiedF(
+      () => isStartedF,
+      duration = 1.seconds,
+      maxTries = 60)
+
+
+    started
   }
 
   def isStarted(): Boolean = {

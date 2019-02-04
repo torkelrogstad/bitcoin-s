@@ -311,31 +311,38 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
     * respective [[org.bitcoins.eclair.rpc.client.EclairRpcClient EclairRpcClient]]s
     */
   def createNodePair(bitcoindRpcClientOpt: Option[BitcoindRpcClient])(
-      implicit system: ActorSystem): (EclairRpcClient, EclairRpcClient) = {
-    val bitcoindRpcClient = {
-      bitcoindRpcClientOpt.getOrElse(
-        BitcoindRpcTestUtil.startedBitcoindRpcClient())
+      implicit system: ActorSystem): Future[(EclairRpcClient, EclairRpcClient)] = {
+    import system.dispatcher
+    val bitcoindRpcClientF: Future[BitcoindRpcClient] = {
+
+      if (bitcoindRpcClientOpt.isDefined) {
+        Future.successful(bitcoindRpcClientOpt.get)
+      } else {
+        BitcoindRpcTestUtil.startedBitcoindRpcClient()
+      }
     }
 
-    val e1Instance = EclairRpcTestUtil.eclairInstance(bitcoindRpcClient)
-    val e2Instance = EclairRpcTestUtil.eclairInstance(bitcoindRpcClient)
+    val e1InstanceF = bitcoindRpcClientF.map(EclairRpcTestUtil.eclairInstance(_))
+    val e2InstanceF = bitcoindRpcClientF.map(EclairRpcTestUtil.eclairInstance(_))
 
-    val client = new EclairRpcClient(e1Instance)
-    val otherClient = new EclairRpcClient(e2Instance)
+    val clientF = e1InstanceF.flatMap { e1 =>
+      val e = new EclairRpcClient(e1)
+      logger.debug(
+        s"Temp eclair directory created ${e.getDaemon.authCredentials.datadir}")
+      e.start().map(_ => e)
+    }
+    val otherClientF = e2InstanceF.map { e2 =>
+      val e = new EclairRpcClient(e2)
+      logger.debug(
+        s"Temp eclair directory created ${e.getDaemon.authCredentials.datadir}")
+      e.start().map(_ => e)
+    }
 
-    logger.debug(
-      s"Temp eclair directory created ${client.getDaemon.authCredentials.datadir}")
-    logger.debug(
-      s"Temp eclair directory created ${otherClient.getDaemon.authCredentials.datadir}")
 
-    client.start()
-    otherClient.start()
-
-    RpcUtil.awaitCondition(condition = () => client.isStarted(),
-                           duration = 1.second)
-
-    RpcUtil.awaitCondition(condition = () => otherClient.isStarted(),
-                           duration = 1.second)
+    //get rid of this when we change the return type of this method to be
+    //Future[(EclairRpcClient,EclairRpcClient)]
+    val bothStartedF = clientF.flatMap(_ => otherClientF)
+    Await.result(bothStartedF,30.seconds)
 
     logger.debug(s"Both clients started")
 
@@ -346,7 +353,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
 
   def connectLNNodes(client: EclairRpcClient, otherClient: EclairRpcClient)(
       implicit
-      system: ActorSystem): Unit = {
+      system: ActorSystem): Future[Unit] = {
     implicit val dispatcher = system.dispatcher
     val infoF = otherClient.getInfo
 
@@ -365,11 +372,14 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
     }
 
     logger.debug(s"Awaiting connection between clients")
-    RpcUtil.awaitConditionF(conditionF = () => isConnected(),
-                            duration = 1.second)
-    logger.debug(s"Successfully connected two clients")
+    val connected = RpcUtil.retryUntilSatisfiedF(
+      conditionF = () => isConnected(),
+      duration = 1.second)
 
-    ()
+    connected.map(_ => logger.debug(s"Successfully connected two clients"))
+
+    connected
+
   }
 
   /**
