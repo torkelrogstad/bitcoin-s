@@ -147,22 +147,22 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
   }
 
   def randomEclairClient(bitcoindRpcOpt: Option[BitcoindRpcClient] = None)(
-      implicit system: ActorSystem): EclairRpcClient = {
-    val bitcoindRpc = {
+      implicit system: ActorSystem): Future[EclairRpcClient] = {
+    import system.dispatcher
+    val bitcoindRpcF: Future[BitcoindRpcClient] = {
       if (bitcoindRpcOpt.isDefined) {
-        bitcoindRpcOpt.get
+        Future.successful(bitcoindRpcOpt.get)
       } else {
         BitcoindRpcTestUtil.startedBitcoindRpcClient()
       }
     }
 
-    val randInstance = randomEclairInstance(bitcoindRpc)
-    val eclairRpc = new EclairRpcClient(randInstance)
-    eclairRpc.start()
+    val randInstanceF = bitcoindRpcF.map(randomEclairInstance(_))
+    val eclairRpcF = randInstanceF.map(i => new EclairRpcClient(i))
 
-    RpcUtil.awaitCondition(() => eclairRpc.isStarted(), duration = 1.seconds)
+    val startedF = eclairRpcF.flatMap(_.start())
 
-    eclairRpc
+    startedF.flatMap(_ => eclairRpcF)
   }
 
   def cannonicalEclairClient()(
@@ -229,14 +229,23 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
   private def createNodeLink(
       bitcoindRpcClient: Option[BitcoindRpcClient],
       channelAmount: MilliSatoshis)(
-      implicit actorSystem: ActorSystem): EclairNodes4 = {
+      implicit actorSystem: ActorSystem): Future[EclairNodes4] = {
     implicit val ec: ExecutionContext = actorSystem.dispatcher
-    val internalBitcoind = bitcoindRpcClient.getOrElse(
-      BitcoindRpcTestUtil.startedBitcoindRpcClient()
-    )
+    val internalBitcoindF = {
+      if (bitcoindRpcClient.isDefined) {
+        Future.successful(bitcoindRpcClient.get)
+      } else {
+        BitcoindRpcTestUtil.startedBitcoindRpcClient()
+      }
+    }
 
-    val (first, second) = createNodePair(Some(internalBitcoind))
-    val (third, fourth) = createNodePair(Some(internalBitcoind))
+    val pair1: Future[(EclairRpcClient, EclairRpcClient)] = {
+      internalBitcoindF.flatMap(b => createNodePair(Some(b)))
+    }
+
+    val pair2: Future[(EclairRpcClient,EclairRpcClient)] = {
+      internalBitcoindF.flatMap(b => createNodePair(Some(b)))
+    }
 
     def open(
         c1: EclairRpcClient,
@@ -247,16 +256,45 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
                   pushMSat = MilliSatoshis(channelAmount.toLong / 2))
     }
 
-    EclairRpcTestUtil.connectLNNodes(second, third)
+    val nodeVecF: Future[Vector[EclairRpcClient]] = {
+      pair1.flatMap { case (first,second) =>
+        pair2.flatMap {
+          case (third,fourth) =>
 
-    val openF = Future.sequence(
-      List(open(first, second), open(second, third), open(third, fourth)))
+            // we need to make sure the second and third nodes are connected
+            val connected = EclairRpcTestUtil.connectLNNodes(second, third)
+            connected.map { _ =>
+              Vector(first,second,third,fourth)
+            }
 
-    Await.result(openF, 60.seconds)
+        }
+      }
+    }
 
-    internalBitcoind.generate(3)
 
-    EclairNodes4(first, second, third, fourth)
+
+    val openChannelsFNested: Future[List[Future[FundedChannelId]]] = {
+      nodeVecF.map { nodeVec =>
+        List(open(nodeVec.head, nodeVec(1)),
+          open(nodeVec(1), nodeVec(2)),
+          open(nodeVec(2), nodeVec(3)))
+
+      }
+    }
+
+    val openChannelsF :Future[List[FundedChannelId]] = {
+      openChannelsFNested.flatMap(Future.sequence(_))
+    }
+
+    val genBlocksF = openChannelsF.flatMap { _ =>
+      internalBitcoindF.flatMap(_.generate(3))
+    }
+
+    genBlocksF.flatMap { _ =>
+      nodeVecF.map { nodeVec =>
+        EclairNodes4(nodeVec.head, nodeVec(1), nodeVec(2), nodeVec(3))
+      }
+    }
   }
 
   /**
@@ -267,7 +305,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
     */
   def createNodeLink(
       bitcoindRpcClient: BitcoindRpcClient
-  )(implicit actorSystem: ActorSystem): EclairNodes4 = {
+  )(implicit actorSystem: ActorSystem): Future[EclairNodes4] = {
     createNodeLink(Some(bitcoindRpcClient), DEFAULT_CHANNEL_MSAT_AMT)
   }
 
@@ -280,7 +318,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
   def createNodeLink(
       bitcoindRpcClient: BitcoindRpcClient,
       channelAmount: MilliSatoshis)(
-      implicit actorSystem: ActorSystem): EclairNodes4 = {
+      implicit actorSystem: ActorSystem): Future[EclairNodes4] = {
     createNodeLink(Some(bitcoindRpcClient), channelAmount)
   }
 
@@ -290,7 +328,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
     * @return A 4-tuple of the created nodes' respective
     *         [[org.bitcoins.eclair.rpc.client.EclairRpcClient EclairRpcClient]]
     */
-  def createNodeLink()(implicit actorSystem: ActorSystem): EclairNodes4 = {
+  def createNodeLink()(implicit actorSystem: ActorSystem): Future[EclairNodes4] = {
     createNodeLink(None, DEFAULT_CHANNEL_MSAT_AMT)
   }
 
@@ -302,7 +340,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
     */
   def createNodeLink(
       channelAmount: MilliSatoshis
-  )(implicit actorSystem: ActorSystem): EclairNodes4 = {
+  )(implicit actorSystem: ActorSystem): Future[EclairNodes4] = {
     createNodeLink(None, channelAmount)
   }
 
@@ -331,24 +369,25 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
         s"Temp eclair directory created ${e.getDaemon.authCredentials.datadir}")
       e.start().map(_ => e)
     }
-    val otherClientF = e2InstanceF.map { e2 =>
+    val otherClientF = e2InstanceF.flatMap { e2 =>
       val e = new EclairRpcClient(e2)
       logger.debug(
         s"Temp eclair directory created ${e.getDaemon.authCredentials.datadir}")
       e.start().map(_ => e)
     }
 
-
-    //get rid of this when we change the return type of this method to be
-    //Future[(EclairRpcClient,EclairRpcClient)]
-    val bothStartedF = clientF.flatMap(_ => otherClientF)
-    Await.result(bothStartedF,30.seconds)
-
     logger.debug(s"Both clients started")
 
-    connectLNNodes(client, otherClient)
+    val connectedLnF: Future[(EclairRpcClient, EclairRpcClient)] = clientF.flatMap { c1 =>
+      otherClientF.flatMap { c2 =>
+        val connectedF = connectLNNodes(c1, c2)
+        connectedF.map { _ =>
+          (c1,c2)
+        }
+      }
+    }
 
-    (client, otherClient)
+    connectedLnF
   }
 
   def connectLNNodes(client: EclairRpcClient, otherClient: EclairRpcClient)(
