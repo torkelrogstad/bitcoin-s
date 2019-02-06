@@ -7,11 +7,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.{Config, ConfigFactory}
 import org.bitcoins.core.config.RegTest
 import org.bitcoins.core.currency.CurrencyUnit
-import org.bitcoins.core.protocol.ln.channel.{
-  ChannelId,
-  ChannelState,
-  FundedChannelId
-}
+import org.bitcoins.core.protocol.ln.channel.{ChannelId, ChannelState, FundedChannelId}
 import org.bitcoins.core.protocol.ln.currency.MilliSatoshis
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.eclair.rpc.client.EclairRpcClient
@@ -21,9 +17,10 @@ import org.bitcoins.rpc.BitcoindRpcTestUtil
 import org.bitcoins.rpc.client.BitcoindRpcClient
 import org.bitcoins.rpc.config.{BitcoindInstance, ZmqConfig}
 import org.bitcoins.rpc.util.RpcUtil
+import org.bitcoins.util.AsyncUtil
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * @define nodeLinkDoc
@@ -195,19 +192,19 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
     * @param chanId
     */
   def awaitUntilChannelNormal(client: EclairRpcClient, chanId: ChannelId)(
-      implicit system: ActorSystem): Unit = {
+      implicit system: ActorSystem): Future[Unit] = {
     awaitUntilChannelState(client, chanId, ChannelState.NORMAL)
   }
 
   def awaitUntilChannelClosing(client: EclairRpcClient, chanId: ChannelId)(
-      implicit system: ActorSystem): Unit = {
+      implicit system: ActorSystem): Future[Unit] = {
     awaitUntilChannelState(client, chanId, ChannelState.CLOSING)
   }
 
   private def awaitUntilChannelState(
       client: EclairRpcClient,
       chanId: ChannelId,
-      state: ChannelState)(implicit system: ActorSystem): Unit = {
+      state: ChannelState)(implicit system: ActorSystem): Future[Unit] = {
     logger.debug(s"Awaiting ${chanId} to enter ${state} state")
     def isState(): Future[Boolean] = {
       val chanF = client.channel(chanId)
@@ -220,10 +217,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
       }(system.dispatcher)
     }
 
-    RpcUtil.awaitConditionF(conditionF = () => isState(), duration = 1.seconds)
-
-    logger.debug(s"${chanId} has successfully entered the ${state} state")
-    ()
+    AsyncUtil.retryUntilSatisfiedF(conditionF = () => isState(), duration = 1.seconds)
   }
 
   private def createNodeLink(
@@ -489,7 +483,7 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
   }
 
   def awaitChannelOpened(client1: EclairRpcClient, chanId: ChannelId)(
-      implicit system: ActorSystem): Unit = {
+      implicit system: ActorSystem): Future[Unit] = {
     EclairRpcTestUtil.awaitUntilChannelNormal(client1, chanId)
   }
 
@@ -513,14 +507,13 @@ trait EclairRpcTestUtil extends BitcoinSLogger {
 
   /** Shuts down an eclair daemon and the bitcoind daemon it is associated with */
   def shutdown(eclairRpcClient: EclairRpcClient)(
-      implicit system: ActorSystem): Unit = {
+      implicit system: ActorSystem): Future[Unit] = {
+    import system.dispatcher
     val bitcoindRpc = getBitcoindRpc(eclairRpcClient)
 
     eclairRpcClient.stop()
 
-    bitcoindRpc.stop()
-
-    RpcUtil.awaitServerShutdown(bitcoindRpc)
+    bitcoindRpc.stop().map(_ => ())
   }
 }
 

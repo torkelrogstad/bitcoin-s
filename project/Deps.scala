@@ -17,7 +17,7 @@ object Deps {
     val nativeLoaderV = "2.3.2"
     val typesafeConfigV = "1.3.3"
 
-    val bitcoinsV = "f2f701-1549224211999-SNAPSHOT"
+    val bitcoinsV = "ebe51d-1549409118067-SNAPSHOT"
   }
 
   object Compile {

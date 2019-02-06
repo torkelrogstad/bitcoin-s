@@ -1212,6 +1212,8 @@ class BitcoindRpcClient(val instance: BitcoindInstance)(
       duration = 1.seconds,
       maxTries = 60)
 
+    started.map(_ => logger.debug(s"started bitcoind"))
+
     started
   }
 }

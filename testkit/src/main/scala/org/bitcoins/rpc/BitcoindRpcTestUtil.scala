@@ -292,19 +292,26 @@ trait BitcoindRpcTestUtil extends BitcoinSLogger {
 
     val blocksToGenerate = 102
     //fund the wallet by generating 102 blocks, need this to get over coinbase maturity
-    val generatedF = startedF.flatMap(_ => rpc.generate(blocksToGenerate))
-
-    def isBlocksGenerated(): Future[Boolean] = {
-      rpc.getBlockCount.map(_ >= blocksToGenerate)
+    val generatedF = startedF.flatMap { _ =>
+      rpc.generate(blocksToGenerate)
     }
 
-    val blocksGeneratedF = AsyncUtil.retryUntilSatisfiedF(
-      () => isBlocksGenerated,
-      duration = 1.seconds
-    )
+    def isBlocksGenerated(): Future[Boolean] = {
+      rpc.getBlockCount.map { count =>
+        count >= blocksToGenerate
+      }
+    }
 
-    blocksGeneratedF.map(_ => rpc)
+    val blocksGeneratedF = generatedF.flatMap { _ =>
+      AsyncUtil.retryUntilSatisfiedF(
+        () => isBlocksGenerated,
+        duration = 1.seconds
+      )
+    }
 
+    val result = blocksGeneratedF.map(_ => rpc)
+
+    result
   }
 }
 
