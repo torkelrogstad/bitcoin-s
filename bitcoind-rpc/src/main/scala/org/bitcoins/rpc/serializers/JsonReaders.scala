@@ -15,13 +15,14 @@ import org.bitcoins.core.protocol.{
   P2PKHAddress,
   P2SHAddress
 }
+import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.core.wallet.fee.{BitcoinFeeUnit, SatoshisPerByte}
 import org.bitcoins.rpc.jsonmodels.RpcAddress
 import play.api.libs.json._
 
 import scala.util.{Failure, Success}
 
-object JsonReaders {
+object JsonReaders extends BitcoinSLogger {
 
   implicit object BigIntReads extends Reads[BigInt] {
     override def reads(json: JsValue): JsResult[BigInt] =
@@ -215,16 +216,21 @@ object JsonReaders {
   }
 
   implicit object BitcoinAddressReads extends Reads[BitcoinAddress] {
-    override def reads(json: JsValue): JsResult[BitcoinAddress] = json match {
-      case JsString(s) =>
-        BitcoinAddress.fromString(s) match {
-          case Success(address) => JsSuccess(address)
-          case Failure(err) =>
-            SerializerUtil.buildErrorMsg("address", err)
-        }
-      case err @ (JsNull | _: JsBoolean | _: JsNumber | _: JsArray |
-          _: JsObject) =>
-        SerializerUtil.buildJsErrorMsg("jsstring", err)
+    override def reads(json: JsValue): JsResult[BitcoinAddress] = {
+      logger.info(s"reading $json")
+      json match {
+        case JsString(s) =>
+          BitcoinAddress.fromString(s) match {
+            case Success(address) =>
+              logger.info(s"result: $address")
+              JsSuccess(address)
+            case Failure(err) =>
+              SerializerUtil.buildErrorMsg("address", err)
+          }
+        case err @ (JsNull | _: JsBoolean | _: JsNumber | _: JsArray |
+            _: JsObject) =>
+          SerializerUtil.buildJsErrorMsg("jsstring", err)
+      }
     }
   }
 
