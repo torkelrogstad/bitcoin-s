@@ -14,6 +14,10 @@ import scodec.bits.ByteVector
   */
 sealed abstract class CompactSizeUInt extends NetworkElement {
 
+  //$COVERAGE-OFF$
+  override def toString: String = s"CompactSizeUInt($toLong)"
+  //$COVERAGE-ON$
+
   /** The number parsed from VarInt. */
   def num: UInt64
 
