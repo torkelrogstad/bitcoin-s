@@ -182,7 +182,7 @@ lazy val chain = project
   .settings(
     name := "bitcoin-s-chain",
     libraryDependencies ++= Deps.chain
-  ).dependsOn(core)
+  ).dependsOn(core, dbCommons)
   .enablePlugins(FlywayPlugin)
 
 lazy val chainTest = project
