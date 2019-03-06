@@ -1,9 +1,17 @@
 package org.bitcoins.core.protocol.psbt
 
+import org.bitcoins.core.crypto.{ECDigitalSignature, ECPublicKey}
 import org.bitcoins.core.currency.Bitcoins
 import org.bitcoins.core.protocol.psbt.Psbt.PsbtGlobalData
+import org.bitcoins.core.protocol.script.{
+  ScriptPubKey,
+  ScriptSignature,
+  ScriptWitness,
+  WitnessScriptPubKey
+}
 import org.bitcoins.core.protocol.transaction.Transaction
 import org.bitcoins.core.protocol.{CompactSizeUInt, NetworkElement}
+import org.bitcoins.core.script.crypto.HashType
 import org.bitcoins.core.util.Factory
 import scodec.bits.{ByteVector, HexStringSyntax}
 
@@ -16,7 +24,7 @@ sealed abstract class Psbt extends NetworkElement {
 
   def globalData: PsbtGlobalData
 
-  def inputs: Vector[PsbtInput]
+  def inputs: Vector[Vector[PsbtInput]]
   def outputs: Vector[PsbtOutput]
 
   def fee: Bitcoins
@@ -29,7 +37,7 @@ object Psbt extends Factory[Psbt] {
 
   private case class PsbtImpl(
       globalData: PsbtGlobalData,
-      inputs: Vector[PsbtInput],
+      inputs: Vector[Vector[PsbtInput]],
       outputs: Vector[PsbtOutput],
       fee: Bitcoins
   ) extends Psbt
@@ -61,7 +69,10 @@ object Psbt extends Factory[Psbt] {
 
     val (globalData, inputsAndOutputsBytes) = processGlobalData(data)
 
-    val (inputs, outputsBytes) = processInputs(inputsAndOutputsBytes)
+    val inputsAmount = globalData.unsignedTx.inputs.length
+    val (inputs, outputsBytes) =
+      processInputs(inputsAmount, inputsAndOutputsBytes)
+
     assert(globalData.unsignedTx.inputs.forall { i =>
       true // todo: verify that all tx inputs have a matching input map
     })
@@ -71,30 +82,69 @@ object Psbt extends Factory[Psbt] {
       true // todo: verify that all tx outputs have a matching output map
     })
 
-    PsbtImpl(globalData = globalData,
-             inputs = inputs,
-             outputs = outputs,
-             fee = Bitcoins.zero)
+    PsbtImpl(globalData, inputs, outputs, Bitcoins.zero)
   }
 
   case class PsbtGlobalData(unsignedTx: Transaction, unknownData: UnknownData)
+
+  private def makePsbtInput(keyValuePair: KeyValuePair): PsbtInput = {
+    import PsbtInputTypes._
+    val KeyValuePair(key, value) = keyValuePair
+    key match {
+      case PSBT_IN_NON_WITNESS_UTXO =>
+        PsbtInputNonWitnessUtxo(Transaction.fromBytes(value))
+      case PSBT_IN_WITNESS_UTXO =>
+        PsbtInputWitnessUtxo(Transaction.fromBytes(value))
+      case PSBT_IN_PARTIAL_SIG =>
+        throw new IllegalArgumentException(
+          "Key PSBT_IN_PARTIAL_SIG must include a public key")
+      case PSBT_IN_PARTIAL_SIG +: rest =>
+        val pubkey = ECPublicKey.fromBytes(rest)
+        val signature = ECDigitalSignature.fromBytes(value)
+        PsbtInputPartialSignature(pubkey, signature)
+      case PSBT_IN_SIGHASH_TYPE =>
+        PsbtInputSighashType(HashType.fromBytes(value))
+      case PSBT_IN_REDEEM_SCRIPT =>
+        PsbtInputRedeemScript(ScriptPubKey.fromBytes(value))
+      case PSBT_IN_WITNESS_SCRIPT =>
+        PsbtInputWitnessScript(???)
+      case PSBT_IN_BIP32_DERIVATION =>
+        throw new IllegalArgumentException(
+          "Key PSBT_IN_BIP32_DERIVATION must include a public key")
+      case PSBT_IN_BIP32_DERIVATION +: rest =>
+        val pubkey = ECPublicKey.fromBytes(rest)
+        // master key fingerprint
+        ???
+      case PSBT_IN_FINAL_SCRIPTSIG =>
+        PsbtInputFinalScriptSig(ScriptSignature.fromBytes(value))
+      case PSBT_IN_FINAL_SCRIPTWITNESS =>
+        PsbtInputFinalScriptWitnesss(???)
+      case unknown: ByteVector =>
+        PsbtInputUnknown(key = unknown, value = value)
+    }
+  }
 
   /**
     * Extracts the inputs of the unsigned transaction, and returns
     * the remainding bytes.
     */
-  private def processInputs(
-      bytes: ByteVector): (Vector[PsbtInput], ByteVector) = {
-    val (keyValuePairs, remaindingBytes) = processKeyValueMap(bytes)
-    val inputs: Vector[PsbtInput] = keyValuePairs.map {
-      case KeyValuePair(key, value) =>
-        key match {
-          case PsbtInputTypes.PSBT_IN_NON_WITNESS_UTXO =>
-            PsbtInputNonWitnessUtxo(Transaction.fromBytes(value))
-          case _: ByteVector => ???
-        }
+
+  @tailrec
+  def processInputs(
+      inputsLeft: Int,
+      bytes: ByteVector,
+      accum: Vector[Vector[PsbtInput]] = Vector.empty): (
+      Vector[Vector[PsbtInput]],
+      ByteVector) = {
+    if (inputsLeft == 0) (accum, bytes)
+    else {
+      val (keyValuePairs, remaindingBytes) = processKeyValueMap(bytes)
+      val inputs: Vector[PsbtInput] = keyValuePairs.map(makePsbtInput)
+      processInputs(inputsLeft = inputsLeft - 1,
+                    bytes = remaindingBytes,
+                    accum = accum :+ inputs)
     }
-    (inputs, remaindingBytes)
+
   }
 
   /**
@@ -216,65 +266,7 @@ object Psbt extends Factory[Psbt] {
   }
 }
 
-sealed abstract class PsbtInput
-case class PsbtInputNonWitnessUtxo(transaction: Transaction) extends PsbtInput
-
-sealed abstract class PsbtOutput
-
 object PsbtGlobalTypes {
   // followed by transaction, network serialization
   val PSBT_GLOBAL_UNSIGNED_TX: ByteVector = hex"0x00"
-}
-
-object PsbtInputTypes {
-
-  /**
-    * The transaction in network serialization format the current
-    * input spends from. This should only be present for inputs
-    * which spend non-segwit outputs. However, if it is unknown
-    * whether an input spends a segwit output, this type should
-    * be used.
-    */
-  val PSBT_IN_NON_WITNESS_UTXO: ByteVector = hex"0x00"
-
-  /**
-    * The entire transaction output in network serialization
-    * which the current input spends from. This should only
-    * be present for inputs which spend segwit outputs,
-    * including P2SH embedded ones.
-    */
-  val PSBT_IN_WITNESS_UTXO: ByteVector = hex"0x01"
-
-  val PSBT_IN_PARTIAL_SIG: ByteVector = hex"0x02"
-
-  val PSBT_IN_SIGHASH_TYPE: ByteVector = hex"0x03"
-
-  val PSBT_IN_REDEEM_SCRIPT: ByteVector = hex"0x04"
-
-  val PSBT_IN_WITNESS_SCRIPT: ByteVector = hex"0x05"
-
-  val PSBT_IN_BIP32_DERIVATION: ByteVector = hex"0x06"
-
-  val PSBT_IN_FINAL_SCRIPTSIG: ByteVector = hex"0x07"
-
-  val PSBT_IN_FINAL_SCRIPTWITNESS: ByteVector = hex"0x08"
-}
-
-object PsbtOutputTypes {
-
-  /** The `redeemScript` for this output if it has one */
-  val PSBT_OUT_REDEEM_SCRIPT: ByteVector = hex"0x00"
-
-  /** The `witnessScript` for this output if it has one */
-  val PSBT_OUT_WITNESS_SCRIPT: ByteVector = hex"0x01"
-
-  /**
-    * The master key fingerprint concatenated with the
-    * derivation path of the public key. The derivation
-    * path is represented as 32 bit unsigned integer
-    * indexes concatenated with each other. This must omit
-    * the index of the master key. Public keys are those
-    * needed to spend this output.
-    */
-  val PSBT_OUT_BIP32_DERIVATION: ByteVector = hex"0x02"
 }
