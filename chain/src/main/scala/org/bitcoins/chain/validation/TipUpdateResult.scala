@@ -13,16 +13,16 @@ object TipUpdateResult {
   /** Indicates we successfully update the chain tip with this header */
   case class Success(header: BlockHeaderDb) extends TipUpdateResult
 
-  sealed abstract class TipUpdateFailure extends TipUpdateResult {
+  sealed abstract class Failure extends TipUpdateResult {
     def header: BlockHeader
   }
 
   /** Means that [[header.previousBlockHashBE]] was incorrect */
-  case class BadPreviousBlockHash(header: BlockHeader) extends TipUpdateFailure
+  case class BadPreviousBlockHash(header: BlockHeader) extends Failure
 
   /** Means that [[header.nBits]] was invalid */
-  case class BadPOW(header: BlockHeader) extends TipUpdateFailure
+  case class BadPOW(header: BlockHeader) extends Failure
 
   /** Means that [[header.nonce]] was invalid */
-  case class BadNonce(header: BlockHeader) extends TipUpdateFailure
+  case class BadNonce(header: BlockHeader) extends Failure
 }

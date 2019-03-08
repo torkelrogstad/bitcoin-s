@@ -1,7 +1,7 @@
 package org.bitcoins.chain.blockchain
 
 import org.bitcoins.chain.models.BlockHeaderDb
-import org.bitcoins.chain.validation.TipUpdateResult.TipUpdateFailure
+import org.bitcoins.chain.validation.TipUpdateResult
 import org.bitcoins.core.protocol.blockchain.BlockHeader
 
 /** Represents the state of an update to our [[org.bitcoins.chain.blockchain.Blockchain Blockchain]]
@@ -10,7 +10,7 @@ import org.bitcoins.core.protocol.blockchain.BlockHeader
   *
   * An example of a [[org.bitcoins.chain.blockchain.BlockchainUpdate.Failed Failed]] update
   * is when we receive a [[BlockHeader]] that is invalid and because of a
-  * [[org.bitcoins.chain.validation.TipUpdateResult.TipUpdateFailure TipUpdateFailure]]
+  * [[org.bitcoins.chain.validation.TipUpdateResult.Failure TipUpdateFailure]]
   * because of [[org.bitcoins.chain.validation.TipUpdateResult.BadPOW BadPOW]] or a
   * [[org.bitcoins.chain.validation.TipUpdateResult.BadNonce BadNonce]] etc
   */
@@ -30,6 +30,6 @@ object BlockchainUpdate {
   case class Failed(
       blockchain: Blockchain,
       failedHeader: BlockHeader,
-      tipUpdateFailure: TipUpdateFailure)
+      tipUpdateFailure: TipUpdateResult.Failure)
       extends BlockchainUpdate
 }
