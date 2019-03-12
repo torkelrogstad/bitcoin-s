@@ -143,6 +143,9 @@ sealed abstract class ChainParams {
     val genesisBlock = Block(genesisBlockHeader, Seq(tx))
     genesisBlock
   }
+
+  /** In bitcoin [[MainNetChainParams mainnet]], the network recalculates the difficulty for the network every 2016 blocks */
+  def difficultyChangeInterval: Int
 }
 
 sealed abstract class BitcoinChainParams extends ChainParams
@@ -173,6 +176,8 @@ object MainNetChainParams extends BitcoinChainParams {
                                             BitcoinSUtil.hexToByte("ad"),
                                             BitcoinSUtil.hexToByte("e4"))
     )
+
+  override def difficultyChangeInterval: Int = 2016
 }
 
 object TestNetChainParams extends BitcoinChainParams {
@@ -200,6 +205,19 @@ object TestNetChainParams extends BitcoinChainParams {
                                             BitcoinSUtil.hexToByte("83"),
                                             BitcoinSUtil.hexToByte("94"))
     )
+
+  override def difficultyChangeInterval: Int = {
+    //https://en.bitcoin.it/wiki/Testnet
+    //basically if a block hasn't been found in 20 minutes
+    //you can mine any arbitrary block
+    //this in practice is very hard to program
+    //for since the concept of "time" on the network
+    //is very unreliable
+
+    //for now, just assume we can change difficulty every
+    //block
+    1
+  }
 }
 
 object RegTestNetChainParams extends BitcoinChainParams {
@@ -212,6 +230,8 @@ object RegTestNetChainParams extends BitcoinChainParams {
                        Satoshis(Int64(5000000000L)))
   override def base58Prefixes: Map[Base58Type, ByteVector] =
     TestNetChainParams.base58Prefixes
+
+  override def difficultyChangeInterval: Int = 2016
 }
 
 sealed abstract class Base58Type

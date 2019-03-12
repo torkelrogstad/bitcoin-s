@@ -34,18 +34,15 @@ sealed abstract class Blockchain extends BitcoinSLogger {
 
   /** Helper method to ensure our blockchain is properly connected at all times */
   private def connectionInvariant: Boolean = {
-    val noTip = headers.tail
     @tailrec
-    def loop(
-        remaining: List[BlockHeaderDb],
-        nextHeader: BlockHeaderDb): Boolean = {
+    def loop(remaining: List[BlockHeaderDb]): Boolean = {
       remaining match {
         case tip :: oldTip :: t =>
           val tipValidation =
             TipValidation.checkNewTip(tip.blockHeader, oldTip, chainParams)
           tipValidation match {
             case TipUpdateResult.Success(_) =>
-              loop(t, oldTip)
+              loop(t)
             case fail: TipUpdateResult.Failure =>
               logger.error(
                 s"Failed connection invariant for blockchain, reason=${fail}")
@@ -55,7 +52,7 @@ sealed abstract class Blockchain extends BitcoinSLogger {
       }
     }
 
-    loop(noTip.toList, tip)
+    loop(headers.toList)
   }
 }
 

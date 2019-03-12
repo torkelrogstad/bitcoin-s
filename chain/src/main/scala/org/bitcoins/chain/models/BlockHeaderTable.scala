@@ -49,7 +49,7 @@ object BlockHeaderDbHelper {
 /** A table that stores block headers related to a blockchain */
 class BlockHeaderTable(tag: Tag)
     extends Table[BlockHeaderDb](tag, "block_headers") {
-  import ChainColumnMappers._
+  import org.bitcoins.db.DbCommonsColumnMappers._
 
   def height = column[Long]("height")
 

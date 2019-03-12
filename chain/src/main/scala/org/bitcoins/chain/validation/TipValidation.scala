@@ -25,9 +25,10 @@ sealed abstract class TipValidation extends BitcoinSLogger {
         logger.warn(
           s"Failed to connect tip=${header.hashBE.hex} to current chain")
         TipUpdateResult.BadPreviousBlockHash(newPotentialTip)
-      } else if (header.nBits != currentTip.nBits) {
-        //TODO: THis is a bug, this should only occurr only 2016 blocks
-        //also this doesn't apply on testnet/regtest
+      } else if ((header.nBits != currentTip.nBits && !checkPOWInterval(
+                   currentTip = currentTip,
+                   chainParams = chainParams))) {
+        //https://github.com/bitcoin/bitcoin/blob/eb7daf4d600eeb631427c018a984a77a34aca66e/src/pow.cpp#L19
         TipUpdateResult.BadPOW(newPotentialTip)
       } else if (isBadNonce(newPotentialTip)) {
         TipUpdateResult.BadNonce(newPotentialTip)
@@ -43,6 +44,16 @@ sealed abstract class TipValidation extends BitcoinSLogger {
     logTipResult(connectTipResult, currentTip)
 
     connectTipResult
+  }
+
+  /** Returns true if this is a valid proof of work change, else false */
+  private def checkPOWInterval(
+      currentTip: BlockHeaderDb,
+      chainParams: ChainParams): Boolean = {
+    val newPotentialHeight = currentTip.height + 1
+    val consensusPowInteval = chainParams.difficultyChangeInterval
+
+    newPotentialHeight % consensusPowInteval == 0
   }
 
   /** Logs the result of [[org.bitcoins.chain.validation.TipValidation.checkNewTip() checkNewTip]] */

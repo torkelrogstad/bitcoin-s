@@ -15,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 sealed abstract class BlockHeaderDAO
     extends CRUD[BlockHeaderDb, DoubleSha256DigestBE] {
 
-  import ChainColumnMappers._
+  import org.bitcoins.db.DbCommonsColumnMappers._
 
   def chainParams: ChainParams
 
