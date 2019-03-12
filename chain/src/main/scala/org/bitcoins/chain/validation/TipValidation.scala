@@ -2,7 +2,7 @@ package org.bitcoins.chain.validation
 
 import org.bitcoins.chain.models.{BlockHeaderDb, BlockHeaderDbHelper}
 import org.bitcoins.core.protocol.blockchain.{BlockHeader, ChainParams}
-import org.bitcoins.core.util.BitcoinSLogger
+import org.bitcoins.core.util.{BitcoinSLogger, NumberUtil}
 
 sealed abstract class TipValidation extends BitcoinSLogger {
 
@@ -17,7 +17,7 @@ sealed abstract class TipValidation extends BitcoinSLogger {
       currentTip: BlockHeaderDb,
       chainParams: ChainParams): TipUpdateResult = {
     val header = newPotentialTip
-    logger.debug(
+    logger.info(
       s"Checking header=${header.hashBE.hex} to try to connect to currentTip=${currentTip.hashBE.hex} with height=${currentTip.height}")
 
     val connectTipResult = {
@@ -60,10 +60,19 @@ sealed abstract class TipValidation extends BitcoinSLogger {
     }
   }
 
-  /** Checks if [[header.nonce]] hashes to meet the POW requirements for this block (nBits) */
+  /** Checks if [[header.nonce]] hashes to meet the POW requirements for this block (nBits)
+    * Mimics this
+    * [[https://github.com/bitcoin/bitcoin/blob/eb7daf4d600eeb631427c018a984a77a34aca66e/src/pow.cpp#L74]]
+    * */
   private def isBadNonce(header: BlockHeader): Boolean = {
-    //TODO: needs to be implemented
-    false
+    //convert hash into a big integer
+    val headerWork = BigInt(1, header.hashBE.bytes.toArray)
+    if (headerWork <= 0 || NumberUtil.isNBitsOverflow(nBits = header.nBits)) {
+      true
+    } else {
+      headerWork > header.difficulty
+    }
+
   }
 }
 
