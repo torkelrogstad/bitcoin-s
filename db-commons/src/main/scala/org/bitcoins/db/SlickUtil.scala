@@ -9,7 +9,6 @@ sealed abstract class SlickUtil {
   def createAllNoAutoInc[T, U <: Table[T]](
       ts: Vector[T],
       database: SafeDatabase,
-      //BlockHeaderTable
       table: TableQuery[U]): Future[Vector[T]] = {
     val actions = ts.map(t => (table += t).andThen(DBIO.successful(t)))
     val result = database.run(DBIO.sequence(actions))

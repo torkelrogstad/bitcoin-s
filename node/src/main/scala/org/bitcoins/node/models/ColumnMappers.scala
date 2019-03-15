@@ -47,7 +47,7 @@ trait ColumnMappers {
       },
       //this has the potential to throw
       { bigDec: BigDecimal =>
-        UInt64(bigDec.toBigIntExact().get)
+        UInt64(bigDec.toBigIntExact().getOrElse(throw new IllegalArgumentException(s"Could not map bigdecimal to UInt64, bigdecimal=${bigDec}"))
       }
     )
   }
