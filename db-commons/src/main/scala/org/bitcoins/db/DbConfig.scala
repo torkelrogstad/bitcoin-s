@@ -55,6 +55,7 @@ sealed abstract class DbConfig extends BitcoinSLogger {
                                classLoader = getClass().getClassLoader())
     }
 
+    logger.error(s"DbConfig.confg=${dbConfig.config}")
     createDbFileIfDNE(config = dbConfig.config)
 
     dbConfig

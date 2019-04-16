@@ -202,6 +202,7 @@ object Deps {
   )
 
   val doc = List(
+    "com.lihaoyi" %% "ammonite" % V.ammoniteV cross CrossVersion.full,
     Test.ammonite,
     Test.scalaTest,
     Test.logback
