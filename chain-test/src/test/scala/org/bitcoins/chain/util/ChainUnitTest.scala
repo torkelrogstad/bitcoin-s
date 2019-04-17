@@ -71,6 +71,8 @@ trait ChainUnitTest
 
     case object GenisisChainHandler extends FixtureTag("GenisisChainHandler")
 
+    case object PopulatedChainHandler extends FixtureTag("PopulatedChainHandler")
+
     case object BitcoindZmqChainHandlerWithBlock
         extends FixtureTag("BitcoindZmqChainHandlerWithBlock")
 
@@ -80,6 +82,7 @@ trait ChainUnitTest
         case GenisisBlockHeaderDAO.name   => GenisisBlockHeaderDAO
         case PopulatedBlockHeaderDAO.name => PopulatedBlockHeaderDAO
         case GenisisChainHandler.name     => GenisisChainHandler
+        case PopulatedChainHandler.name   => PopulatedChainHandler
         case BitcoindZmqChainHandlerWithBlock.name =>
           BitcoindZmqChainHandlerWithBlock
         case _: String =>
@@ -113,6 +116,8 @@ trait ChainUnitTest
     case class GenisisChainHandler(chainHandler: ChainHandler)
         extends ChainFixture
 
+    case class PopulatedChainHandler(chainHandler: ChainHandler) extends ChainFixture
+
     case class BitcoindZmqChainHandlerWithBlock(
         bitcoindChainHandler: BitcoindChainHandler)
         extends ChainFixture
@@ -126,6 +131,7 @@ trait ChainUnitTest
           createPopulatedBlockHeaderDAO().map(PopulatedBlockHeaderDAO.apply)
         case FixtureTag.GenisisChainHandler =>
           createChainHandler().map(GenisisChainHandler.apply)
+        case FixtureTag.PopulatedChainHandler => createPopulatedChainHandler().map(PopulatedChainHandler.apply)
         case FixtureTag.BitcoindZmqChainHandlerWithBlock =>
           createBitcoindChainHandler().map(
             BitcoindZmqChainHandlerWithBlock.apply)
@@ -138,6 +144,7 @@ trait ChainUnitTest
         case GenisisBlockHeaderDAO(_)   => destroyHeaderTable()
         case PopulatedBlockHeaderDAO(_) => destroyHeaderTable()
         case GenisisChainHandler(_)     => destroyHeaderTable()
+        case PopulatedChainHandler(_)   => destroyHeaderTable()
         case BitcoindZmqChainHandlerWithBlock(bitcoindHandler) =>
           destroyBitcoindChainHandler(bitcoindHandler)
       }
@@ -323,6 +330,19 @@ trait ChainUnitTest
 
   def withChainHandler(test: OneArgAsyncTest): FutureOutcome = {
     makeFixture(createChainHandler, destroyHeaderTable)(test)
+  }
+
+  // Creates and populates BlockHeaderTable with block headers 562375 to 571375
+  def createPopulatedChainHandler(): Future[ChainHandler] = {
+    createPopulatedBlockHeaderDAO().flatMap { blockHeaderDAO =>
+      blockHeaderDAO.getAtHeight(562375).map { blockHeaderVec =>
+      ChainHandler(Blockchain(blockHeaderVec, blockHeaderDAO))
+      }
+    }
+  }
+
+  def withPopulatedChainHandler(test: OneArgAsyncTest): FutureOutcome = {
+    makeFixture(createPopulatedChainHandler, destroyHeaderTable)(test)
   }
 
   /** Creates the [[org.bitcoins.chain.models.BlockHeaderTable]] */

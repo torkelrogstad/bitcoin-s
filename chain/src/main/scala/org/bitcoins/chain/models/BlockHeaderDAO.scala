@@ -89,6 +89,18 @@ sealed abstract class BlockHeaderDAO
     table.filter(_.height === height).result
   }
 
+  def getBetweenHeights(from: Long, to: Long): Future[Vector[BlockHeaderDb]] = {
+    val query = getBetweenHeightsQuery(from, to)
+    database.runVec(query)
+  }
+
+  def getBetweenHeightsQuery(from: Long, to: Long): SQLiteProfile.StreamingProfileAction[
+    Seq[BlockHeaderDb],
+    BlockHeaderDb,
+    Effect.Read] = {
+    table.filter(header => header.height >= from && header.height <= to).result
+  }
+
   /** Returns the maximum block height from our database */
   def maxHeight: Future[Long] = {
     val query = maxHeightQuery
