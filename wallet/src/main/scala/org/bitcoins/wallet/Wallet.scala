@@ -6,11 +6,7 @@ import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.blockchain.ChainParams
 import org.bitcoins.core.protocol.script.ScriptPubKey
-import org.bitcoins.core.protocol.transaction.{
-  Transaction,
-  TransactionOutPoint,
-  TransactionOutput
-}
+import org.bitcoins.core.protocol.transaction.{Transaction, TransactionOutPoint, TransactionOutput}
 import org.bitcoins.core.util.{BitcoinSLogger, EitherUtil}
 import org.bitcoins.core.wallet.builder.BitcoinTxBuilder
 import org.bitcoins.core.wallet.fee.FeeUnit
@@ -202,10 +198,9 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
         val destinations: Seq[TransactionOutput] = List(
           TransactionOutput(amount, address.scriptPubKey))
 
-        // currencly just grabs one utxos, throws if can't find big enough
-        // todo: implement coin selection
-        val utxos: List[BitcoinUTXOSpendingInfo] =
-          List(walletUtxos.find(_.value >= amount).get.toUTXOSpendingInfo(this))
+        // currencly just grabs the biggest utxos until it finds enough
+        val utxos: Vector[BitcoinUTXOSpendingInfo] =
+          CoinSelector.accumulateLargest(walletUtxos, destinations, feeRate).map(_.toUTXOSpendingInfo(this))
 
         BitcoinTxBuilder(destinations,
                          utxos,
