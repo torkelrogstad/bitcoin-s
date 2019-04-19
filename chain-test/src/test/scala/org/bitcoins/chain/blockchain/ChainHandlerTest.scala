@@ -66,28 +66,34 @@ class ChainHandlerTest extends ChainUnitTest {
             chainHandler.blockchain.copy(headers = Vector(firstBlockHeaderDb))))
           var blockCount = FIRST_BLOCK_HEIGHT
 
-          val processFVec = blockHeaders.tail.map { blockHeader =>
-            processorF = processorF.flatMap { processor =>
-              processor.processHeader(blockHeader)
-            }
-
-            processorF.flatMap { processor =>
-              val headerFoundF = processor.getHeader(blockHeader.hashBE).map {
-                headerOpt =>
-                  assert(headerOpt.contains(blockHeader))
+          val processFVec = blockHeaders.tail.map { blockHeader => () =>
+            {
+              processorF = processorF.flatMap { processor =>
+                processor.processHeader(blockHeader)
               }
 
-              val sizeChangedF = processor.getBlockCount.map { count =>
-                blockCount = blockCount + 1
-                assert(count == blockCount)
-              }
+              processorF.flatMap { processor =>
+                val headerFoundF = processor.getHeader(blockHeader.hashBE).map {
+                  headerOpt =>
+                    assert(headerOpt.contains(blockHeader))
+                }
 
-              headerFoundF.flatMap(_ => sizeChangedF)
+                val sizeChangedF = processor.getBlockCount.map { count =>
+                  blockCount = blockCount + 1
+                  assert(count == blockCount)
+                }
+
+                headerFoundF.flatMap(_ => sizeChangedF)
+              }
             }
           }
 
-          Future.sequence(processFVec).map(_ => succeed)
+          processFVec.foldLeft(Future.successful(succeed)) {
+            case (fut, processF) =>
+              fut.flatMap { _ =>
+                processF()
+              }
+          }
         }
   }
-
 }
