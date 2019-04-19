@@ -6,8 +6,17 @@ import akka.actor.ActorSystem
 import org.bitcoins.chain.blockchain.{Blockchain, ChainHandler}
 import org.bitcoins.chain.config.ChainAppConfig
 import org.bitcoins.chain.db.{ChainDbConfig, ChainDbManagement}
-import org.bitcoins.chain.models.{BlockHeaderDAO, BlockHeaderDb, BlockHeaderDbHelper}
-import org.bitcoins.core.protocol.blockchain.{Block, BlockHeader, ChainParams, RegTestNetChainParams}
+import org.bitcoins.chain.models.{
+  BlockHeaderDAO,
+  BlockHeaderDb,
+  BlockHeaderDbHelper
+}
+import org.bitcoins.core.protocol.blockchain.{
+  Block,
+  BlockHeader,
+  ChainParams,
+  RegTestNetChainParams
+}
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.db.NetworkDb
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
@@ -71,7 +80,8 @@ trait ChainUnitTest
 
     case object GenisisChainHandler extends FixtureTag("GenisisChainHandler")
 
-    case object PopulatedChainHandler extends FixtureTag("PopulatedChainHandler")
+    case object PopulatedChainHandler
+        extends FixtureTag("PopulatedChainHandler")
 
     case object BitcoindZmqChainHandlerWithBlock
         extends FixtureTag("BitcoindZmqChainHandlerWithBlock")
@@ -116,7 +126,8 @@ trait ChainUnitTest
     case class GenisisChainHandler(chainHandler: ChainHandler)
         extends ChainFixture
 
-    case class PopulatedChainHandler(chainHandler: ChainHandler) extends ChainFixture
+    case class PopulatedChainHandler(chainHandler: ChainHandler)
+        extends ChainFixture
 
     case class BitcoindZmqChainHandlerWithBlock(
         bitcoindChainHandler: BitcoindChainHandler)
@@ -131,7 +142,8 @@ trait ChainUnitTest
           createPopulatedBlockHeaderDAO().map(PopulatedBlockHeaderDAO.apply)
         case FixtureTag.GenisisChainHandler =>
           createChainHandler().map(GenisisChainHandler.apply)
-        case FixtureTag.PopulatedChainHandler => createPopulatedChainHandler().map(PopulatedChainHandler.apply)
+        case FixtureTag.PopulatedChainHandler =>
+          createPopulatedChainHandler().map(PopulatedChainHandler.apply)
         case FixtureTag.BitcoindZmqChainHandlerWithBlock =>
           createBitcoindChainHandler().map(
             BitcoindZmqChainHandlerWithBlock.apply)
@@ -259,10 +271,12 @@ trait ChainUnitTest
     makeFixture(createBlockHeaderDAO, destroyHeaderTable)(test)
   }
 
+  val FIRST_BLOCK_HEIGHT: Int = 562375
+
   // Creates and populates BlockHeaderTable with block headers 562375 to 571375
   def createPopulatedBlockHeaderDAO(): Future[BlockHeaderDAO] = {
     // The height of the first block in the json file
-    val OFFSET: Int = 562375
+    val OFFSET: Int = FIRST_BLOCK_HEIGHT
 
     val tableSetupF = setupHeaderTable()
 
@@ -335,8 +349,8 @@ trait ChainUnitTest
   // Creates and populates BlockHeaderTable with block headers 562375 to 571375
   def createPopulatedChainHandler(): Future[ChainHandler] = {
     createPopulatedBlockHeaderDAO().flatMap { blockHeaderDAO =>
-      blockHeaderDAO.getAtHeight(562375).map { blockHeaderVec =>
-      ChainHandler(Blockchain(blockHeaderVec, blockHeaderDAO))
+      blockHeaderDAO.getAtHeight(FIRST_BLOCK_HEIGHT).map { blockHeaderVec =>
+        ChainHandler(Blockchain(blockHeaderVec, blockHeaderDAO))
       }
     }
   }
