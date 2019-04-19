@@ -10,31 +10,39 @@ import scala.annotation.tailrec
 /** Implements algorithms for selecting from a UTXO set to spend to an output set at a given fee rate. */
 trait CoinSelector {
 
-  /** Greedily selects from walletUtxos starting with the largest outputs, skipping detrimental outputs */
+  /**
+    * Greedily selects from walletUtxos starting with the largest outputs, skipping outputs with values
+    * below their fees. Better for high fee environments than accumulateSmallestViable.
+    */
   def accumulateLargest(
-      walletUtxos: Seq[UTXOSpendingInfoDb],
-      outputs: Seq[TransactionOutput],
+      walletUtxos: Vector[UTXOSpendingInfoDb],
+      outputs: Vector[TransactionOutput],
       feeRate: FeeUnit): Vector[UTXOSpendingInfoDb] = {
     val sortedUtxos =
-      walletUtxos.toVector.sortBy(_.value.satoshis.toLong).reverse
+      walletUtxos.sortBy(_.value.satoshis.toLong).reverse
 
     accumulate(sortedUtxos, outputs, feeRate)
   }
 
-  /** Greedily selects from walletUtxos starting with the smallest outputs, skipping detrimental outputs */
+  /**
+    * Greedily selects from walletUtxos starting with the smallest outputs, skipping outputs with values
+    * below their fees. Good for low fee environments to consolidate UTXOs.
+    *
+    * Has the potential privacy breach of connecting a ton of UTXOs to one address.
+    */
   def accumulateSmallestViable(
-      walletUtxos: Seq[UTXOSpendingInfoDb],
-      outputs: Seq[TransactionOutput],
+      walletUtxos: Vector[UTXOSpendingInfoDb],
+      outputs: Vector[TransactionOutput],
       feeRate: FeeUnit): Vector[UTXOSpendingInfoDb] = {
-    val sortedUtxos = walletUtxos.toVector.sortBy(_.value.satoshis.toLong)
+    val sortedUtxos = walletUtxos.sortBy(_.value.satoshis.toLong)
 
     accumulate(sortedUtxos, outputs, feeRate)
   }
 
-  /** Greedily selects from walletUtxos in order, skipping detrimental outputs */
+  /** Greedily selects from walletUtxos in order, skipping outputs with values below their fees */
   def accumulate(
-      walletUtxos: Seq[UTXOSpendingInfoDb],
-      outputs: Seq[TransactionOutput],
+      walletUtxos: Vector[UTXOSpendingInfoDb],
+      outputs: Vector[TransactionOutput],
       feeRate: FeeUnit): Vector[UTXOSpendingInfoDb] = {
     val totalValue = outputs.foldLeft(CurrencyUnits.zero) {
       case (totVal, output) => totVal + output.value
@@ -62,7 +70,7 @@ trait CoinSelector {
       }
     }
 
-    addUtxos(Vector.empty, CurrencyUnits.zero, walletUtxos.toVector)
+    addUtxos(Vector.empty, CurrencyUnits.zero, walletUtxos)
   }
 }
 

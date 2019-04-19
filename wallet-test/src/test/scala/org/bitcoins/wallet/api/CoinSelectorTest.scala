@@ -11,12 +11,16 @@ import org.bitcoins.wallet.util.BitcoinSWalletTest
 import org.scalatest.FutureOutcome
 
 class CoinSelectorTest extends BitcoinSWalletTest {
-  override type FixtureParam = (
-      TransactionOutput,
-      FeeUnit,
-      UTXOSpendingInfoDb,
-      UTXOSpendingInfoDb,
-      UTXOSpendingInfoDb)
+  case class CoinSelectionFixture(
+      output: TransactionOutput,
+      feeRate: FeeUnit,
+      utxo1: UTXOSpendingInfoDb,
+      utxo2: UTXOSpendingInfoDb,
+      utxo3: UTXOSpendingInfoDb) {
+    val utxoSet: Vector[UTXOSpendingInfoDb] = Vector(utxo1, utxo2, utxo3)
+  }
+
+  override type FixtureParam = CoinSelectionFixture
 
   override def withFixture(test: OneArgAsyncTest): FutureOutcome = {
     val output = TransactionOutput(Satoshis(Int64(99L)), ScriptPubKey.empty)
@@ -47,39 +51,33 @@ class CoinSelectorTest extends BitcoinSWalletTest {
       None
     )
 
-    test((output, feeRate, utxo1, utxo2, utxo3))
+    test(CoinSelectionFixture(output, feeRate, utxo1, utxo2, utxo3))
   }
 
   behavior of "CoinSelector"
 
   it must "accumulate largest outputs" in { fixture =>
-    val (output, feeRate, utxo1, utxo2, utxo3) = fixture
+    val selection = CoinSelector.accumulateLargest(fixture.utxoSet,
+                                                   Vector(fixture.output),
+                                                   fixture.feeRate)
 
-    val selection = CoinSelector.accumulateLargest(Vector(utxo1, utxo2, utxo3),
-                                                   Vector(output),
-                                                   feeRate)
-
-    assert(selection == Vector(utxo2, utxo3))
+    assert(selection == Vector(fixture.utxo2, fixture.utxo3))
   }
 
   it must "accumulate smallest outputs" in { fixture =>
-    val (output, feeRate, utxo1, utxo2, utxo3) = fixture
-
     val selection =
-      CoinSelector.accumulateSmallestViable(Vector(utxo1, utxo2, utxo3),
-                                            Vector(output),
-                                            feeRate)
+      CoinSelector.accumulateSmallestViable(fixture.utxoSet,
+                                            Vector(fixture.output),
+                                            fixture.feeRate)
 
-    assert(selection == Vector(utxo1, utxo3, utxo2))
+    assert(selection == Vector(fixture.utxo1, fixture.utxo3, fixture.utxo2))
   }
 
   it must "accumulate outputs in order" in { fixture =>
-    val (output, feeRate, utxo1, utxo2, utxo3) = fixture
+    val selection = CoinSelector.accumulate(fixture.utxoSet,
+                                            Vector(fixture.output),
+                                            fixture.feeRate)
 
-    val selection = CoinSelector.accumulate(Vector(utxo1, utxo2, utxo3),
-                                            Vector(output),
-                                            feeRate)
-
-    assert(selection == Vector(utxo1, utxo2))
+    assert(selection == Vector(fixture.utxo1, fixture.utxo2))
   }
 }

@@ -6,7 +6,11 @@ import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.blockchain.ChainParams
 import org.bitcoins.core.protocol.script.ScriptPubKey
-import org.bitcoins.core.protocol.transaction.{Transaction, TransactionOutPoint, TransactionOutput}
+import org.bitcoins.core.protocol.transaction.{
+  Transaction,
+  TransactionOutPoint,
+  TransactionOutput
+}
 import org.bitcoins.core.util.{BitcoinSLogger, EitherUtil}
 import org.bitcoins.core.wallet.builder.BitcoinTxBuilder
 import org.bitcoins.core.wallet.fee.FeeUnit
@@ -195,12 +199,14 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
       change <- getNewChangeAddress(accountIndex)
       walletUtxos <- listUtxos()
       txBuilder <- {
-        val destinations: Seq[TransactionOutput] = List(
+        val destinations = Vector(
           TransactionOutput(amount, address.scriptPubKey))
 
         // currencly just grabs the biggest utxos until it finds enough
         val utxos: Vector[BitcoinUTXOSpendingInfo] =
-          CoinSelector.accumulateLargest(walletUtxos, destinations, feeRate).map(_.toUTXOSpendingInfo(this))
+          CoinSelector
+            .accumulateLargest(walletUtxos, destinations, feeRate)
+            .map(_.toUTXOSpendingInfo(this))
 
         BitcoinTxBuilder(destinations,
                          utxos,
