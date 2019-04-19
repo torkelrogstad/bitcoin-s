@@ -8,7 +8,7 @@ import org.bitcoins.chain.models.{
   BlockHeaderDbHelper
 }
 import org.bitcoins.chain.util.ChainUnitTest
-import org.bitcoins.core.protocol.blockchain.BlockHeader
+import org.bitcoins.core.protocol.blockchain.{BlockHeader, ChainParams}
 import org.bitcoins.testkit.chain.{BlockHeaderHelper, ChainTestUtil}
 import org.scalatest.{Assertion, FutureOutcome}
 
@@ -28,7 +28,8 @@ class TipValidationTest extends ChainUnitTest {
   //blocks 566,092 and 566,093
   val newValidTip = BlockHeaderHelper.header1
   val currentTipDb = BlockHeaderHelper.header2Db
-  override val chainParam = ChainTestUtil.mainnetChainParam
+  override lazy val defaultChainParam: ChainParams =
+    ChainTestUtil.mainnetChainParam
 
   it must "connect two blocks with that are valid" in { bhDAO =>
     val newValidTipDb =
@@ -83,9 +84,8 @@ class TipValidationTest extends ChainUnitTest {
       expected: TipUpdateResult,
       blockHeaderDAO: BlockHeaderDAO,
       currentTipDbDefault: BlockHeaderDb = currentTipDb): Future[Assertion] = {
-    val checkTipF = TipValidation.checkNewTip(header,
-                                              currentTipDbDefault,
-                                              blockHeaderDAO)
+    val checkTipF =
+      TipValidation.checkNewTip(header, currentTipDbDefault, blockHeaderDAO)
 
     checkTipF.map(validationResult => assert(validationResult == expected))
   }

@@ -22,14 +22,13 @@ class BitcoinPowTest extends ChainUnitTest {
   it must "NOT calculate a POW change when one is not needed" inFixtured {
     case ChainFixture.Empty =>
       val chainParams = MainNetChainParams
-      val appConfig = AppConfig(UnitTestDbConfig,chainParams)
+      val appConfig = AppConfig(UnitTestDbConfig, chainParams)
       val blockHeaderDAO = BlockHeaderDAO(appConfig)
       val header1 = ChainTestUtil.ValidPOWChange.blockHeaderDb566494
       val header2 = ChainTestUtil.ValidPOWChange.blockHeaderDb566495
 
-      val nextWorkF = Pow.getNetworkWorkRequired(header1,
-                                                 header2.blockHeader,
-                                                 blockHeaderDAO)
+      val nextWorkF =
+        Pow.getNetworkWorkRequired(header1, header2.blockHeader, blockHeaderDAO)
 
       nextWorkF.map(nextWork => assert(nextWork == header1.nBits))
   }
@@ -60,8 +59,7 @@ class BitcoinPowTest extends ChainUnitTest {
           nextTip <- nextBlockF
           nextNBits <- Pow.getNetworkWorkRequired(currentTip,
                                                   nextTip.blockHeader,
-                                                  blockHeaderDAO,
-                                                  MainNetChainParams)
+                                                  blockHeaderDAO)
         } assert(nextNBits == nextTip.nBits)
       }
 
