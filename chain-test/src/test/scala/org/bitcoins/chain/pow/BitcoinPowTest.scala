@@ -49,26 +49,22 @@ class BitcoinPowTest extends ChainUnitTest {
         assert(calculatedWork == expectedNextWork))
   }
 
-  it must "calculate a GetNextWorkRequired correctly" taggedAs FixtureTag.PopulatedBlockHeaderDAO inFixtured {
+  it must "GetNextWorkRequired correctly" taggedAs FixtureTag.PopulatedBlockHeaderDAO inFixtured {
     case ChainFixture.PopulatedBlockHeaderDAO(blockHeaderDAO) =>
-      val firstAfterAdjustmentF = blockHeaderDAO.getAtHeight(562464)
-      val lastBeforeAdjustmentF = blockHeaderDAO.getAtHeight(564479)
-      val nextAdjustmentF = blockHeaderDAO.getAtHeight(564480)
+      (FIRST_BLOCK_HEIGHT until FIRST_BLOCK_HEIGHT + 3000).foreach { height =>
+        val blockF = blockHeaderDAO.getAtHeight(height).map(_.head)
+        val nextBlockF = blockHeaderDAO.getAtHeight(height + 1).map(_.head)
 
-      for {
-        firstBlockVec <- firstAfterAdjustmentF
-        lastBlockVec <- lastBeforeAdjustmentF
-        nextBlockVec <- nextAdjustmentF
-      _ = {
-        assert(firstBlockVec.length == 1)
-        assert(lastBlockVec.length == 1)
-        assert(nextBlockVec.length == 1)
+        for {
+          currentTip <- blockF
+          nextTip <- nextBlockF
+          nextNBits <- Pow.getNetworkWorkRequired(currentTip,
+                                                  nextTip.blockHeader,
+                                                  blockHeaderDAO,
+                                                  MainNetChainParams)
+        } assert(nextNBits == nextTip.nBits)
       }
-      nextNBits <- Pow.calculateNextWorkRequired(lastBlockVec.head, firstBlockVec.head, MainNetChainParams)
-      } yield {
-        assert(firstBlockVec.head.nBits == lastBlockVec.head.nBits)
-        assert(lastBlockVec.head.nBits != nextBlockVec.head.nBits)
-        assert(nextNBits == nextBlockVec.head.nBits)
-      }
+
+      succeed
   }
 }
