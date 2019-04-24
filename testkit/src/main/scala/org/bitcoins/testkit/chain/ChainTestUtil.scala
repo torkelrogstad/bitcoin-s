@@ -19,7 +19,7 @@ sealed abstract class ChainTestUtil {
   lazy val mainnetChainParam: MainNetChainParams.type = MainNetChainParams
 
   lazy val blockHeader562375 = BlockHeader.fromHex(
-    "000000208ea17b5cfda97e5d567eb31315e29a889f7d5a7b745e120000000000000000003c24cf3deba022fa0575d8a26e15bd693ef5748cf383cd6a62db69fcf6d5e491f3775f5c35683017f3741352")
+    "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c")
 
   /** Contains block headers where a proof of work change is valid */
   object ValidPOWChange {
