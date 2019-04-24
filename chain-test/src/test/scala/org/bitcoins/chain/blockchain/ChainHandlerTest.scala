@@ -77,19 +77,33 @@ class ChainHandlerTest extends ChainUnitTest {
         fail(headersResult.toString)
       }
 
-      val blockHeaders = headersResult.get
-      val firstBlockHeaderDb =
-        BlockHeaderDbHelper.fromBlockHeader(FIRST_BLOCK_HEIGHT,
-                                            ChainTestUtil.blockHeader562375)
+      val firstPowChange = (FIRST_BLOCK_HEIGHT / chainHandler.chainParams.difficultyChangeInterval + 1) * chainHandler.chainParams.difficultyChangeInterval
+
+      val blockHeaders =
+        headersResult.get.drop((firstPowChange - FIRST_BLOCK_HEIGHT).toInt)
+
+      val firstBlockHeaderDb = BlockHeaderDbHelper.fromBlockHeader(firstPowChange - 2, ChainTestUtil.blockHeader562462)
+
+      val secondBlockHeaderDb =
+        BlockHeaderDbHelper.fromBlockHeader(firstPowChange - 1,
+                                            ChainTestUtil.blockHeader562463)
+
+      val thirdBlockHeaderDb =
+        BlockHeaderDbHelper.fromBlockHeader(firstPowChange,
+                                            ChainTestUtil.blockHeader562464)
 
       chainHandler.blockchain.blockHeaderDAO
-        .create(firstBlockHeaderDb)
+        .createAll(Vector(firstBlockHeaderDb, secondBlockHeaderDb, thirdBlockHeaderDb))
         .flatMap { _ =>
-          var processorF = Future.successful(chainHandler.copy(blockchain =
-            chainHandler.blockchain.copy(headers = Vector(firstBlockHeaderDb))))
-          var blockCount = FIRST_BLOCK_HEIGHT
+          var processorF = Future.successful(
+            chainHandler.copy(blockchain = chainHandler.blockchain.copy(
+              headers = Vector(thirdBlockHeaderDb, secondBlockHeaderDb, firstBlockHeaderDb))))
+          var blockCount = firstPowChange
 
-          val processFVec = blockHeaders.tail.map { blockHeader => () =>
+          // Takes way too long to do all blocks
+          val blockHeadersToTest = blockHeaders.tail.take((2*chainHandler.chainParams.difficultyChangeInterval + 1).toInt)
+
+          val processFVec = blockHeadersToTest.map { blockHeader => () =>
             {
               processorF = processorF.flatMap { processor =>
                 processor.processHeader(blockHeader)
