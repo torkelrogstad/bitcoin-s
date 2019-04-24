@@ -5,6 +5,7 @@ import org.bitcoins.db.{AppConfig, CRUD, DbConfig, SlickUtil}
 import slick.jdbc.SQLiteProfile
 import slick.jdbc.SQLiteProfile.api._
 
+import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -57,21 +58,40 @@ sealed abstract class BlockHeaderDAO
   def getAncestorAtHeight(
       child: BlockHeaderDb,
       height: Long): Future[Option[BlockHeaderDb]] = {
-    //extremely inefficient and probably needs to be re-implemented
-    //we are reading from disk every time here
-    val headerOptF = read(child.previousBlockHashBE)
-    headerOptF.flatMap {
-      case Some(header) =>
-        if (header.height == height) {
-          Future.successful(Some(header))
-        } else if (height <= header.height) {
-          //need to keep traversing backwards to get to the right height
-          getAncestorAtHeight(header, height)
+    val headersF = getBetweenHeights(from = height, to = child.height - 1)
+
+    val headersByHeight: Array[Vector[BlockHeaderDb]] =
+      new Array[Vector[BlockHeaderDb]](_length = (child.height - height).toInt)
+    headersByHeight.indices.foreach(headersByHeight(_) = Vector.empty)
+
+    headersF.map { headers =>
+      headers.foreach { header =>
+        val index = (header.height - height).toInt
+        headersByHeight(index) = headersByHeight(index).:+(header)
+      }
+
+      val groupedByHeightHeaders: Vector[Vector[BlockHeaderDb]] =
+        headersByHeight.toVector
+
+      @tailrec
+      def loop(
+          currentHeader: BlockHeaderDb,
+          headersByDescHeight: Vector[Vector[BlockHeaderDb]]): Option[
+        BlockHeaderDb] = {
+        if (currentHeader.height == height) {
+          Some(currentHeader)
         } else {
-          Future.successful(None)
+          val prevHeaderOpt = headersByDescHeight.headOption.flatMap(
+            _.find(_.hashBE == currentHeader.previousBlockHashBE))
+
+          prevHeaderOpt match {
+            case None             => None
+            case Some(prevHeader) => loop(prevHeader, headersByDescHeight.tail)
+          }
         }
-      case None =>
-        Future.successful(None)
+      }
+
+      loop(child, groupedByHeightHeaders.reverse)
     }
   }
 
@@ -93,7 +113,9 @@ sealed abstract class BlockHeaderDAO
     database.runVec(query)
   }
 
-  def getBetweenHeightsQuery(from: Long, to: Long): SQLiteProfile.StreamingProfileAction[
+  def getBetweenHeightsQuery(
+      from: Long,
+      to: Long): SQLiteProfile.StreamingProfileAction[
     Seq[BlockHeaderDb],
     BlockHeaderDb,
     Effect.Read] = {
@@ -129,8 +151,8 @@ sealed abstract class BlockHeaderDAO
 }
 
 object BlockHeaderDAO {
-  private case class BlockHeaderDAOImpl(
-      appConfig: AppConfig)(override implicit val ec: ExecutionContext)
+  private case class BlockHeaderDAOImpl(appConfig: AppConfig)(
+      override implicit val ec: ExecutionContext)
       extends BlockHeaderDAO
 
   def apply(appConfig: AppConfig)(
