@@ -41,6 +41,29 @@ class ChainHandlerTest extends ChainUnitTest {
       foundHeaderF.map(found => assert(found.get == newValidHeader))
   }
 
+  it must "have an in-order seed" in { _ =>
+    val source =
+      scala.io.Source.fromURL(getClass.getResource("/block_headers.json"))
+    val arrStr = source.getLines.next
+    source.close()
+
+    import org.bitcoins.rpc.serializers.JsonReaders.BlockHeaderReads
+    val headersResult = Json.parse(arrStr).validate[Vector[BlockHeader]]
+    if (headersResult.isError) {
+      fail(headersResult.toString)
+    }
+
+    val blockHeaders = headersResult.get
+
+    blockHeaders.reduce[BlockHeader] {
+      case (prev, next) =>
+        assert(next.previousBlockHashBE == prev.hashBE)
+        next
+    }
+
+    succeed
+  }
+
   it must "be able to process and fetch real headers from mainnet" in {
     chainHandler: ChainHandler =>
       val source =
@@ -75,7 +98,7 @@ class ChainHandlerTest extends ChainUnitTest {
               processorF.flatMap { processor =>
                 val headerFoundF = processor.getHeader(blockHeader.hashBE).map {
                   headerOpt =>
-                    assert(headerOpt.contains(blockHeader))
+                    assert(headerOpt.map(_.blockHeader).contains(blockHeader))
                 }
 
                 val sizeChangedF = processor.getBlockCount.map { count =>
