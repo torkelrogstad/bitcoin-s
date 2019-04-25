@@ -58,18 +58,34 @@ sealed abstract class BlockHeaderDAO
   def getAncestorAtHeight(
       child: BlockHeaderDb,
       height: Long): Future[Option[BlockHeaderDb]] = {
+    /*
+     * To avoid making many database reads, we make one database read for all
+     * possibly useful block headers.
+     */
     val headersF = getBetweenHeights(from = height, to = child.height - 1)
 
+    /*
+     * We then bucket sort these headers by height so that any ancestor can be found
+     * in linear time assuming a bounded number of contentious tips.
+     */
     val headersByHeight: Array[Vector[BlockHeaderDb]] =
       new Array[Vector[BlockHeaderDb]](_length = (child.height - height).toInt)
-    headersByHeight.indices.foreach(headersByHeight(_) = Vector.empty)
 
+    /*
+     * I believe Array's of Objects are instantiated with null, which is evil,
+     * and so we start by giving each element of the array a Vector.empty.
+     */
+    headersByHeight.indices.foreach(index =>
+      headersByHeight(index) = Vector.empty)
+
+    // Bucket sort
     headersF.map { headers =>
       headers.foreach { header =>
         val index = (header.height - height).toInt
         headersByHeight(index) = headersByHeight(index).:+(header)
       }
 
+      // Now that the bucket sort is done, we get rid of mutability
       val groupedByHeightHeaders: Vector[Vector[BlockHeaderDb]] =
         headersByHeight.toVector
 
@@ -108,6 +124,7 @@ sealed abstract class BlockHeaderDAO
     table.filter(_.height === height).result
   }
 
+  /** Gets Block Headers between (inclusive) from and to, could be out of order */
   def getBetweenHeights(from: Long, to: Long): Future[Vector[BlockHeaderDb]] = {
     val query = getBetweenHeightsQuery(from, to)
     database.runVec(query)

@@ -273,9 +273,10 @@ trait ChainUnitTest
     makeFixture(createBlockHeaderDAO, destroyHeaderTable)(test)
   }
 
+  /** Height of the first block in populated fixtures */
   val FIRST_BLOCK_HEIGHT: Int = 562375
 
-  // Creates and populates BlockHeaderTable with block headers 562375 to 571375
+  /** Creates and populates BlockHeaderTable with block headers 562375 to 571375 */
   def createPopulatedBlockHeaderDAO(): Future[BlockHeaderDAO] = {
     // The height of the first block in the json file
     val OFFSET: Int = FIRST_BLOCK_HEIGHT
@@ -322,10 +323,11 @@ trait ChainUnitTest
                                                 dbHeaders = dbHeaders,
                                                 batchesSoFar = Vector.empty)
 
-        val chainHandler = makeChainHandler(
-          MainNetChainParams,
+        val firstHeader =
           BlockHeaderDbHelper.fromBlockHeader(562375,
-                                              ChainTestUtil.blockHeader562375))
+                                              ChainTestUtil.blockHeader562375)
+
+        val chainHandler = makeChainHandler(MainNetChainParams, firstHeader)
 
         val insertedF = tableSetupF.flatMap { _ =>
           batchedDbHeaders.foldLeft(

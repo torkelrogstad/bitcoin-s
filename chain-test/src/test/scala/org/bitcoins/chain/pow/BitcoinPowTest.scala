@@ -50,17 +50,19 @@ class BitcoinPowTest extends ChainUnitTest {
 
   it must "GetNextWorkRequired correctly" taggedAs FixtureTag.PopulatedBlockHeaderDAO inFixtured {
     case ChainFixture.PopulatedBlockHeaderDAO(blockHeaderDAO) =>
-      (FIRST_BLOCK_HEIGHT until FIRST_BLOCK_HEIGHT + 3000).foreach { height =>
-        val blockF = blockHeaderDAO.getAtHeight(height).map(_.head)
-        val nextBlockF = blockHeaderDAO.getAtHeight(height + 1).map(_.head)
+      val iterations = 4200
+      (FIRST_BLOCK_HEIGHT until FIRST_BLOCK_HEIGHT + iterations).foreach {
+        height =>
+          val blockF = blockHeaderDAO.getAtHeight(height).map(_.head)
+          val nextBlockF = blockHeaderDAO.getAtHeight(height + 1).map(_.head)
 
-        for {
-          currentTip <- blockF
-          nextTip <- nextBlockF
-          nextNBits <- Pow.getNetworkWorkRequired(currentTip,
-                                                  nextTip.blockHeader,
-                                                  blockHeaderDAO)
-        } assert(nextNBits == nextTip.nBits)
+          for {
+            currentTip <- blockF
+            nextTip <- nextBlockF
+            nextNBits <- Pow.getNetworkWorkRequired(currentTip,
+                                                    nextTip.blockHeader,
+                                                    blockHeaderDAO)
+          } assert(nextNBits == nextTip.nBits)
       }
 
       succeed
