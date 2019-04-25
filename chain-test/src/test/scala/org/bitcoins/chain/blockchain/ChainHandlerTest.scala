@@ -8,6 +8,7 @@ import org.bitcoins.core.protocol.blockchain.{
   ChainParams,
   MainNetChainParams
 }
+import org.bitcoins.core.util.FileUtil
 import org.bitcoins.testkit.chain.{BlockHeaderHelper, ChainTestUtil}
 import org.scalatest.FutureOutcome
 import play.api.libs.json.Json
@@ -21,8 +22,6 @@ class ChainHandlerTest extends ChainUnitTest {
   override implicit val system = ActorSystem("ChainUnitTest")
 
   override val defaultTag: FixtureTag = FixtureTag.GenisisChainHandler
-
-  override lazy val defaultChainParam: ChainParams = MainNetChainParams
 
   override def withFixture(test: OneArgAsyncTest): FutureOutcome =
     withChainHandler(test)
@@ -42,8 +41,7 @@ class ChainHandlerTest extends ChainUnitTest {
   }
 
   it must "have an in-order seed" in { _ =>
-    val source =
-      scala.io.Source.fromURL(getClass.getResource("/block_headers.json"))
+    val source = FileUtil.getFileAsSource("block_headers.json")
     val arrStr = source.getLines.next
     source.close()
 
@@ -66,8 +64,7 @@ class ChainHandlerTest extends ChainUnitTest {
 
   it must "be able to process and fetch real headers from mainnet" in {
     chainHandler: ChainHandler =>
-      val source =
-        scala.io.Source.fromURL(getClass.getResource("/block_headers.json"))
+      val source = FileUtil.getFileAsSource("block_headers.json")
       val arrStr = source.getLines.next
       source.close()
 
@@ -82,7 +79,9 @@ class ChainHandlerTest extends ChainUnitTest {
       val blockHeaders =
         headersResult.get.drop((firstPowChange - FIRST_BLOCK_HEIGHT).toInt)
 
-      val firstBlockHeaderDb = BlockHeaderDbHelper.fromBlockHeader(firstPowChange - 2, ChainTestUtil.blockHeader562462)
+      val firstBlockHeaderDb =
+        BlockHeaderDbHelper.fromBlockHeader(firstPowChange - 2,
+                                            ChainTestUtil.blockHeader562462)
 
       val secondBlockHeaderDb =
         BlockHeaderDbHelper.fromBlockHeader(firstPowChange - 1,
@@ -92,16 +91,25 @@ class ChainHandlerTest extends ChainUnitTest {
         BlockHeaderDbHelper.fromBlockHeader(firstPowChange,
                                             ChainTestUtil.blockHeader562464)
 
+      /*
+       * We need to insert one block before the first POW check because it is used on the next
+       * POW check. We then need to insert the next to blocks to circumvent a POW check since
+       * that would require we have an old block in the Blockchain that we don't have.
+       */
+      val firstThreeBlocks =
+        Vector(firstBlockHeaderDb, secondBlockHeaderDb, thirdBlockHeaderDb)
+
       chainHandler.blockchain.blockHeaderDAO
-        .createAll(Vector(firstBlockHeaderDb, secondBlockHeaderDb, thirdBlockHeaderDb))
+        .createAll(firstThreeBlocks)
         .flatMap { _ =>
           var processorF = Future.successful(
-            chainHandler.copy(blockchain = chainHandler.blockchain.copy(
-              headers = Vector(thirdBlockHeaderDb, secondBlockHeaderDb, firstBlockHeaderDb))))
+            chainHandler.copy(blockchain =
+              chainHandler.blockchain.copy(headers = firstThreeBlocks.reverse)))
           var blockCount = firstPowChange
 
           // Takes way too long to do all blocks
-          val blockHeadersToTest = blockHeaders.tail.take((2*chainHandler.chainParams.difficultyChangeInterval + 1).toInt)
+          val blockHeadersToTest = blockHeaders.tail.take(
+            (2 * chainHandler.chainParams.difficultyChangeInterval + 1).toInt)
 
           val processFVec = blockHeadersToTest.map { blockHeader => () =>
             {
