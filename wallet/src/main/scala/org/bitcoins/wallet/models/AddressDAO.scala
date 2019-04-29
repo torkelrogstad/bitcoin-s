@@ -1,6 +1,6 @@
 package org.bitcoins.wallet.models
 
-import org.bitcoins.core.crypto.bip44.BIP44ChainType
+import org.bitcoins.core.hd.HDChainType
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.db.{CRUD, SlickUtil}
 import org.bitcoins.wallet.db.WalletDbConfig
@@ -45,14 +45,14 @@ case class AddressDAO(override val dbConfig: WalletDbConfig)(
     table.filter(_.accountIndex === accountIndex)
 
   def findMostRecentChange(accountIndex: Int): Future[Option[AddressDb]] = {
-    val query = findMostRecentForChain(accountIndex, BIP44ChainType.Change)
+    val query = findMostRecentForChain(accountIndex, HDChainType.Change)
 
     database.run(query)
   }
 
   private def findMostRecentForChain(
       accountIndex: Int,
-      chain: BIP44ChainType): SqlAction[
+      chain: HDChainType): SqlAction[
     Option[AddressDb],
     NoStream,
     Effect.Read] = {
@@ -65,7 +65,7 @@ case class AddressDAO(override val dbConfig: WalletDbConfig)(
   }
 
   def findMostRecentExternal(accountIndex: Int): Future[Option[AddressDb]] = {
-    val query = findMostRecentForChain(accountIndex, BIP44ChainType.External)
+    val query = findMostRecentForChain(accountIndex, HDChainType.External)
     database.run(query)
   }
 }

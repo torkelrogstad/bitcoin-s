@@ -6,12 +6,7 @@ import org.bitcoins.core.crypto.{
   ExtKeyPubVersion,
   ExtPublicKey
 }
-import org.bitcoins.core.crypto.bip44.{
-  BIP44Account,
-  BIP44ChainType,
-  BIP44Coin,
-  BIP44Path
-}
+import org.bitcoins.core.hd.{HDAccount, HDCoin, LegacyHDPathFactory$$}
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.blockchain.{
   ChainParams,
@@ -27,11 +22,11 @@ object WalletTestUtil {
   val chainParams: ChainParams = RegTestNetChainParams
   val networkParam: RegTest.type = RegTest
 
-  val bip44Coin: BIP44Coin = BIP44Coin.fromChainParams(chainParams)
-  lazy val sampleBip44Path = BIP44Path(bip44Coin,
-                                       accountIndex = 0,
-                                       BIP44ChainType.External,
-                                       addressIndex = 0)
+  val bip44Coin: HDCoin = HDCoin.fromChainParams(chainParams)
+  lazy val sampleBip44Path = LegacyHDPathFactory$$(bip44Coin,
+                                                   accountIndex = 0,
+                                                   BIP44ChainType.External,
+                                                   addressIndex = 0)
 
   val extKeyPubVersion: ExtKeyPubVersion =
     ExtKeyPubVersion.fromChainParams(chainParams)
@@ -39,7 +34,7 @@ object WalletTestUtil {
   def freshXpub: ExtPublicKey =
     CryptoGenerators.extPublicKey.sample.getOrElse(freshXpub)
 
-  val firstAccount = BIP44Account(bip44Coin, 0)
+  val firstAccount = HDAccount(bip44Coin, 0)
   def firstAccountDb = AccountDb(freshXpub, firstAccount)
 
   lazy val sampleTxid: DoubleSha256Digest = DoubleSha256Digest(

@@ -1,9 +1,13 @@
 package org.bitcoins.core.crypto
 
 import org.bitcoins.core.crypto.ExtKeyVersion._
-import org.bitcoins.core.crypto.bip32.BIP32Path
+import org.bitcoins.core.hd.BIP32Path
 import org.bitcoins.core.number.UInt32
-import org.bitcoins.testkit.core.gen.{CryptoGenerators, NumberGenerator}
+import org.bitcoins.testkit.core.gen.{
+  CryptoGenerators,
+  HDGenerators,
+  NumberGenerator
+}
 import org.bitcoins.testkit.util.BitcoinSUnitTest
 import scodec.bits.HexStringSyntax
 
@@ -47,7 +51,7 @@ class ExtKeyTest extends BitcoinSUnitTest {
   }
 
   it must "derive private keys from a BIP32 path and an xpriv" in {
-    forAll(CryptoGenerators.extPrivateKey, CryptoGenerators.bip32Path) {
+    forAll(CryptoGenerators.extPrivateKey, HDGenerators.bip32Path) {
       (priv, path) =>
         priv.deriveChildPrivKey(path)
         succeed
@@ -55,7 +59,7 @@ class ExtKeyTest extends BitcoinSUnitTest {
   }
 
   it must "derive public keys from a BIP32 path and an xpriv" in {
-    forAll(CryptoGenerators.extPrivateKey, CryptoGenerators.bip32Path) {
+    forAll(CryptoGenerators.extPrivateKey, HDGenerators.bip32Path) {
       (priv, path) =>
         val pub = priv.deriveChildPubKey(path)
         pub match {
@@ -66,7 +70,7 @@ class ExtKeyTest extends BitcoinSUnitTest {
   }
 
   it must "fail to derive public keys from a hardened public key" in {
-    forAll(CryptoGenerators.extPrivateKey, CryptoGenerators.hardBip32Child) {
+    forAll(CryptoGenerators.extPrivateKey, HDGenerators.hardBip32Child) {
       (priv, child) =>
         val pub = priv.extPublicKey
         val derivedPub = pub.deriveChildPubKey(child.toUInt32)

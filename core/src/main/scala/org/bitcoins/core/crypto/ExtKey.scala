@@ -1,7 +1,7 @@
 package org.bitcoins.core.crypto
 
 import org.bitcoin.NativeSecp256k1
-import org.bitcoins.core.crypto.bip32.{BIP32Node, BIP32Path}
+import org.bitcoins.core.hd.{BIP32Node, BIP32Path}
 import org.bitcoins.core.number.{UInt32, UInt8}
 import org.bitcoins.core.protocol.NetworkElement
 import org.bitcoins.core.util._
@@ -167,8 +167,8 @@ sealed abstract class ExtPrivateKey extends ExtKey {
     * could signify account levels, one sublevel for each currency, or
     * how to derive change addresses.
     *
-    * @see [[org.bitcoins.core.crypto.bip44.BIP44Path BIP44Path]] for a more
-    *     specialized version of a BIP32 path
+    * @see [[org.bitcoins.core.hd.HDPath HDPath]] for a more
+    *      specialized version of a BIP32 path
     */
   def deriveChildPrivKey(path: BIP32Path): ExtPrivateKey = {
     path.path.foldLeft(this)((accum: ExtPrivateKey, curr: BIP32Node) =>

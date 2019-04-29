@@ -1,13 +1,10 @@
 package org.bitcoins.wallet.models
 
 import org.bitcoins.core.crypto.Sign
-import org.bitcoins.core.crypto.bip44.BIP44Path
 import org.bitcoins.core.currency.CurrencyUnit
+import org.bitcoins.core.hd.LegacyHDPathFactory$$
 import org.bitcoins.core.protocol.script.{ScriptPubKey, ScriptWitness}
-import org.bitcoins.core.protocol.transaction.{
-  TransactionOutPoint,
-  TransactionOutput
-}
+import org.bitcoins.core.protocol.transaction.{TransactionOutPoint, TransactionOutput}
 import org.bitcoins.core.script.crypto.HashType
 import org.bitcoins.core.wallet.utxo.BitcoinUTXOSpendingInfo
 import org.bitcoins.db.{DbRowAutoInc, TableAutoInc}
@@ -16,12 +13,12 @@ import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.ProvenShape
 
 case class UTXOSpendingInfoDb(
-    id: Option[Long],
-    outPoint: TransactionOutPoint,
-    output: TransactionOutput,
-    privKeyPath: BIP44Path,
-    redeemScriptOpt: Option[ScriptPubKey],
-    scriptWitnessOpt: Option[ScriptWitness]
+                               id: Option[Long],
+                               outPoint: TransactionOutPoint,
+                               output: TransactionOutput,
+                               privKeyPath: LegacyHDPathFactory$$,
+                               redeemScriptOpt: Option[ScriptPubKey],
+                               scriptWitnessOpt: Option[ScriptWitness]
 ) extends DbRowAutoInc[UTXOSpendingInfoDb] {
   val hashType: HashType = HashType.sigHashAll
 
@@ -54,7 +51,7 @@ case class UTXOSpendingInfoTable(tag: Tag)
   def output: Rep[TransactionOutput] =
     column[TransactionOutput]("tx_output")
 
-  def privKeyPath: Rep[BIP44Path] = column[BIP44Path]("bip44_privkey_path")
+  def privKeyPath: Rep[LegacyHDPathFactory$$] = column[LegacyHDPathFactory$$]("bip44_privkey_path")
 
   def redeemScriptOpt: Rep[Option[ScriptPubKey]] =
     column[Option[ScriptPubKey]]("nullable_redeem_script")

@@ -1,8 +1,8 @@
 package org.bitcoins.wallet
 import org.bitcoins.core.config.BitcoinNetwork
 import org.bitcoins.core.crypto._
-import org.bitcoins.core.crypto.bip44._
 import org.bitcoins.core.currency.{Bitcoins, CurrencyUnit}
+import org.bitcoins.core.hd.{HDAccount, HDCoin, HDChainType}
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.script.ScriptPubKey
@@ -23,6 +23,7 @@ import scodec.bits.BitVector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import org.bitcoins.core.hd.HDCoinType
 
 sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
   implicit def ec: ExecutionContext
@@ -32,8 +33,7 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
   val accountDAO: AccountDAO = AccountDAO(dbConfig)
   val utxoDAO: UTXOSpendingInfoDAO = UTXOSpendingInfoDAO(dbConfig)
 
-  val bip44Coin: BIP44Coin = BIP44Coin.fromChainParams(chainParams)
-
+  val bip44Coin: HDCoinType = HDCoinType.fromChainParams(chainParams)
 
   /**
     * @inheritdoc
@@ -149,11 +149,11 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
     */
   private def getNewAddressHelper(
       accountIndex: Int,
-      chainType: BIP44ChainType): Future[BitcoinAddress] = {
+      chainType: HDChainType): Future[BitcoinAddress] = {
     val lastAddrOptF = chainType match {
-      case BIP44ChainType.External =>
+      case HDChainType.External =>
         addressDAO.findMostRecentExternal(accountIndex)
-      case BIP44ChainType.Change =>
+      case HDChainType.Change =>
         addressDAO.findMostRecentChange(accountIndex)
     }
 
@@ -161,7 +161,7 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
       val addrPath = lastAddrOpt match {
         case Some(addr) => addr.path.next.address
         case None =>
-          val account = BIP44Account(bip44Coin, accountIndex)
+          val account = HDAccount(bip44Coin, accountIndex)
           val chain = account.toChain(chainType)
           BIP44Address(chain, 0)
       }
@@ -179,13 +179,13 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
     * @inheritdoc
     */
   override def getNewAddress(accountIndex: Int = 0): Future[BitcoinAddress] = {
-    getNewAddressHelper(accountIndex, BIP44ChainType.External)
+    getNewAddressHelper(accountIndex, HDChainType.External)
   }
 
   /** Generates a new change address */
   private def getNewChangeAddress(
       accountIndex: Int = 0): Future[BitcoinAddress] = {
-    getNewAddressHelper(accountIndex, BIP44ChainType.Change)
+    getNewAddressHelper(accountIndex, HDChainType.Change)
   }
 
   override def sendToAddress(
@@ -205,16 +205,15 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
         val utxos: List[BitcoinUTXOSpendingInfo] =
           List(walletUtxos.find(_.value >= amount).get.toUTXOSpendingInfo(this))
 
-
         val b = networkParameters match {
           case b: BitcoinNetwork =>
             BitcoinTxBuilder(destinations = destinations,
-              utxos = utxos,
-              feeRate = feeRate,
-              changeSPK = change.scriptPubKey,
-              network = b)
+                             utxos = utxos,
+                             feeRate = feeRate,
+                             changeSPK = change.scriptPubKey,
+                             network = b)
         }
-        
+
         b
       }
       signed <- txBuilder.sign
@@ -256,9 +255,8 @@ object Wallet extends CreateWalletApi with BitcoinSLogger {
     override val passphrase: AesPassword = Wallet.badPassphrase
   }
 
-  def apply(
-      mnemonicCode: MnemonicCode,
-      walletAppConfig: WalletAppConfig)(implicit ec: ExecutionContext): Wallet =
+  def apply(mnemonicCode: MnemonicCode, walletAppConfig: WalletAppConfig)(
+      implicit ec: ExecutionContext): Wallet =
     WalletImpl(mnemonicCode, walletAppConfig)(ec)
 
   // todo figure out how to handle password part of wallet
@@ -311,7 +309,7 @@ object Wallet extends CreateWalletApi with BitcoinSLogger {
         encrypted <- encryptedMnemonicE
       } yield {
         val wallet = WalletImpl(mnemonic, appConfig)
-        val account = BIP44Account(BIP44Coin.fromChainParams(chainParams), 0)
+        val account = HDAccount(HDCoin.fromChainParams(chainParams), 0)
         val xpriv = wallet.xpriv
 
         // safe since we're deriving from a priv

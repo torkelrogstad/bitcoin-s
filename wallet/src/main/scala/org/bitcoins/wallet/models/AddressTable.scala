@@ -1,17 +1,9 @@
 package org.bitcoins.wallet.models
 
 import org.bitcoins.core.config.NetworkParameters
-import org.bitcoins.core.crypto.bip44.{BIP44ChainType, BIP44Coin, BIP44Path}
-import org.bitcoins.core.crypto.{
-  ECPublicKey,
-  ExtPrivateKey,
-  Sha256Hash160Digest
-}
-import org.bitcoins.core.protocol.script.{
-  P2WPKHWitnessSPKV0,
-  P2WPKHWitnessV0,
-  ScriptWitness
-}
+import org.bitcoins.core.crypto.{ECPublicKey, ExtPrivateKey, Sha256Hash160Digest}
+import org.bitcoins.core.hd.{HDCoin, HDChainType, LegacyHDPathFactory$$}
+import org.bitcoins.core.protocol.script.{P2WPKHWitnessSPKV0, P2WPKHWitnessV0, ScriptWitness}
 import org.bitcoins.core.protocol.{Bech32Address, BitcoinAddress}
 import org.bitcoins.core.script.ScriptType
 import slick.jdbc.SQLiteProfile.api._
@@ -20,20 +12,20 @@ import slick.lifted.ProvenShape
 // todo: make ADT for different addresses in DB, seeing as they have different fields
 // todo: indicate whether or not address has been spent to
 case class AddressDb(
-    path: BIP44Path,
-    ecPublicKey: ECPublicKey,
-    hashedPubKey: Sha256Hash160Digest,
-    address: BitcoinAddress,
-    witnessScriptOpt: Option[ScriptWitness],
-    scriptType: ScriptType)
+                      path: LegacyHDPathFactory$$,
+                      ecPublicKey: ECPublicKey,
+                      hashedPubKey: Sha256Hash160Digest,
+                      address: BitcoinAddress,
+                      witnessScriptOpt: Option[ScriptWitness],
+                      scriptType: ScriptType)
 
 object AddressDbHelper {
 
   /** Get a Segwit pay-to-pubkeyhash address */
   def getP2WPKHAddress(
-      xpriv: ExtPrivateKey,
-      path: BIP44Path,
-      np: NetworkParameters): AddressDb = {
+                        xpriv: ExtPrivateKey,
+                        path: LegacyHDPathFactory$$,
+                        np: NetworkParameters): AddressDb = {
 
     val xprivAtPath: ExtPrivateKey = xpriv.deriveChildPrivKey(path)
     val pub = xprivAtPath.key.publicKey
@@ -60,10 +52,10 @@ class AddressTable(tag: Tag) extends Table[AddressDb](tag, "addresses") {
 
   def accountIndex: Rep[Int] = column[Int]("account_index")
 
-  def accountCoin: Rep[BIP44Coin] = column[BIP44Coin]("bip44_coin")
+  def accountCoin: Rep[HDCoin] = column[HDCoin]("bip44_coin")
 
-  def accountChainType: Rep[BIP44ChainType] =
-    column[BIP44ChainType]("bip44_chain_type")
+  def accountChainType: Rep[HDChainType] =
+    column[HDChainType]("bip44_chain_type")
 
   def addressIndex: Rep[Int] = column[Int]("address_index")
 
@@ -82,8 +74,8 @@ class AddressTable(tag: Tag) extends Table[AddressDb](tag, "addresses") {
 
   private type AddressTuple = (
       Int,
-      BIP44Coin,
-      BIP44ChainType,
+      HDCoin,
+      HDChainType,
       BitcoinAddress,
       Option[ScriptWitness],
       Int,
@@ -102,7 +94,7 @@ class AddressTable(tag: Tag) extends Table[AddressDb](tag, "addresses") {
           hashedPubKey,
           scriptType) =>
       AddressDb(
-        path = BIP44Path(coin = accountCoin,
+        path = LegacyHDPathFactory$$(coin = accountCoin,
                          accountIndex = accountIndex,
                          chainType = accountChain,
                          addressIndex = addressIndex),

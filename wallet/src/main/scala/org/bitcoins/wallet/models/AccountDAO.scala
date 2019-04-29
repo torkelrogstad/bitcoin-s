@@ -1,6 +1,6 @@
 package org.bitcoins.wallet.models
 
-import org.bitcoins.core.crypto.bip44.BIP44Coin
+import org.bitcoins.core.hd.HDCoin
 import org.bitcoins.db.{CRUD, SlickUtil}
 import org.bitcoins.wallet.db.WalletDbConfig
 import slick.jdbc.SQLiteProfile.api._
@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class AccountDAO(dbConfig: WalletDbConfig)(
     implicit executionContext: ExecutionContext)
-    extends CRUD[AccountDb, (BIP44Coin, Int)] {
+    extends CRUD[AccountDb, (HDCoin, Int)] {
 
   import org.bitcoins.db.DbCommonsColumnMappers._
 
@@ -21,10 +21,10 @@ case class AccountDAO(dbConfig: WalletDbConfig)(
     SlickUtil.createAllNoAutoInc(ts, database, table)
 
   override protected def findByPrimaryKeys(
-      ids: Vector[(BIP44Coin, Int)]): Query[Table[_], AccountDb, Seq] = ???
+      ids: Vector[(HDCoin, Int)]): Query[Table[_], AccountDb, Seq] = ???
 
   override def findByPrimaryKey(
-      id: (BIP44Coin, Int)): Query[Table[_], AccountDb, Seq] = {
+      id: (HDCoin, Int)): Query[Table[_], AccountDb, Seq] = {
     val (coin, index) = id
     table
       .filter(_.coin === coin)

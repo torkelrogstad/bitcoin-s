@@ -1,7 +1,6 @@
 package org.bitcoins.db
 
 import org.bitcoins.core.crypto._
-import org.bitcoins.core.crypto.bip44.{BIP44ChainType, BIP44Coin, BIP44Path}
 import org.bitcoins.core.number.{Int32, UInt32, UInt64}
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.script.{ScriptPubKey, ScriptWitness}
@@ -13,6 +12,9 @@ import org.bitcoins.core.script.ScriptType
 import org.bitcoins.core.serializers.script.RawScriptWitnessParser
 import scodec.bits.ByteVector
 import slick.jdbc.SQLiteProfile.api._
+import org.bitcoins.core.hd.LegacyHDPath
+import org.bitcoins.core.hd.HDCoinType
+import org.bitcoins.core.hd.HDChainType
 
 abstract class DbCommonsColumnMappers {
 
@@ -94,15 +96,16 @@ abstract class DbCommonsColumnMappers {
       .base[ExtPublicKey, String](_.toString, ExtPublicKey.fromString(_).get)
   }
 
-  implicit val bip44CoinMapper: BaseColumnType[BIP44Coin] = {
-    MappedColumnType.base[BIP44Coin, Int](_.toInt, BIP44Coin.fromInt)
+  implicit val bip44CoinTypeMapper: BaseColumnType[HDCoinType] = {
+    MappedColumnType.base[HDCoinType, Int](_.toInt, HDCoinType.fromInt)
   }
 
-  implicit val bip44PathMappper: BaseColumnType[BIP44Path] =
-    MappedColumnType.base[BIP44Path, String](_.toString, BIP44Path.fromString)
+  implicit val bip44PathMappper: BaseColumnType[LegacyHDPath] =
+    MappedColumnType
+      .base[LegacyHDPath, String](_.toString, LegacyHDPath.fromString)
 
-  implicit val bip44ChainTypeMapper: BaseColumnType[BIP44ChainType] =
-    MappedColumnType.base[BIP44ChainType, Int](_.index, BIP44ChainType.fromInt)
+  implicit val bip44ChainTypeMapper: BaseColumnType[HDChainType] =
+    MappedColumnType.base[HDChainType, Int](_.index, HDChainType.fromInt)
 
   implicit val bitcoinAddressMapper: BaseColumnType[BitcoinAddress] =
     MappedColumnType
