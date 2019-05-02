@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
+import scala.concurrent.duration.DurationInt
 import scala.util._
 /**
 * This is for example purposes only!
@@ -92,9 +93,9 @@ val createdGenHeaderF = blockHeaderTableF.flatMap(_ => blockHeaderDAO.create(gen
 
 val chainF = createdGenHeaderF.map(h => Vector(h))
 
-val blockchainF = chainF.map(chain => Blockchain(chain,blockHeaderDAO))
+val blockchainF = chainF.map(chain => Blockchain(chain))
 
-val chainHandlerF = blockchainF.map(blockchain => ChainHandler(blockchain))
+val chainHandlerF = blockchainF.map(blockchain => ChainHandler(blockHeaderDAO, chainAppConfig))
 
 //we need a way to connect bitcoin-s to our running bitcoind, we are going to do this via rpc for now
 //we need to implement the 'getBestBlockHashFunc' and 'getBlockHeaderFunc' functions
@@ -147,8 +148,6 @@ val addressF = walletF.flatMap(_.getNewAddress())
 addressF.onComplete { _ =>
   cleanup()
 }
-
-
 
 def cleanup(): Future[Unit] = {
   logger.info("Beginning clean up of create wallet script")
