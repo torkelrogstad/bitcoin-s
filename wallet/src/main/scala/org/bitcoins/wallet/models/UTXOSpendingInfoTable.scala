@@ -10,28 +10,50 @@ import org.bitcoins.core.protocol.transaction.{
 import org.bitcoins.core.script.crypto.HashType
 import org.bitcoins.core.wallet.utxo.BitcoinUTXOSpendingInfo
 import org.bitcoins.db.{DbRowAutoInc, TableAutoInc}
-import org.bitcoins.wallet.api.UnlockedWalletApi
 import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.ProvenShape
+import org.bitcoins.core.hd.HDPath
+import scala.util.Failure
+import scala.util.Success
 import org.bitcoins.core.hd.SegWitHDPath
 
-case class UTXOSpendingInfoDb(
+case class SegWitUTOXSpendingInfodb(
     id: Option[Long],
     outPoint: TransactionOutPoint,
     output: TransactionOutput,
     privKeyPath: SegWitHDPath,
-    redeemScriptOpt: Option[ScriptPubKey],
-    scriptWitnessOpt: Option[ScriptWitness]
-) extends DbRowAutoInc[UTXOSpendingInfoDb] {
+    scriptWitness: ScriptWitness
+) extends UTXOSpendingInfoDb[SegWitHDPath] {
+  override def redeemScriptOpt: Option[ScriptPubKey] = None
+  override def scriptWitnessOpt: Option[ScriptWitness] = Some(scriptWitness)
+
+  override def copyWithId(id: Long): SegWitUTOXSpendingInfodb =
+    copy(id = Some(id))
+}
+
+// TODO add case for nested segwit
+// and legacy
+sealed trait UTXOSpendingInfoDb[T <: HDPath[T]]
+    extends DbRowAutoInc[UTXOSpendingInfoDb[T]] {
+  def id: Option[Long]
+  def outPoint: TransactionOutPoint
+  def output: TransactionOutput
+  def privKeyPath: T
+  def redeemScriptOpt: Option[ScriptPubKey]
+  def scriptWitnessOpt: Option[ScriptWitness]
+
   val hashType: HashType = HashType.sigHashAll
 
   def value: CurrencyUnit = output.value
 
-  def toUTXOSpendingInfo(wallet: UnlockedWalletApi): BitcoinUTXOSpendingInfo = {
+  def toUTXOSpendingInfo(account: AccountDb): BitcoinUTXOSpendingInfo = {
 
-    val privAtPath = wallet.xpriv.deriveChildPrivKey(privKeyPath).key
+    val pubAtPath = account.xpub.deriveChildPubKey(privKeyPath) match {
+      case Failure(exception) => throw exception
+      case Success(xpub)      => xpub.key
+    }
 
-    val sign: Sign = Sign(privAtPath.signFunction, privAtPath.publicKey)
+    val sign: Sign = Sign(pubAtPath.signFunction, pubAtPath)
 
     BitcoinUTXOSpendingInfo(outPoint,
                             output,
@@ -41,11 +63,10 @@ case class UTXOSpendingInfoDb(
                             hashType)
   }
 
-  override def copyWithId(id: Long): UTXOSpendingInfoDb = copy(id = Some(id))
 }
 
 case class UTXOSpendingInfoTable(tag: Tag)
-    extends TableAutoInc[UTXOSpendingInfoDb](tag, "utxos") {
+    extends TableAutoInc[UTXOSpendingInfoDb[_]](tag, "utxos") {
   import org.bitcoins.db.DbCommonsColumnMappers._
 
   def outPoint: Rep[TransactionOutPoint] =
@@ -54,7 +75,7 @@ case class UTXOSpendingInfoTable(tag: Tag)
   def output: Rep[TransactionOutput] =
     column[TransactionOutput]("tx_output")
 
-  def privKeyPath: Rep[SegWitHDPath] = column[SegWitHDPath]("hd_privkey_path")
+  def privKeyPath: Rep[HDPath[_]] = column[HDPath[_]]("hd_privkey_path")
 
   def redeemScriptOpt: Rep[Option[ScriptPubKey]] =
     column[Option[ScriptPubKey]]("nullable_redeem_script")
@@ -62,6 +83,41 @@ case class UTXOSpendingInfoTable(tag: Tag)
   def scriptWitnessOpt: Rep[Option[ScriptWitness]] =
     column[Option[ScriptWitness]]("script_witness")
 
-  def * : ProvenShape[UTXOSpendingInfoDb] =
-    (id.?, outPoint, output, privKeyPath, redeemScriptOpt, scriptWitnessOpt) <> (UTXOSpendingInfoDb.tupled, UTXOSpendingInfoDb.unapply)
+  private type UTXOTuple[T <: HDPath[T]] = (
+      Option[Long],
+      TransactionOutPoint,
+      TransactionOutput,
+      HDPath[T],
+      Option[ScriptPubKey],
+      Option[ScriptWitness])
+
+  private def fromTuple[T <: HDPath[T]](
+      tuple: UTXOTuple[T]): UTXOSpendingInfoDb[T] = {
+    tuple match {
+      case (id,
+            outpoint,
+            output,
+            path: SegWitHDPath,
+            None,
+            Some(scriptWitness)) =>
+        SegWitUTOXSpendingInfodb(id, outpoint, output, path, scriptWitness)
+          .asInstanceOf[UTXOSpendingInfoDb[T]]
+
+      case bad =>
+        throw new IllegalArgumentException(
+          s"Could not construct UtxoSpendingInfoDb from bad combination $bad. Note: Only Segwit is implemented")
+    }
+  }
+
+  private def toTuple[T <: HDPath[T]](
+      utxo: UTXOSpendingInfoDb[T]): Option[UTXOTuple[T]] =
+    Some(
+      (utxo.id,
+       utxo.outPoint,
+       utxo.output,
+       utxo.privKeyPath,
+       utxo.redeemScriptOpt,
+       utxo.scriptWitnessOpt))
+
+  def * : ProvenShape[UTXOSpendingInfoDb[_]] = ???
 }

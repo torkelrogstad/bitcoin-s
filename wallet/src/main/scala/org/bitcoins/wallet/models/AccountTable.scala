@@ -11,25 +11,30 @@ class AccountTable(tag: Tag) extends Table[AccountDb](tag, "wallet_accounts") {
 
   import org.bitcoins.db.DbCommonsColumnMappers._
 
+  def purpose: Rep[HDPurpose] = column[HDPurpose]("hd_purpose")
+
   def xpub: Rep[ExtPublicKey] = column[ExtPublicKey]("xpub")
 
   def coin: Rep[HDCoinType] = column[HDCoinType]("coin")
 
   def index: Rep[Int] = column[Int]("account_index")
 
-  private type AccountTuple = (ExtPublicKey, HDCoinType, Int)
+  private type AccountTuple = (HDPurpose, ExtPublicKey, HDCoinType, Int)
 
   private val fromTuple: AccountTuple => AccountDb = {
-    case (pub, coin, index) =>
-      AccountDb(pub, HDAccount(HDCoin(???, coin), index))
+    case (purpose, pub, coin, index) =>
+      AccountDb(pub, HDAccount(HDCoin(purpose, coin), index))
   }
 
   private val toTuple: AccountDb => Option[AccountTuple] = account =>
     Some(
-      (account.xpub, account.hdAccount.coin.coinType, account.hdAccount.index))
+      (account.hdAccount.purpose,
+       account.xpub,
+       account.hdAccount.coin.coinType,
+       account.hdAccount.index))
 
   def * : ProvenShape[AccountDb] =
-    (xpub, coin, index) <> (fromTuple, toTuple)
+    (purpose, xpub, coin, index) <> (fromTuple, toTuple)
 
   def primaryKey: PrimaryKey =
     primaryKey("pk_account", (coin, index))

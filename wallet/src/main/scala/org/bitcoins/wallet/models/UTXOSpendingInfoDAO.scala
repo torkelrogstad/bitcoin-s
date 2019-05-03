@@ -8,11 +8,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class UTXOSpendingInfoDAO(dbConfig: WalletDbConfig)(
     implicit val ec: ExecutionContext)
-    extends CRUDAutoInc[UTXOSpendingInfoDb] {
+    extends CRUDAutoInc[UTXOSpendingInfoDb[_]] {
 
   /** The table inside our database we are inserting into */
   override val table = TableQuery[UTXOSpendingInfoTable]
 
-  def findAllUTXOs(): Future[Vector[UTXOSpendingInfoDb]] =
+  def findAllUTXOs(): Future[Vector[UTXOSpendingInfoDb[_]]] =
     database.run(table.result).map(_.toVector)
 }

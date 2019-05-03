@@ -13,37 +13,39 @@ import org.bitcoins.core.hd.HDChainType
 
 case class AddressDAO(override val dbConfig: WalletDbConfig)(
     implicit val ec: ExecutionContext)
-    extends CRUD[AddressDb, BitcoinAddress] {
+    extends CRUD[AddressDb[_], BitcoinAddress] {
   import org.bitcoins.db.DbCommonsColumnMappers._
 
   override val table: TableQuery[AddressTable] = TableQuery[AddressTable]
 
-  override def createAll(ts: Vector[AddressDb]): Future[Vector[AddressDb]] =
+  override def createAll(
+      ts: Vector[AddressDb[_]]): Future[Vector[AddressDb[_]]] =
     SlickUtil.createAllNoAutoInc(ts, database, table)
 
   /** Finds the rows that correlate to the given primary keys */
   override def findByPrimaryKeys(
-      addresses: Vector[BitcoinAddress]): Query[Table[_], AddressDb, Seq] =
+      addresses: Vector[BitcoinAddress]): Query[Table[_], AddressDb[_], Seq] =
     table.filter(_.address.inSet(addresses))
 
-  override def findAll(ts: Vector[AddressDb]): Query[Table[_], AddressDb, Seq] =
+  override def findAll(
+      ts: Vector[AddressDb[_]]): Query[Table[_], AddressDb[_], Seq] =
     findByPrimaryKeys(ts.map(_.address))
 
-  def findAddress(addr: BitcoinAddress): Future[Option[AddressDb]] = {
+  def findAddress(addr: BitcoinAddress): Future[Option[AddressDb[_]]] = {
     val query = findByPrimaryKey(addr).result
     database.run(query).map(_.headOption)
   }
 
-  def findAll(): Future[Vector[AddressDb]] = {
+  def findAll(): Future[Vector[AddressDb[_]]] = {
     val query = table.result
     database.run(query).map(_.toVector)
   }
 
   private def addressesForAccountQuery(
-      accountIndex: Int): Query[AddressTable, AddressDb, Seq] =
+      accountIndex: Int): Query[AddressTable, AddressDb[_], Seq] =
     table.filter(_.accountIndex === accountIndex)
 
-  def findMostRecentChange(accountIndex: Int): Future[Option[AddressDb]] = {
+  def findMostRecentChange(accountIndex: Int): Future[Option[AddressDb[_]]] = {
     val query = findMostRecentForChain(accountIndex, HDChainType.Change)
 
     database.run(query)
@@ -51,7 +53,10 @@ case class AddressDAO(override val dbConfig: WalletDbConfig)(
 
   private def findMostRecentForChain(
       accountIndex: Int,
-      chain: HDChainType): SqlAction[Option[AddressDb], NoStream, Effect.Read] = {
+      chain: HDChainType): SqlAction[
+    Option[AddressDb[_]],
+    NoStream,
+    Effect.Read] = {
     addressesForAccountQuery(accountIndex)
       .filter(_.accountChainType === chain)
       .sortBy(_.addressIndex.desc)
@@ -60,7 +65,8 @@ case class AddressDAO(override val dbConfig: WalletDbConfig)(
       .headOption
   }
 
-  def findMostRecentExternal(accountIndex: Int): Future[Option[AddressDb]] = {
+  def findMostRecentExternal(
+      accountIndex: Int): Future[Option[AddressDb[_]]] = {
     val query = findMostRecentForChain(accountIndex, HDChainType.External)
     database.run(query)
   }

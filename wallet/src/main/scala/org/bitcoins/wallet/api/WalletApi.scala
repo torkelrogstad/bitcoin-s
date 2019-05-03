@@ -3,6 +3,7 @@ package org.bitcoins.wallet.api
 import org.bitcoins.core.config.NetworkParameters
 import org.bitcoins.core.crypto._
 import org.bitcoins.core.currency.CurrencyUnit
+import org.bitcoins.core.hd.HDPurpose
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.blockchain.ChainParams
@@ -10,6 +11,7 @@ import org.bitcoins.core.protocol.transaction.Transaction
 import org.bitcoins.core.wallet.fee.FeeUnit
 import org.bitcoins.wallet.config.WalletAppConfig
 import org.bitcoins.wallet.db.WalletDbConfig
+import org.bitcoins.wallet.HDUtil
 import org.bitcoins.wallet.models.{AccountDb, AddressDb, UTXOSpendingInfoDb}
 
 import scala.concurrent.Future
@@ -23,7 +25,7 @@ import scala.concurrent.Future
   */
 sealed trait WalletApi {
 
-  def walletAppConfig: WalletAppConfig
+  implicit val walletAppConfig: WalletAppConfig
 
   def dbConfig: WalletDbConfig = walletAppConfig.dbConfig
 
@@ -55,16 +57,18 @@ trait LockedWalletApi extends WalletApi {
     */
   // def updateUtxo: Future[WalletApi]
 
-  def listUtxos(): Future[Vector[UTXOSpendingInfoDb]]
+  def listUtxos(): Future[Vector[UTXOSpendingInfoDb[_]]]
 
-  def listAddresses(): Future[Vector[AddressDb]]
+  def listAddresses(): Future[Vector[AddressDb[_]]]
+
+  protected[wallet] def defaultAccount: AccountDb
 
   /**
     * Gets a new external address. Calling this method multiple
     * times will return the same address, until it has
     * received funds.
     */
-  def getNewAddress(accountIndex: Int = 0): Future[BitcoinAddress]
+  def getNewAddress(account: AccountDb = defaultAccount): Future[BitcoinAddress]
 
   /**
     * Unlocks the wallet with the provided passphrase,
@@ -91,10 +95,12 @@ trait UnlockedWalletApi extends LockedWalletApi {
 
   def passphrase: AesPassword
 
-  lazy val xpriv: ExtPrivateKey = {
+  /** Derives the relevant xpriv for the given HD purpose */
+  def xprivForPurpose(purpose: HDPurpose): ExtPrivateKey = {
     val seed = BIP39Seed.fromMnemonic(mnemonicCode, BIP39Seed.EMPTY_PASSWORD) // todo think more about this
 
-    val privVersion = ExtKeyPrivVersion.fromNetworkParameters(networkParameters)
+    val privVersion = HDUtil.getXprivVersion(purpose)
+    //ExtKeyPrivVersion.fromNetworkParameters(networkParameters)
     seed.toExtPrivateKey(privVersion)
   }
 
@@ -112,5 +118,5 @@ trait UnlockedWalletApi extends LockedWalletApi {
       address: BitcoinAddress,
       amount: CurrencyUnit,
       feeRate: FeeUnit,
-      accountIndex: Int = 0): Future[Transaction]
+      fromAccount: AccountDb): Future[Transaction]
 }

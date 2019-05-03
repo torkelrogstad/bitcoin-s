@@ -2,11 +2,7 @@ package org.bitcoins.wallet.models
 
 import org.bitcoins.core.config.NetworkParameters
 import org.bitcoins.core.hd._
-import org.bitcoins.core.crypto.{
-  ECPublicKey,
-  ExtPrivateKey,
-  Sha256Hash160Digest
-}
+import org.bitcoins.core.crypto.{ECPublicKey, Sha256Hash160Digest}
 import org.bitcoins.core.protocol.script.{
   P2WPKHWitnessSPKV0,
   P2WPKHWitnessV0,
@@ -16,37 +12,71 @@ import org.bitcoins.core.protocol.{Bech32Address, BitcoinAddress}
 import org.bitcoins.core.script.ScriptType
 import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.ProvenShape
+import org.bitcoins.core.protocol.P2SHAddress
+import org.bitcoins.core.protocol.P2PKHAddress
 
-// todo: make ADT for different addresses in DB, seeing as they have different fields
-// todo: indicate whether or not address has been spent to
-case class AddressDb(
+sealed trait AddressDb[T <: HDPath[T]] {
+  def path: HDPath[T]
+  def ecPublicKey: ECPublicKey
+  def hashedPubKey: Sha256Hash160Digest
+  def address: BitcoinAddress
+  def scriptType: ScriptType
+  def witnessScriptOpt: Option[ScriptWitness]
+}
+
+/** Segwit P2PKH */
+case class SegWitAddressDb(
     path: SegWitHDPath,
     ecPublicKey: ECPublicKey,
     hashedPubKey: Sha256Hash160Digest,
-    address: BitcoinAddress,
-    witnessScriptOpt: Option[ScriptWitness],
-    scriptType: ScriptType)
+    address: Bech32Address,
+    witnessScript: ScriptWitness
+) extends AddressDb[SegWitHDPath] {
+  override val scriptType = ScriptType.WITNESS_V0_KEYHASH
+  override val witnessScriptOpt = Some(witnessScript)
+}
+
+/** Segwit P2PKH-in-P2SH */
+case class NestedSegWitAddressDb(
+    path: NestedSegWitHDPath,
+    ecPublicKey: ECPublicKey,
+    hashedPubKey: Sha256Hash160Digest,
+    address: P2SHAddress
+) extends AddressDb[NestedSegWitHDPath] {
+  override val scriptType = ScriptType.SCRIPTHASH
+  override val witnessScriptOpt = None
+}
+
+/** P2PKH */
+case class LegacyAddressDb(
+    path: LegacyHDPath,
+    ecPublicKey: ECPublicKey,
+    hashedPubKey: Sha256Hash160Digest,
+    address: P2PKHAddress,
+) extends AddressDb[LegacyHDPath] {
+  override val scriptType = ScriptType.PUBKEYHASH
+  override val witnessScriptOpt = None
+}
+// todo: make ADT for different addresses in DB, seeing as they have different fields
+// todo: indicate whether or not address has been spent to
 
 object AddressDbHelper {
 
   /** Get a Segwit pay-to-pubkeyhash address */
   def getP2WPKHAddress(
-      xpriv: ExtPrivateKey,
+      pub: ECPublicKey,
       path: SegWitHDPath,
-      np: NetworkParameters): AddressDb = {
+      np: NetworkParameters): SegWitAddressDb = {
 
-    val xprivAtPath: ExtPrivateKey = xpriv.deriveChildPrivKey(path)
-    val pub = xprivAtPath.key.publicKey
     val witnessSpk = P2WPKHWitnessSPKV0(pub)
     val scriptWitness = P2WPKHWitnessV0(pub)
     val addr = Bech32Address(witnessSpk, np)
-    AddressDb(
+    SegWitAddressDb(
       path = path,
       ecPublicKey = pub,
       hashedPubKey = witnessSpk.pubKeyHash,
       address = addr,
-      witnessScriptOpt = Some(scriptWitness),
-      scriptType = ScriptType.WITNESS_V0_KEYHASH
+      witnessScript = scriptWitness
     )
   }
 }
@@ -55,7 +85,7 @@ object AddressDbHelper {
   * todo: this needs design rework.
   * todo: https://github.com/bitcoin-s/bitcoin-s-core/pull/391#discussion_r274188334
   */
-class AddressTable(tag: Tag) extends Table[AddressDb](tag, "addresses") {
+class AddressTable(tag: Tag) extends Table[AddressDb[_]](tag, "addresses") {
   import org.bitcoins.db.DbCommonsColumnMappers._
 
   def purpose: Rep[HDPurpose] = column[HDPurpose]("hd_purpose")
@@ -94,53 +124,57 @@ class AddressTable(tag: Tag) extends Table[AddressDb](tag, "addresses") {
       Sha256Hash160Digest,
       ScriptType)
 
-  private val fromTuple: AddressTuple => AddressDb = {
-    case (purpose, // since segwit paths are hard coded ignore
-          accountIndex,
-          accountCoin,
-          accountChain,
-          address,
-          scriptWitnessOpt,
-          addressIndex,
-          pubKey,
-          hashedPubKey,
-          scriptType) =>
-      HDCoinType.Bitcoin
+  private val fromTuple: AddressTuple => AddressDb[_] = {
+    case (
+        purpose,
+        accountIndex,
+        accountCoin,
+        accountChain,
+        address,
+        scriptWitnessOpt,
+        addressIndex,
+        pubKey,
+        hashedPubKey,
+        scriptType @ _ // what should we do about this? scriptType is inferrable from purpose
+        ) =>
+      (purpose, address, scriptWitnessOpt) match {
+        case (HDPurposes.SegWit,
+              bechAddr: Bech32Address,
+              Some(scriptWitness)) =>
+          val path =
+            SegWitHDPath(coinType = accountCoin,
+                         accountIndex = accountIndex,
+                         chainType = accountChain,
+                         addressIndex = addressIndex)
 
-      AddressDb(
-        SegWitHDPath(coinType = accountCoin,
-                     accountIndex = accountIndex,
-                     chainType = accountChain,
-                     addressIndex = addressIndex),
-        ecPublicKey = pubKey,
-        hashedPubKey = hashedPubKey,
-        address = address,
-        witnessScriptOpt = scriptWitnessOpt,
-        scriptType = scriptType
-      )
+          SegWitAddressDb(path,
+                          ecPublicKey = pubKey,
+                          hashedPubKey = hashedPubKey,
+                          address = bechAddr,
+                          witnessScript = scriptWitness)
+        case invalidCombination =>
+          throw new IllegalArgumentException(
+            s"Got invalid combination of HD purpose, address and script witness: $invalidCombination" +
+              s"Note: Currently only segwit addreses are implemented")
+      }
   }
 
-  private val toTuple: AddressDb => Option[AddressTuple] = {
-    case AddressDb(path,
-                   pubKey,
-                   hashedPubKey,
-                   address,
-                   scriptWitnessOpt,
-                   scriptType) =>
+  private val toTuple: AddressDb[_] => Option[AddressTuple] = {
+    case SegWitAddressDb(path, pubKey, hashedPubKey, address, scriptWitness) =>
       Some(
         (path.purpose,
          path.account.index,
          path.coin.coinType,
          path.chain.chainType,
          address,
-         scriptWitnessOpt,
+         Some(scriptWitness),
          path.address.index,
          pubKey,
          hashedPubKey,
-         scriptType))
+         ScriptType.WITNESS_V0_KEYHASH))
   }
 
-  override def * : ProvenShape[AddressDb] =
+  override def * : ProvenShape[AddressDb[_]] =
     (purpose,
      accountIndex,
      accountCoin,
