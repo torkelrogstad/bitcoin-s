@@ -7,6 +7,7 @@ import org.bitcoins.wallet.Wallet
 import org.bitcoins.wallet.api.InitializeWalletSuccess
 import scodec.bits.ByteVector
 import akka.actor.ActorSystem
+import org.bitcoins.chain.api.ChainApi
 import com.typesafe.config.ConfigFactory
 import org.bitcoins.chain.db.ChainDbManagement
 import org.bitcoins.chain.db.ChainDbConfig
@@ -14,6 +15,9 @@ import org.bitcoins.chain.config.ChainAppConfig
 import org.bitcoins.chain.blockchain.sync.ChainSync
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.core.crypto.DoubleSha256DigestBE
+import org.bitcoins.core.currency._
+import org.bitcoins.core.protocol.transaction._
+import org.bitcoins.core.number._
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
 import org.bitcoins.rpc.client.v17.BitcoindV17RpcClient
 import org.bitcoins.rpc.config.BitcoindInstance
@@ -59,6 +63,8 @@ val walletAppConfig = WalletAppConfig(walletDbConfig)
 
 val datadir = new File(s"/tmp/bitcoin-${time}/")
 val bitcoinConf = new File(datadir.getAbsolutePath + "/bitcoin.conf")
+
+logger.info(s"bitcoin.conf location=${bitcoinConf.getAbsolutePath}")
 datadir.mkdirs()
 bitcoinConf.createNewFile()
 
@@ -97,56 +103,103 @@ val blockchainF = chainF.map(chain => Blockchain(chain))
 
 val chainHandlerF = blockchainF.map(blockchain => ChainHandler(blockHeaderDAO, chainAppConfig))
 
-//we need a way to connect bitcoin-s to our running bitcoind, we are going to do this via rpc for now
-//we need to implement the 'getBestBlockHashFunc' and 'getBlockHeaderFunc' functions
-//to be able to sync our internal bitcoin-s chain with our external bitcoind chain
-val getBestBlockHashFunc = { () =>
-  bitcoindF.flatMap(_.getBestBlockHash)
-}
+val chainApi101BlocksF = sync(chainHandlerF, 101)
 
-val getBlockHeaderFunc = { hash: DoubleSha256DigestBE =>
-  bitcoindF.flatMap(_.getBlockHeader(hash).map(_.blockHeader))
-}
-
-
-//now that we have bitcoind setup correctly and have rpc linked to
-//the bitcoin-s chain project, let's generate some blocks so
-//we have money to spend in our bitcoind wallet!
-//we need to generate 101 blocks to give us 50 btc to spend
-val genBlocksF = chainHandlerF.flatMap { _ =>
-  bitcoindF.flatMap(_.generate(101))
-}
-
-//now we need to sync those blocks into bitcoin-s
-val chainSyncF = genBlocksF.flatMap { _ =>
-  chainHandlerF.flatMap { ch =>
-    ChainSync.sync(
-      ch,
-      getBlockHeaderFunc,
-      getBestBlockHashFunc)
-  }
-}
-
-val bitcoinsLogF = chainSyncF.map { chainApi =>
+val bitcoinsLogF = chainApi101BlocksF.flatMap { chainApi =>
   chainApi.getBlockCount.map(count => logger.info(s"bitcoin-s blockcount=${count}"))
 }
 
 val walletF = bitcoinsLogF.flatMap { _ =>
   //create tables
-  val createTablesF = WalletDbManagement.createAll(walletDbConfig)
+  val dropTablesF = WalletDbManagement.dropAll(walletDbConfig)
+  val createTablesF = dropTablesF.flatMap(_ => WalletDbManagement.createAll(walletDbConfig))
   createTablesF.flatMap { _ =>
     Wallet.initialize(walletAppConfig)
       .map(_.asInstanceOf[InitializeWalletSuccess].wallet)
   }
 }
 
-val addressF = walletF.flatMap(_.getNewAddress())
+val bitcoinsAddrF = walletF.flatMap(_.getNewAddress())
 
 //send money to our wallet with bitcoind
+val amt = Bitcoins.one
+val transactionOutputIndexF: Future[(Transaction,Int)] = for {
+  bitcoind <- bitcoindF
+  bitcoinsAddr <- bitcoinsAddrF
+  txid <- bitcoind.sendToAddress(bitcoinsAddr, amt)
+  tx <- bitcoind.getRawTransactionRaw(txid)
+} yield {
+  logger.info(s"Sending ${amt} to address ${bitcoinsAddr.value}")
+  val Some((output,index)) = tx.outputs.zipWithIndex.find { case (output,index) =>
+    output.scriptPubKey == bitcoinsAddr.scriptPubKey
+  }
 
-//clean everything up
-addressF.onComplete { _ =>
-  cleanup()
+  (tx,index)
+}
+
+//add the utxo that was just created by bitcoind to our wallet
+val addUtxoF = for {
+  wallet <- walletF
+  (tx,index) <- transactionOutputIndexF
+  addUtxo <- wallet.addUtxo(tx,UInt32(index))
+} yield {
+  logger.info(s"Add utxo result=${addUtxo}")
+  addUtxo
+}
+
+//bury the utxo with enough proof of work to make it confirmed
+val chainApi6BlocksF = for {
+  addUtxo <- addUtxoF
+  (tx,_) <- transactionOutputIndexF
+  chainApi <- sync(chainApi101BlocksF,6)
+} yield {
+  logger.info(s"txid=${tx.txId.flip.hex}")
+}
+
+//check balance & clean everything up
+chainApi6BlocksF.onComplete { chainApi =>
+  val balanceF = walletF.flatMap(_.getBalance)
+
+  balanceF.onComplete(balance => logger.info(s"bitcoin-s walllet balance=${balance}"))
+
+  balanceF.flatMap(_ => cleanup())
+}
+
+
+
+/** Syncs the give number of blocks to our chain */
+def sync(chainHandlerF: Future[ChainApi], numBlocks: Int)(implicit ec: ExecutionContext): Future[ChainApi] = {
+  //we need a way to connect bitcoin-s to our running bitcoind, we are going to do this via rpc for now
+  //we need to implement the 'getBestBlockHashFunc' and 'getBlockHeaderFunc' functions
+  //to be able to sync our internal bitcoin-s chain with our external bitcoind chain
+  val getBestBlockHashFunc = { () =>
+    bitcoindF.flatMap(_.getBestBlockHash)
+  }
+
+  val getBlockHeaderFunc = { hash: DoubleSha256DigestBE =>
+    bitcoindF.flatMap(_.getBlockHeader(hash).map(_.blockHeader))
+  }
+
+
+  //now that we have bitcoind setup correctly and have rpc linked to
+  //the bitcoin-s chain project, let's generate some blocks so
+  //we have money to spend in our bitcoind wallet!
+  //we need to generate 101 blocks to give us 50 btc to spend
+  val genBlocksF = chainHandlerF.flatMap { _ =>
+    bitcoindF.flatMap(_.generate(numBlocks))
+  }
+
+  //now we need to sync those blocks into bitcoin-s
+  val chainSyncF = genBlocksF.flatMap { _ =>
+    chainHandlerF.flatMap { ch =>
+      ChainSync.sync(
+        ch.asInstanceOf[ChainHandler],
+        getBlockHeaderFunc,
+        getBestBlockHashFunc)
+    }
+  }
+
+  chainSyncF
 }
 
 def cleanup(): Future[Unit] = {
