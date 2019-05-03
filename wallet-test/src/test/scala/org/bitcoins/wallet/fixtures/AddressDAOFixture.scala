@@ -1,7 +1,8 @@
 package org.bitcoins.wallet.fixtures
 
-import scala.concurrent.Future
+import org.bitcoins.core.hd.SegWitHDPath
 
+import scala.concurrent.Future
 import org.bitcoins.wallet.db.WalletDbManagement
 import org.bitcoins.wallet.models.{AccountDAO, AddressDAO}
 import org.bitcoins.wallet.util.BitcoinSWalletTest
@@ -13,7 +14,7 @@ import org.scalatest._
   */
 trait AddressDAOFixture extends fixture.AsyncFlatSpec with BitcoinSWalletTest {
 
-  override final type FixtureParam = (AccountDAO, AddressDAO)
+  override final type FixtureParam = (AccountDAO, AddressDAO[SegWitHDPath])
 
   override final def withFixture(test: OneArgAsyncTest): FutureOutcome =
     makeDependentFixture(createTables, dropTables)(test)
@@ -31,7 +32,7 @@ trait AddressDAOFixture extends fixture.AsyncFlatSpec with BitcoinSWalletTest {
 
   private def createTables(): Future[FixtureParam] = {
     val accountDAO = AccountDAO(dbConfig)
-    val addressDAO = AddressDAO(dbConfig)
+    val addressDAO = AddressDAO[SegWitHDPath](dbConfig)
 
     val createAccountF =
       WalletDbManagement.createTable(accountDAO.table, dbConfig)

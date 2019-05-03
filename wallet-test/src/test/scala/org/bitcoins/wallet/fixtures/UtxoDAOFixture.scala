@@ -1,5 +1,6 @@
 package org.bitcoins.wallet.fixtures
 
+import org.bitcoins.core.hd.SegWitHDPath
 import org.bitcoins.wallet.db.WalletDbManagement
 import org.bitcoins.wallet.models.UTXOSpendingInfoDAO
 import org.bitcoins.wallet.util.BitcoinSWalletTest
@@ -9,7 +10,7 @@ import scala.concurrent.Future
 
 trait UtxoDAOFixture extends fixture.AsyncFlatSpec with BitcoinSWalletTest {
 
-  override final type FixtureParam = UTXOSpendingInfoDAO
+  override final type FixtureParam = UTXOSpendingInfoDAO[SegWitHDPath]
 
   override final def withFixture(test: OneArgAsyncTest): FutureOutcome =
     makeDependentFixture(createUtxoTable, dropUtxoTable)(test)
@@ -18,8 +19,8 @@ trait UtxoDAOFixture extends fixture.AsyncFlatSpec with BitcoinSWalletTest {
     WalletDbManagement.dropTable(utxoDAO.table, dbConfig)
   }
 
-  private def createUtxoTable(): Future[UTXOSpendingInfoDAO] = {
-    val dao = UTXOSpendingInfoDAO(dbConfig)
+  private def createUtxoTable(): Future[UTXOSpendingInfoDAO[SegWitHDPath]] = {
+    val dao = UTXOSpendingInfoDAO[SegWitHDPath](dbConfig)
     WalletDbManagement.createTable(dao.table, dbConfig).map(_ => dao)
   }
 

@@ -85,7 +85,8 @@ object AddressDbHelper {
   * todo: this needs design rework.
   * todo: https://github.com/bitcoin-s/bitcoin-s-core/pull/391#discussion_r274188334
   */
-class AddressTable(tag: Tag) extends Table[AddressDb[_]](tag, "addresses") {
+class AddressTable[T <: HDPath[T]](tag: Tag)
+    extends Table[AddressDb[T]](tag, "addresses") {
   import org.bitcoins.db.DbCommonsColumnMappers._
 
   def purpose: Rep[HDPurpose] = column[HDPurpose]("hd_purpose")
@@ -124,7 +125,7 @@ class AddressTable(tag: Tag) extends Table[AddressDb[_]](tag, "addresses") {
       Sha256Hash160Digest,
       ScriptType)
 
-  private val fromTuple: AddressTuple => AddressDb[_] = {
+  private val fromTuple: AddressTuple => AddressDb[T] = {
     case (
         purpose,
         accountIndex,
@@ -147,11 +148,12 @@ class AddressTable(tag: Tag) extends Table[AddressDb[_]](tag, "addresses") {
                          chainType = accountChain,
                          addressIndex = addressIndex)
 
-          SegWitAddressDb(path,
-                          ecPublicKey = pubKey,
-                          hashedPubKey = hashedPubKey,
-                          address = bechAddr,
-                          witnessScript = scriptWitness)
+          SegWitAddressDb(
+            path,
+            ecPublicKey = pubKey,
+            hashedPubKey = hashedPubKey,
+            address = bechAddr,
+            witnessScript = scriptWitness).asInstanceOf[AddressDb[T]]
         case invalidCombination =>
           throw new IllegalArgumentException(
             s"Got invalid combination of HD purpose, address and script witness: $invalidCombination" +
@@ -159,22 +161,29 @@ class AddressTable(tag: Tag) extends Table[AddressDb[_]](tag, "addresses") {
       }
   }
 
-  private val toTuple: AddressDb[_] => Option[AddressTuple] = {
-    case SegWitAddressDb(path, pubKey, hashedPubKey, address, scriptWitness) =>
-      Some(
-        (path.purpose,
-         path.account.index,
-         path.coin.coinType,
-         path.chain.chainType,
-         address,
-         Some(scriptWitness),
-         path.address.index,
-         pubKey,
-         hashedPubKey,
-         ScriptType.WITNESS_V0_KEYHASH))
+  private val toTuple: AddressDb[T] => Option[AddressTuple] = { addressDb =>
+    addressDb.asInstanceOf[AddressDb[_]] match {
+      case SegWitAddressDb(path,
+                           pubKey,
+                           hashedPubKey,
+                           address,
+                           scriptWitness) =>
+        Some(
+          (path.purpose,
+           path.account.index,
+           path.coin.coinType,
+           path.chain.chainType,
+           address,
+           Some(scriptWitness),
+           path.address.index,
+           pubKey,
+           hashedPubKey,
+           ScriptType.WITNESS_V0_KEYHASH))
+      case _: AddressDb[_] => None
+    }
   }
 
-  override def * : ProvenShape[AddressDb[_]] =
+  override def * : ProvenShape[AddressDb[T]] =
     (purpose,
      accountIndex,
      accountCoin,

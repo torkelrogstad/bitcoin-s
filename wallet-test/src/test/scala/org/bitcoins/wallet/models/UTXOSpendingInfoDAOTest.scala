@@ -16,14 +16,15 @@ class UTXOSpendingInfoDAOTest extends BitcoinSWalletTest with UtxoDAOFixture {
       TransactionOutPoint(WalletTestUtil.sampleTxid, WalletTestUtil.sampleVout)
     val output = TransactionOutput(Bitcoins.one, WalletTestUtil.sampleSPK)
     val privkeyPath = WalletTestUtil.sampleSegwitPath
-    val utxo =
-      UTXOSpendingInfoDb(id = None,
+    val utxo = ???
+    /*
+      SegWitUTOXSpendingInfodb(id = None,
                          outPoint = outpoint,
                          output = output,
                          privKeyPath = privkeyPath,
                          redeemScriptOpt = None, // todo test this properly
                          scriptWitnessOpt = None) // todo test this properly
-
+     */
     for {
       created <- utxoDAO.create(utxo)
       read <- utxoDAO.read(created.id.get)

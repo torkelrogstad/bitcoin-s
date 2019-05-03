@@ -37,8 +37,8 @@ object WalletTestUtil {
                  HDChainType.External,
                  addressIndex = 0)
 
-  val extKeyPubVersion: ExtKeyPubVersion =
-    ExtKeyPubVersion.fromChainParams(chainParams)
+  val extKeyPubVersion: ExtKeyPubVersion = ???
+  //ExtKeyPubVersion.fromChainParams(chainParams)
 
   def freshXpub: ExtPublicKey =
     CryptoGenerators.extPublicKey.sample.getOrElse(freshXpub)

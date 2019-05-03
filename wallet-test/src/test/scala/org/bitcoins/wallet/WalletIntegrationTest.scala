@@ -64,7 +64,8 @@ class WalletIntegrationTest extends BitcoinSWalletTest {
       addressFromBitcoind <- bitcoind.getNewAddress
       signedTx <- wallet.sendToAddress(addressFromBitcoind,
                                        Bitcoins(0.5),
-                                       feeRate)
+                                       feeRate,
+                                       ???)
 
       txid <- bitcoind.sendRawTransaction(signedTx)
       _ <- bitcoind.generate(1)

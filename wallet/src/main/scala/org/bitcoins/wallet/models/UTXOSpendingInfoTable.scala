@@ -13,9 +13,12 @@ import org.bitcoins.db.{DbRowAutoInc, TableAutoInc}
 import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.ProvenShape
 import org.bitcoins.core.hd.HDPath
+
 import scala.util.Failure
 import scala.util.Success
 import org.bitcoins.core.hd.SegWitHDPath
+
+import scala.reflect.ClassTag
 
 case class SegWitUTOXSpendingInfodb(
     id: Option[Long],
@@ -65,8 +68,8 @@ sealed trait UTXOSpendingInfoDb[T <: HDPath[T]]
 
 }
 
-case class UTXOSpendingInfoTable(tag: Tag)
-    extends TableAutoInc[UTXOSpendingInfoDb[_]](tag, "utxos") {
+case class UTXOSpendingInfoTable[T <: HDPath[T]: ClassTag](tag: Tag)
+    extends TableAutoInc[UTXOSpendingInfoDb[T]](tag, "utxos") {
   import org.bitcoins.db.DbCommonsColumnMappers._
 
   def outPoint: Rep[TransactionOutPoint] =
@@ -75,7 +78,7 @@ case class UTXOSpendingInfoTable(tag: Tag)
   def output: Rep[TransactionOutput] =
     column[TransactionOutput]("tx_output")
 
-  def privKeyPath: Rep[HDPath[_]] = column[HDPath[_]]("hd_privkey_path")
+  def privKeyPath: Rep[T] = column[T]("hd_privkey_path")
 
   def redeemScriptOpt: Rep[Option[ScriptPubKey]] =
     column[Option[ScriptPubKey]]("nullable_redeem_script")
@@ -83,16 +86,15 @@ case class UTXOSpendingInfoTable(tag: Tag)
   def scriptWitnessOpt: Rep[Option[ScriptWitness]] =
     column[Option[ScriptWitness]]("script_witness")
 
-  private type UTXOTuple[T <: HDPath[T]] = (
+  private type UTXOTuple = (
       Option[Long],
       TransactionOutPoint,
       TransactionOutput,
-      HDPath[T],
+      T,
       Option[ScriptPubKey],
       Option[ScriptWitness])
 
-  private def fromTuple[T <: HDPath[T]](
-      tuple: UTXOTuple[T]): UTXOSpendingInfoDb[T] = {
+  private def fromTuple(tuple: UTXOTuple): UTXOSpendingInfoDb[T] = {
     tuple match {
       case (id,
             outpoint,
@@ -109,8 +111,7 @@ case class UTXOSpendingInfoTable(tag: Tag)
     }
   }
 
-  private def toTuple[T <: HDPath[T]](
-      utxo: UTXOSpendingInfoDb[T]): Option[UTXOTuple[T]] =
+  private def toTuple(utxo: UTXOSpendingInfoDb[T]): Option[UTXOTuple] =
     Some(
       (utxo.id,
        utxo.outPoint,
@@ -119,5 +120,5 @@ case class UTXOSpendingInfoTable(tag: Tag)
        utxo.redeemScriptOpt,
        utxo.scriptWitnessOpt))
 
-  def * : ProvenShape[UTXOSpendingInfoDb[_]] = ???
+  def * : ProvenShape[UTXOSpendingInfoDb[T]] = ???
 }

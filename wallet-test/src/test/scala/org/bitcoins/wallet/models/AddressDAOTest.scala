@@ -17,7 +17,7 @@ class AddressDAOTest extends BitcoinSWalletTest with AddressDAOFixture {
 
   // todo: do this with an actual working address
   // todo: with script witness + redeem script
-  private def getAddressDb(account: AccountDb): AddressDb = {
+  private def getAddressDb(account: AccountDb): AddressDb[SegWitHDPath] = {
     val path = SegWitHDPath(WalletTestUtil.hdCoinType,
                             chainType = HDChainType.External,
                             accountIndex = account.hdAccount.index,
@@ -26,7 +26,7 @@ class AddressDAOTest extends BitcoinSWalletTest with AddressDAOFixture {
     val hashedPubkey = CryptoUtil.sha256Hash160(pubkey.bytes)
     val address = P2SHAddress(hashedPubkey, RegTest)
 
-    AddressDb(path, pubkey, hashedPubkey, address, None, ScriptType.SCRIPTHASH)
+    ??? //AddressDb(path, pubkey, hashedPubkey, address, None, ScriptType.SCRIPTHASH)
   }
 
   behavior of "AddressDAO"

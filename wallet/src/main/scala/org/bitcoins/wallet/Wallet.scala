@@ -6,7 +6,11 @@ import org.bitcoins.core.currency._
 import org.bitcoins.core.number.UInt32
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.script.ScriptPubKey
-import org.bitcoins.core.protocol.transaction.{Transaction, TransactionOutPoint, TransactionOutput}
+import org.bitcoins.core.protocol.transaction.{
+  Transaction,
+  TransactionOutPoint,
+  TransactionOutput
+}
 import org.bitcoins.core.util.{BitcoinSLogger, EitherUtil}
 import org.bitcoins.core.wallet.builder.BitcoinTxBuilder
 import org.bitcoins.core.wallet.fee.FeeUnit
@@ -19,7 +23,17 @@ import scodec.bits.BitVector
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import org.bitcoins.core.hd.{HDAccount, HDAddress, HDChainType, HDCoin, HDCoinType, HDPath, HDPurpose, HDPurposes, SegWitHDPath}
+import org.bitcoins.core.hd.{
+  HDAccount,
+  HDAddress,
+  HDChainType,
+  HDCoin,
+  HDCoinType,
+  HDPath,
+  HDPurpose,
+  HDPurposes,
+  SegWitHDPath
+}
 import org.bitcoins.core.protocol.blockchain.MainNetChainParams
 import org.bitcoins.core.protocol.blockchain.RegTestNetChainParams
 import org.bitcoins.core.protocol.blockchain.TestNetChainParams
@@ -27,10 +41,10 @@ import org.bitcoins.core.protocol.blockchain.TestNetChainParams
 sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
   implicit def ec: ExecutionContext
 
-  val addressDAO: AddressDAO = AddressDAO(dbConfig)
+  val addressDAO: AddressDAO[SegWitHDPath] = AddressDAO(dbConfig)
   val mnemonicDAO: MnemonicCodeDAO = MnemonicCodeDAO(dbConfig)
   val accountDAO: AccountDAO = AccountDAO(dbConfig)
-  val utxoDAO: UTXOSpendingInfoDAO = UTXOSpendingInfoDAO(dbConfig)
+  val utxoDAO: UTXOSpendingInfoDAO[SegWitHDPath] = UTXOSpendingInfoDAO(dbConfig)
 
   lazy val hdCoin: HDCoin = {
     val coinType = chainParams match {
@@ -69,7 +83,7 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
       outPoint: TransactionOutPoint,
       addressDb: AddressDb[_]): Future[UTXOSpendingInfoDb[_]] = {
 
-    val utxo: UTXOSpendingInfoDb[_] = addressDb match {
+    val utxo: UTXOSpendingInfoDb[SegWitHDPath] = addressDb match {
       case segwitAddr: SegWitAddressDb =>
         SegWitUTOXSpendingInfodb(
           id = None,
@@ -187,9 +201,11 @@ sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
           case segwitPath: SegWitHDPath =>
             AddressDbHelper
               .getP2WPKHAddress(???, //account.xpub,
-                segwitPath,
-                networkParameters)
-          case _: HDPath[_] => throw new IllegalArgumentException("P2PKH and nested segwit P2PKH not yet implemented")
+                                segwitPath,
+                                networkParameters)
+          case _: HDPath[_] =>
+            throw new IllegalArgumentException(
+              "P2PKH and nested segwit P2PKH not yet implemented")
         }
       addressDAO.create(addressDb).map(_.address)
     }
