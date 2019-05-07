@@ -17,7 +17,6 @@ import org.bitcoins.core.wallet.fee.FeeUnit
 import org.bitcoins.core.wallet.utxo.BitcoinUTXOSpendingInfo
 import org.bitcoins.wallet.api.AddUtxoError.{AddressNotFound, BadSPK}
 import org.bitcoins.wallet.api._
-import org.bitcoins.wallet.config.WalletAppConfig
 import org.bitcoins.wallet.models._
 import scodec.bits.BitVector
 
@@ -37,13 +36,14 @@ import org.bitcoins.core.hd.{
 import org.bitcoins.core.protocol.blockchain.MainNetChainParams
 import org.bitcoins.core.protocol.blockchain.RegTestNetChainParams
 import org.bitcoins.core.protocol.blockchain.TestNetChainParams
+import org.bitcoins.db.AppConfig
 
 sealed abstract class Wallet extends UnlockedWalletApi with BitcoinSLogger {
 
-  val addressDAO: AddressDAO = AddressDAO(dbConfig)
-  val mnemonicDAO: MnemonicCodeDAO = MnemonicCodeDAO(dbConfig)
-  val accountDAO: AccountDAO = AccountDAO(dbConfig)
-  val utxoDAO: UTXOSpendingInfoDAO = UTXOSpendingInfoDAO(dbConfig)
+  val addressDAO: AddressDAO = AddressDAO()
+  val mnemonicDAO: MnemonicCodeDAO = MnemonicCodeDAO()
+  val accountDAO: AccountDAO = AccountDAO()
+  val utxoDAO: UTXOSpendingInfoDAO = UTXOSpendingInfoDAO()
 
   /** The default HD coin */
   lazy private val DEFAULT_HD_COIN: HDCoin = {
@@ -336,31 +336,31 @@ object Wallet extends CreateWalletApi with BitcoinSLogger {
   private[wallet] val DEFAULT_HD_PURPOSE: HDPurpose = HDPurposes.SegWit
 
   private case class WalletImpl(
-      mnemonicCode: MnemonicCode,
-      walletAppConfig: WalletAppConfig)(implicit val ec: ExecutionContext)
+      mnemonicCode: MnemonicCode
+  )(
+      implicit override val walletConfig: AppConfig,
+      override val ec: ExecutionContext)
       extends Wallet {
 
     // todo: until we've figured out a better schem
     override val passphrase: AesPassword = Wallet.badPassphrase
   }
 
-  def apply(mnemonicCode: MnemonicCode, walletAppConfig: WalletAppConfig)(
-      implicit ec: ExecutionContext): Wallet =
-    WalletImpl(mnemonicCode, walletAppConfig)(ec)
+  def apply(mnemonicCode: MnemonicCode)(
+      implicit config: AppConfig,
+      ec: ExecutionContext): Wallet =
+    WalletImpl(mnemonicCode)
 
   // todo figure out how to handle password part of wallet
   val badPassphrase = AesPassword("changeMe")
 
   // todo fix signature
-  override def initializeWithEntropy(
-      entropy: BitVector,
-      appConfig: WalletAppConfig)(
-      implicit ec: ExecutionContext): Future[InitializeWalletResult] = {
+  override def initializeWithEntropy(entropy: BitVector)(
+      implicit config: AppConfig,
+      ec: ExecutionContext): Future[InitializeWalletResult] = {
     import org.bitcoins.core.util.EitherUtil.EitherOps._
 
-    val chainParams = appConfig.chain
-
-    logger.info(s"Initializing wallet on chain $chainParams")
+    logger.info(s"Initializing wallet on chain ${config.network}")
 
     val mnemonicT = Try(MnemonicCode.fromEntropy(entropy))
     val mnemonicE: Either[InitializeWalletError, MnemonicCode] =
@@ -378,6 +378,7 @@ object Wallet extends CreateWalletApi with BitcoinSLogger {
       mnemonicE.flatMap { mnemonic =>
         val encryptedT = EncryptedMnemonicHelper
           .encrypt(mnemonic, badPassphrase)
+        encryptedT.foreach(_ => logger.info(s"Encrypted mnemonic"))
 
         val encryptedE: Either[Throwable, EncryptedMnemonic] =
           encryptedT match {
@@ -397,14 +398,19 @@ object Wallet extends CreateWalletApi with BitcoinSLogger {
         mnemonic <- mnemonicE
         encrypted <- encryptedMnemonicE
       } yield {
-        val wallet = WalletImpl(mnemonic, appConfig)
+        val wallet = WalletImpl(mnemonic)
+        logger.info(1.toString())
         val coin =
-          HDCoin(DEFAULT_HD_PURPOSE, HDUtil.getCoinType(chainParams.network))
+          HDCoin(DEFAULT_HD_PURPOSE, HDUtil.getCoinType(config.network))
+        logger.info(2.toString())
         val account = HDAccount(coin, 0)
+        logger.info(3.toString())
         val xpriv = wallet.xprivForPurpose(DEFAULT_HD_PURPOSE)
+        logger.info(4.toString())
 
         // safe since we're deriving from a priv
         val xpub = xpriv.deriveChildPubKey(account).get
+        logger.info(5.toString())
         val accountDb = AccountDb(xpub, account)
 
         for {
