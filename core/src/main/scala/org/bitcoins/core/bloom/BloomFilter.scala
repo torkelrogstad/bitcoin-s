@@ -20,12 +20,15 @@ import scodec.bits.{BitVector, ByteVector}
 
 import scala.annotation.tailrec
 import scala.util.hashing.MurmurHash3
+import org.bitcoins.core.crypto.ECPublicKey
+import org.bitcoins.core.crypto.ECDigitalSignature
 
 /**
-  * Created by chris on 8/2/16.
-  * Implements a bloom fitler that abides by the semantics of
-  * [[https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki BIP37]].
-  * [[https://github.com/bitcoin/bitcoin/blob/master/src/bloom.h]]
+  * Implements a Bloom fiter that abides by the semantics of BIP37.
+  *
+  * @see [[https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki BIP37]]
+  *      and Bitcoin Core
+  *       [[https://github.com/bitcoin/bitcoin/blob/master/src/bloom.h bloom.h]]
   */
 sealed abstract class BloomFilter extends NetworkElement {
 
@@ -47,6 +50,13 @@ sealed abstract class BloomFilter extends NetworkElement {
     * [[https://bitcoin.org/en/developer-reference#filterload link]]
     */
   def flags: BloomFlag
+
+  /** Inserts a public key into the Bloom filter */
+  def insert(pubkey: ECPublicKey): BloomFilter =
+    insert(pubkey.bytes)
+
+  /** Inserts a signature into the bloom filter */
+  def insert(sig: ECDigitalSignature): BloomFilter = insert(sig.bytes)
 
   /** Inserts a sequence of bytes into the [[org.bitcoins.core.bloom.BloomFilter BloomFilter]] */
   def insert(bytes: ByteVector): BloomFilter = {
@@ -125,8 +135,10 @@ sealed abstract class BloomFilter extends NetworkElement {
     //pull out all of the constants in the scriptPubKey's
     val constantsWithOutputIndex = scriptPubKeys.zipWithIndex.flatMap {
       case (scriptPubKey, index) =>
-        val constants = scriptPubKey.asm.filter(_.isInstanceOf[ScriptConstant])
-        constants.map(c => (c, index))
+        val constants = scriptPubKey.asm.collect {
+          case constant: ScriptConstant => constant
+        }
+        constants.map(_ -> index)
     }
 
     //check if the bloom filter contains any of the script constants in our outputs
@@ -137,8 +149,10 @@ sealed abstract class BloomFilter extends NetworkElement {
     val scriptSigs = transaction.inputs.map(_.scriptSignature)
     val constantsWithInputIndex = scriptSigs.zipWithIndex.flatMap {
       case (scriptSig, index) =>
-        val constants = scriptSig.asm.filter(_.isInstanceOf[ScriptConstant])
-        constants.map(c => (c, index))
+        val constants = scriptSig.asm.collect {
+          case constant: ScriptConstant => constant
+        }
+        constants.map(_ -> index)
     }
     //check if the filter contains any of the prevouts in this tx
     val containsOutPoint =
@@ -206,9 +220,10 @@ sealed abstract class BloomFilter extends NetworkElement {
     def loop(
         constantsWithIndex: Seq[(ScriptToken, Int)],
         accumFilter: BloomFilter): BloomFilter = constantsWithIndex match {
-      case h +: t if (accumFilter.contains(h._1.bytes)) =>
-        logger.debug("Found constant in bloom filter: " + h._1.hex)
-        val filter = accumFilter.insert(TransactionOutPoint(txId, UInt32(h._2)))
+      case (token, index) +: t if (accumFilter.contains(token.bytes)) =>
+        logger.debug("Found constant in bloom filter: " + token.hex)
+        val filter =
+          accumFilter.insert(TransactionOutPoint(txId, UInt32(index)))
         loop(t, filter)
       case _ +: t => loop(t, accumFilter)
       case Nil    => accumFilter
@@ -252,7 +267,7 @@ sealed abstract class BloomFilter extends NetworkElement {
     * See [[https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#bloom-filter-format BIP37]]
     * to see where this number comes from
     */
-  private def murmurConstant = UInt32("fba4c795")
+  private def murmurConstant = UInt32(0xfba4c795L)
 
   /** Adds a sequence of byte vectors to our bloom filter then returns that new filter*/
   def insertByteVectors(bytes: Seq[ByteVector]): BloomFilter = {
