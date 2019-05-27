@@ -18,7 +18,7 @@ import org.bitcoins.wallet.config.WalletAppConfig
 case class MnemonicCodeDAO()(implicit executionContext: ExecutionContext) {
   val ec: ExecutionContext = executionContext
 
-  val appConfig = WalletAppConfig
+  val appConfig = WalletAppConfig()
   val database = appConfig.database
 
   /** The table inside our database we are inserting into */
