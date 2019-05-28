@@ -1,6 +1,6 @@
 name := "bitcoin-s-core-test"
 
-libraryDependencies ++= Deps.coreTest
+// libraryDependencies ++= Deps.coreTest
 
 publishArtifact := false
 

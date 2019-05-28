@@ -1,5 +1,8 @@
 import sbt._
 
+// ScalaJS triple-percentage
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+
 object Deps {
 
   object V {
@@ -7,7 +10,6 @@ object Deps {
     val logback = "1.0.13"
     val scalacheck = "1.14.0"
     val scalaTest = "3.0.5"
-    val slf4j = "1.7.5"
     val spray = "1.3.2"
     val zeromq = "0.4.3"
     val akkav = "10.1.7"
@@ -22,58 +24,78 @@ object Deps {
   }
 
   object Compile {
-    val bouncycastle = "org.bouncycastle" % "bcprov-jdk15on" % V.bouncyCastle withSources () withJavadoc ()
-    val scodec = "org.scodec" %% "scodec-bits" % V.scodecV withSources () withJavadoc ()
-    val slf4j = "org.slf4j" % "slf4j-api" % V.slf4j % "provided" withSources () withJavadoc ()
-    val zeromq = "org.zeromq" % "jeromq" % V.zeromq withSources () withJavadoc ()
-    val akkaHttp = "com.typesafe.akka" %% "akka-http" % V.akkav withSources () withJavadoc ()
-    val akkaStream = "com.typesafe.akka" %% "akka-stream" % V.akkaStreamv withSources () withJavadoc ()
-    val playJson = "com.typesafe.play" %% "play-json" % V.playv withSources () withJavadoc ()
-    val typesafeConfig = "com.typesafe" % "config" % V.typesafeConfigV withSources () withJavadoc ()
 
-    val logback = "ch.qos.logback" % "logback-classic" % V.logback withSources () withJavadoc ()
+    val zeromq = Def.setting("org.zeromq" % "jeromq" % V.zeromq)
+    val akkaHttp = Def.setting("com.typesafe.akka" %% "akka-http" % V.akkav)
 
-    //for loading secp256k1 natively
-    val nativeLoader = "org.scijava" % "native-lib-loader" % V.nativeLoaderV withSources () withJavadoc ()
-    val ammonite = "com.lihaoyi" %% "ammonite" % V.ammoniteV cross CrossVersion.full
+    val akkaStream =
+      Def.setting("com.typesafe.akka" %% "akka-stream" % V.akkaStreamv)
+    val playJson = Def.setting("com.typesafe.play" %% "play-json" % V.playv)
+
+    val typesafeConfig =
+      Def.setting("com.typesafe" % "config" % V.typesafeConfigV)
+
+    val logback = Def.setting("ch.qos.logback" % "logback-classic" % V.logback)
+
+    val ammonite =
+      "com.lihaoyi" %% "ammonite" % V.ammoniteV cross CrossVersion.full
   }
 
   object Test {
-    val async = "org.scala-lang.modules" %% "scala-async" % V.asyncV % "test" withSources () withJavadoc ()
 
-    val bitcoinj = ("org.bitcoinj" % "bitcoinj-core" % "0.14.4" % "test")
-      .exclude("org.slf4j", "slf4j-api")
-    val junitInterface = "com.novocode" % "junit-interface" % V.junitV % "test" withSources () withJavadoc ()
-    val logback = "ch.qos.logback" % "logback-classic" % V.logback % "test" withSources () withJavadoc ()
-    val scalacheck = "org.scalacheck" %% "scalacheck" % V.scalacheck % "test" withSources () withJavadoc ()
-    val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest % "test" withSources () withJavadoc ()
-    val spray = "io.spray" %% "spray-json" % V.spray % "test" withSources () withJavadoc ()
-    val akkaHttp = "com.typesafe.akka" %% "akka-http-testkit" % V.akkav % "test" withSources () withJavadoc ()
-    val akkaStream = "com.typesafe.akka" %% "akka-stream-testkit" % V.akkaStreamv % "test" withSources () withJavadoc ()
+    val async =
+      Def.setting("org.scala-lang.modules" %% "scala-async" % V.asyncV % "test")
+
+    val bitcoinj = Def.setting(
+      "org.bitcoinj" % "bitcoinj-core" % "0.14.4" % "test"
+    )
+
+    val logback =
+      Def.setting("ch.qos.logback" % "logback-classic" % V.logback % "test")
+
+    val scalacheck =
+      Def.setting("org.scalacheck" %% "scalacheck" % V.scalacheck % "test")
+
+    val scalaTest =
+      Def.setting("org.scalatest" %% "scalatest" % V.scalaTest % "test")
+    val spray = Def.setting("io.spray" %% "spray-json" % V.spray % "test")
+
+    val akkaHttp =
+      Def.setting("com.typesafe.akka" %% "akka-http-testkit" % V.akkav % "test")
+
+    val akkaStream = Def.setting(
+      "com.typesafe.akka" %% "akka-stream-testkit" % V.akkaStreamv % "test")
     val ammonite = Compile.ammonite % "test"
-    val playJson = Compile.playJson % "test"
+    val playJson = Def.setting(Compile.playJson.value % "test")
   }
 
   val root = List(
     Test.ammonite
   )
 
-  val core = List(
-    Compile.bouncycastle,
-    Compile.scodec,
-    Compile.slf4j,
-    Test.ammonite
-  )
+  lazy val coreCross = Def.setting(
+    Seq(
+      "org.scodec" %%% "scodec-bits" % V.scodecV,
+      "com.outr" %%% "scribe" % "2.7.3"
+    ))
+
+  lazy val coreJVM = Def.setting(
+    coreCross.value ++
+      Seq(
+        "org.bouncycastle" % "bcprov-jdk15on" % V.bouncyCastle
+      ))
+
+  lazy val coreJS = Def.setting(coreCross.value)
 
   val secp256k1jni = List(
-    Compile.nativeLoader,
-    Test.junitInterface,
-    Test.ammonite
+    //for loading secp256k1 natively
+    "org.scijava" % "native-lib-loader" % V.nativeLoaderV,
+    "com.novocode" % "junit-interface" % V.junitV % "test"
   )
 
   val coreTest = List(
     Test.bitcoinj,
-    Test.junitInterface,
+    "com.novocode" % "junit-interface" % V.junitV % "test",
     Test.logback,
     Test.scalaTest,
     Test.spray,
@@ -83,7 +105,6 @@ object Deps {
 
   val bitcoindZmq = List(
     Compile.zeromq,
-    Compile.slf4j,
     Test.logback,
     Test.scalacheck,
     Test.scalaTest,
@@ -94,7 +115,6 @@ object Deps {
     Compile.akkaHttp,
     Compile.akkaStream,
     Compile.playJson,
-    Compile.slf4j,
     Compile.typesafeConfig,
     Test.ammonite
   )
@@ -110,7 +130,6 @@ object Deps {
   )
 
   val bench = List(
-    "org.slf4j" % "slf4j-api" % V.slf4j withSources () withJavadoc (),
     Compile.logback,
     Test.ammonite
   )
@@ -119,7 +138,6 @@ object Deps {
     Compile.akkaHttp,
     Compile.akkaStream,
     Compile.playJson,
-    Compile.slf4j,
     Test.ammonite
   )
 
@@ -133,7 +151,6 @@ object Deps {
   )
 
   val testkit = List(
-    Compile.slf4j,
     "org.scalacheck" %% "scalacheck" % V.scalacheck withSources () withJavadoc (),
     "org.scalatest" %% "scalatest" % V.scalaTest withSources () withJavadoc (),
     Test.ammonite

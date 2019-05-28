@@ -25,4 +25,8 @@ addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.2.5")
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.2.6")
 
 // write markdown files with type-checked Scala
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "1.3.0" )
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "1.3.0")
+
+// Cross build with ScalaJS
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.28")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")

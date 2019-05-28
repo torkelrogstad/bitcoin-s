@@ -4,6 +4,9 @@ import com.typesafe.sbt.SbtGit.GitKeys._
 
 import scala.util.Properties
 
+// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+
 cancelable in Global := true
 
 fork in Test := true
@@ -68,15 +71,15 @@ lazy val commonSettings = List(
     val file = (Test / sourceManaged).value / "amm.scala"
     IO.write(file, """object amm extends App { ammonite.Main.main(args) }""")
     Seq(file)
-  }.taskValue,
-  // Travis has performance issues on macOS
-  Test / parallelExecution := !(Properties.isMac && sys.props
-    .get("CI")
-    .isDefined)
+  }.taskValue
 )
 
 lazy val commonTestSettings = Seq(
-  publish / skip := true
+  publish / skip := true,
+// Travis has performance issues on macOS
+  Test / parallelExecution := !(Properties.isMac && sys.props
+    .get("CI")
+    .isDefined)
 ) ++ commonSettings
 
 lazy val commonProdSettings = Seq(
@@ -87,7 +90,8 @@ lazy val bitcoins = project
   .in(file("."))
   .aggregate(
     secp256k1jni,
-    core,
+    coreJVM,
+    coreJS,
     coreTest,
     zmq,
     bitcoindRpc,
@@ -187,13 +191,23 @@ lazy val secp256k1jni = project
   )
   .enablePlugins(GitVersioning)
 
-lazy val core = project
+lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Full)
   .in(file("core"))
   .settings(commonProdSettings: _*)
-  .dependsOn(
-    secp256k1jni
+  .jvmSettings()
+  .jsSettings()
+
+lazy val coreJVM = core.jvm
+  .settings(
+    libraryDependencies ++= Deps.coreJVM.value
   )
-  .enablePlugins(GitVersioning)
+  .dependsOn(secp256k1jni)
+
+lazy val coreJS = core.js
+  .settings(
+    libraryDependencies ++= Deps.coreJS.value
+  )
 
 lazy val coreTest = project
   .in(file("core-test"))
@@ -202,7 +216,7 @@ lazy val coreTest = project
     name := "bitcoin-s-core-test"
   )
   .dependsOn(
-    core,
+    coreJVM,
     testkit
   )
   .enablePlugins()
@@ -210,25 +224,30 @@ lazy val coreTest = project
 lazy val zmq = project
   .in(file("zmq"))
   .settings(commonSettings: _*)
-  .settings(name := "bitcoin-s-zmq", libraryDependencies ++= Deps.bitcoindZmq)
+  .settings(
+    name := "bitcoin-s-zmq"
+    // libraryDependencies ++= Deps.bitcoindZmq
+  )
   .dependsOn(
-    core
+    coreJVM
   )
   .enablePlugins(GitVersioning)
 
 lazy val bitcoindRpc = project
   .in(file("bitcoind-rpc"))
   .settings(commonProdSettings: _*)
-  .settings(name := "bitcoin-s-bitcoind-rpc",
-            libraryDependencies ++= Deps.bitcoindRpc)
-  .dependsOn(core)
+  .settings(name := "bitcoin-s-bitcoind-rpc"
+  //libraryDependencies ++= Deps.bitcoindRpc
+  )
+  .dependsOn(coreJVM)
   .enablePlugins(GitVersioning)
 
 lazy val bitcoindRpcTest = project
   .in(file("bitcoind-rpc-test"))
   .settings(commonTestSettings: _*)
-  .settings(libraryDependencies ++= Deps.bitcoindRpcTest,
-            name := "bitcoin-s-bitcoind-rpc-test")
+  .settings(
+    // libraryDependencies ++= Deps.bitcoindRpcTest,
+    name := "bitcoin-s-bitcoind-rpc-test")
   .dependsOn(testkit)
   .enablePlugins()
 
@@ -238,20 +257,22 @@ lazy val bench = project
   .settings(assemblyOption in assembly := (assemblyOption in assembly).value
     .copy(includeScala = true))
   .settings(
-    libraryDependencies ++= Deps.bench,
+//     libraryDependencies ++= Deps.bench,
     name := "bitcoin-s-bench",
     skip in publish := true
   )
-  .dependsOn(core)
+  .dependsOn(coreJVM)
   .enablePlugins(GitVersioning)
 
 lazy val eclairRpc = project
   .in(file("eclair-rpc"))
   .settings(commonProdSettings: _*)
-  .settings(name := "bitcoin-s-eclair-rpc",
-            libraryDependencies ++= Deps.eclairRpc)
+  .settings(
+    name := "bitcoin-s-eclair-rpc"
+    // libraryDependencies ++= Deps.eclairRpc
+  )
   .dependsOn(
-    core,
+    coreJVM,
     bitcoindRpc
   )
   .enablePlugins(GitVersioning)
@@ -259,8 +280,9 @@ lazy val eclairRpc = project
 lazy val eclairRpcTest = project
   .in(file("eclair-rpc-test"))
   .settings(commonTestSettings: _*)
-  .settings(libraryDependencies ++= Deps.eclairRpcTest,
-            name := "bitcoin-s-eclair-rpc-test")
+  .settings(
+    // libraryDependencies ++= Deps.eclairRpcTest,
+    name := "bitcoin-s-eclair-rpc-test")
   .dependsOn(testkit)
   .enablePlugins()
 
@@ -268,7 +290,7 @@ lazy val testkit = project
   .in(file("testkit"))
   .settings(commonProdSettings: _*)
   .dependsOn(
-    core,
+    coreJVM,
     bitcoindRpc,
     eclairRpc
   )
@@ -295,7 +317,8 @@ lazy val docs = project
   )
   .dependsOn(
     bitcoindRpc,
-    core,
+    coreJVM,
+    coreJS,
     eclairRpc,
     secp256k1jni,
     testkit,
@@ -305,11 +328,11 @@ lazy val docs = project
 
 lazy val scripts = project
   .in(file("scripts"))
-  .dependsOn(core, bitcoindRpc, eclairRpc, zmq)
+  .dependsOn(coreJVM, coreJS, bitcoindRpc, eclairRpc, zmq)
   .settings(commonTestSettings: _*)
   .settings(
-    name := "bitcoin-s-scripts",
-    libraryDependencies ++= Deps.scripts
+    name := "bitcoin-s-scripts"
+    // libraryDependencies ++= Deps.scripts
   )
 
 // Ammonite is invoked through running

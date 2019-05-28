@@ -16,7 +16,6 @@ import org.bouncycastle.crypto.params.{
   ECPublicKeyParameters
 }
 import org.bouncycastle.crypto.signers.{ECDSASigner, HMacDSAKCalculator}
-import org.bouncycastle.math.ec.ECPoint
 import scodec.bits.ByteVector
 
 import scala.annotation.tailrec
@@ -354,7 +353,8 @@ sealed abstract class ECPublicKey extends BaseECKey {
     * @return
     */
   def toPoint: ECPoint = {
-    CryptoParams.curve.getCurve.decodePoint(bytes.toArray)
+    // CryptoParams.curve.getCurve.decodePoint(bytes.toArray)
+    ???
   }
 }
 
@@ -387,7 +387,8 @@ object ECPublicKey extends Factory[ECPublicKey] {
     * [[https://github.com/bitcoin/bitcoin/blob/27765b6403cece54320374b37afb01a0cfe571c3/src/pubkey.cpp#L207-L212]]
     */
   def isFullyValid(bytes: ByteVector): Boolean =
-    Try(NativeSecp256k1.isValidPubKey(bytes.toArray)).getOrElse(false) && isValid(bytes)
+    Try(NativeSecp256k1.isValidPubKey(bytes.toArray))
+      .getOrElse(false) && isValid(bytes)
 
   /**
     * Mimics the CPubKey::IsValid function in Bitcoin core, this is a consensus rule

@@ -1,6 +1,5 @@
 package org.bitcoins.core.crypto
 
-import org.bitcoin.NativeSecp256k1
 import org.bitcoins.core.hd.{BIP32Node, BIP32Path}
 import org.bitcoins.core.number.{UInt32, UInt8}
 import org.bitcoins.core.protocol.NetworkElement
@@ -189,7 +188,7 @@ sealed abstract class ExtPrivateKey extends ExtKey {
     val (il, ir) = hmac.splitAt(32)
     //should be ECGroup addition
     //parse256(IL) + kpar (mod n)
-    val tweak = NativeSecp256k1.privKeyTweakAdd(il.toArray, key.bytes.toArray)
+    val tweak = Secp256k1.privKeyTweakAdd(il.toArray, key.bytes.toArray)
     val childKey = ECPrivateKey(ByteVector(tweak))
     val fp = CryptoUtil.sha256Hash160(key.publicKey.bytes).bytes.take(4)
     ExtPrivateKey(version, depth + UInt8.one, fp, idx, ChainCode(ir), childKey)
@@ -321,9 +320,9 @@ sealed abstract class ExtPublicKey extends ExtKey {
       val hmac = CryptoUtil.hmac512(chainCode.bytes, data)
       val (il, ir) = hmac.splitAt(32)
       val priv = ECPrivateKey(il)
-      val tweaked = NativeSecp256k1.pubKeyTweakAdd(key.bytes.toArray,
-                                                   hmac.toArray,
-                                                   priv.isCompressed)
+      val tweaked = Secp256k1.pubKeyTweakAdd(key.bytes.toArray,
+                                             hmac.toArray,
+                                             priv.isCompressed)
       val childPubKey = ECPublicKey(ByteVector(tweaked))
 
       //we do not handle this case since it is impossible

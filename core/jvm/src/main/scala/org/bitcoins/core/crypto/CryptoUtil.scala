@@ -94,7 +94,7 @@ trait CryptoUtil extends BitcoinSLogger {
     * @return a tuple (p1, p2) where p1 and p2 are points on the curve and p1.x = p2.x = x
     *         p1.y is even, p2.y is odd
     */
-  def recoverPoint(x: BigInteger): (ECPoint, ECPoint) = {
+  private def recoverPoint(x: BigInteger): (ECPoint, ECPoint) = {
     val curve = CryptoParams.curve.getCurve()
     val x1 = curve.fromBigInteger(x)
     val square = x1.square().add(curve.getA).multiply(x1).add(curve.getB)
@@ -103,6 +103,7 @@ trait CryptoUtil extends BitcoinSLogger {
     val R1 = curve.createPoint(x1.toBigInteger, y1.toBigInteger).normalize()
     val R2 = curve.createPoint(x1.toBigInteger, y2.toBigInteger).normalize()
     if (y1.testBitZero()) (R2, R1) else (R1, R2)
+    ???
   }
 
   /**
@@ -134,9 +135,10 @@ trait CryptoUtil extends BitcoinSLogger {
       .subtract(curve.getG.multiply(m)))
       .multiply(r.modInverse(curve.getN))
 
-    val pub1 = ECPublicKey.fromPoint(Q1)
-    val pub2 = ECPublicKey.fromPoint(Q2)
-    (pub1, pub2)
+    // val pub1 = ECPublicKey.fromPoint(Q1)
+    // val pub2 = ECPublicKey.fromPoint(Q2)
+    // (pub1, pub2)
+    ???
   }
 }
 

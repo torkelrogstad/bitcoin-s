@@ -24,7 +24,7 @@ sealed abstract class CryptoParams {
     * https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#low-s-values-in-signatures
     * @return
     */
-  def halfCurveOrder = curve.getN.shiftRight(1)
+  def halfCurveOrder: BigInt = curve.getN.shiftRight(1)
 
 }
 
