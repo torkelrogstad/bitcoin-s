@@ -29,15 +29,16 @@ import scala.concurrent.duration.DurationInt
 import org.bitcoins.testkit.rpc.BitcoindRpcTestUtil
 import akka.stream.StreamTcpException
 
-class EclairRpcClientTest extends AsyncFlatSpec with BeforeAndAfterAll {
+class EclairRpcClientTest
+    extends AsyncFlatSpec
+    with BeforeAndAfterAll
+    with scribe.Logging {
 
   implicit val system: ActorSystem =
     ActorSystem("EclairRpcClient", BitcoindRpcTestUtil.AKKA_CONFIG)
   implicit val m: ActorMaterializer = ActorMaterializer.create(system)
   implicit val ec: ExecutionContext = m.executionContext
   implicit val bitcoinNp: RegTest.type = EclairRpcTestUtil.network
-
-  val logger: Logger = BitcoinSLogger.logger
 
   lazy val bitcoindRpcClientF: Future[BitcoindRpcClient] = {
     val cliF = EclairRpcTestUtil.startedBitcoindRpcClient()

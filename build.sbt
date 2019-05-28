@@ -225,8 +225,8 @@ lazy val zmq = project
   .in(file("zmq"))
   .settings(commonSettings: _*)
   .settings(
-    name := "bitcoin-s-zmq"
-    // libraryDependencies ++= Deps.bitcoindZmq
+    name := "bitcoin-s-zmq",
+    libraryDependencies ++= Deps.zmq
   )
   .dependsOn(
     coreJVM
@@ -236,9 +236,8 @@ lazy val zmq = project
 lazy val bitcoindRpc = project
   .in(file("bitcoind-rpc"))
   .settings(commonProdSettings: _*)
-  .settings(name := "bitcoin-s-bitcoind-rpc"
-  //libraryDependencies ++= Deps.bitcoindRpc
-  )
+  .settings(name := "bitcoin-s-bitcoind-rpc",
+            libraryDependencies ++= Deps.bitcoindRpc)
   .dependsOn(coreJVM)
   .enablePlugins(GitVersioning)
 
@@ -246,8 +245,9 @@ lazy val bitcoindRpcTest = project
   .in(file("bitcoind-rpc-test"))
   .settings(commonTestSettings: _*)
   .settings(
-    // libraryDependencies ++= Deps.bitcoindRpcTest,
-    name := "bitcoin-s-bitcoind-rpc-test")
+    name := "bitcoin-s-bitcoind-rpc-test",
+    libraryDependencies ++= Deps.bitcoindRpcTest
+  )
   .dependsOn(testkit)
   .enablePlugins()
 
@@ -257,8 +257,8 @@ lazy val bench = project
   .settings(assemblyOption in assembly := (assemblyOption in assembly).value
     .copy(includeScala = true))
   .settings(
-//     libraryDependencies ++= Deps.bench,
     name := "bitcoin-s-bench",
+    libraryDependencies ++= Deps.bench,
     skip in publish := true
   )
   .dependsOn(coreJVM)
@@ -268,8 +268,8 @@ lazy val eclairRpc = project
   .in(file("eclair-rpc"))
   .settings(commonProdSettings: _*)
   .settings(
-    name := "bitcoin-s-eclair-rpc"
-    // libraryDependencies ++= Deps.eclairRpc
+    name := "bitcoin-s-eclair-rpc",
+    libraryDependencies ++= Deps.eclairRpc
   )
   .dependsOn(
     coreJVM,
@@ -281,8 +281,9 @@ lazy val eclairRpcTest = project
   .in(file("eclair-rpc-test"))
   .settings(commonTestSettings: _*)
   .settings(
-    // libraryDependencies ++= Deps.eclairRpcTest,
-    name := "bitcoin-s-eclair-rpc-test")
+    name := "bitcoin-s-eclair-rpc-test",
+    libraryDependencies ++= Deps.eclairRpcTest
+  )
   .dependsOn(testkit)
   .enablePlugins()
 
@@ -331,8 +332,8 @@ lazy val scripts = project
   .dependsOn(coreJVM, coreJS, bitcoindRpc, eclairRpc, zmq)
   .settings(commonTestSettings: _*)
   .settings(
-    name := "bitcoin-s-scripts"
-    // libraryDependencies ++= Deps.scripts
+    name := "bitcoin-s-scripts",
+    libraryDependencies ++= Deps.scripts
   )
 
 // Ammonite is invoked through running
