@@ -175,13 +175,11 @@ object GCS {
   private def golombDecodeItemFromSet(
       encodedData: BitVector,
       p: UInt8): (UInt64, BitVector) = {
-    val encodedDataNoPadding = dropLeftPadding(encodedData)
-
-    val head = golombDecode(encodedDataNoPadding, p)
+    val head = golombDecode(encodedData, p)
 
     val prefixSize = (head >> p.toInt).toInt + 1
 
-    (head, encodedDataNoPadding.drop(prefixSize + p.toInt))
+    (head, encodedData.drop(prefixSize + p.toInt))
   }
 
   def golombDecodeSet(encodedData: BitVector, p: UInt8): Vector[UInt64] = {
@@ -190,11 +188,10 @@ object GCS {
         encoded: BitVector,
         decoded: Vector[UInt64],
         lastHash: UInt64 = UInt64.zero): Vector[UInt64] = {
-      val encodedNoPadding = dropLeftPadding(encoded)
-      if (encodedNoPadding.isEmpty) {
+      if (encoded.isEmpty) {
         decoded
       } else {
-        val (delta, encodedLeft) = golombDecodeItemFromSet(encodedNoPadding, p)
+        val (delta, encodedLeft) = golombDecodeItemFromSet(encoded, p)
         val hash = lastHash + delta
 
         loop(encodedLeft, decoded.:+(hash), hash)
@@ -204,7 +201,7 @@ object GCS {
     loop(encodedData, Vector.empty)
   }
 
-  private def encodeSortedSet(hashes: Vector[UInt64], p: UInt8): BitVector = {
+  def encodeSortedSet(hashes: Vector[UInt64], p: UInt8): BitVector = {
     val (golombStream, _) = hashes.foldLeft((BitVector.empty, UInt64.zero)) {
       case ((accum, lastHash), hash) =>
         val delta = hash - lastHash

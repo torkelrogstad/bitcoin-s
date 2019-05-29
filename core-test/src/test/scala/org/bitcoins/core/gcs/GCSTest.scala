@@ -169,4 +169,28 @@ class GCSTest extends BitcoinSUnitTest {
     }
   }
 
+  it must "encode and decode a set of elements already tested" in {
+    val p = UInt8(2)
+
+    // Diffs are 1, 2, 3, 4, 5
+    val sortedItems =
+      Vector(UInt64(0), UInt64(1), UInt64(3), UInt64(6), UInt64(10), UInt64(15))
+
+    val codedSet = GCS.encodeSortedSet(sortedItems, p)
+
+    val coded0 = Vector(false, false, false)
+    val coded1 = Vector(false, false, true)
+    val coded2 = Vector(false, true, false)
+    val coded3 = Vector(false, true, true)
+    val coded4 = Vector(true, false, false, false)
+    val coded5 = Vector(true, false, false, true)
+    val expectedCodedSet =
+      BitVector.bits(coded0 ++ coded1 ++ coded2 ++ coded3 ++ coded4 ++ coded5)
+
+    assert(codedSet == expectedCodedSet)
+
+    val decodedSet = GCS.golombDecodeSet(codedSet, p)
+
+    assert(decodedSet == sortedItems)
+  }
 }
