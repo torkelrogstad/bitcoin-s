@@ -31,6 +31,7 @@ class PeerMessageReceiver(
     extends BitcoinSLogger {
 
   import ref.dispatcher
+  implicit val chain = chainAppConfig
 
   //TODO: Really bad to just modify this internal state
   //not async safe at all
@@ -136,7 +137,7 @@ class PeerMessageReceiver(
   private def handleDataPayload(
       payload: DataPayload,
       sender: PeerMessageSender): Unit = {
-    val dataMsgHandler = new DataMessageHandler(chainAppConfig)
+    val dataMsgHandler = new DataMessageHandler()
     //else it means we are receiving this data payload from a peer,
     //we need to handle it
     dataMsgHandler.handleDataPayload(payload, sender)
