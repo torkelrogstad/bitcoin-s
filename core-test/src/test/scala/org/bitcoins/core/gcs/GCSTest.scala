@@ -5,7 +5,7 @@ import org.bitcoins.core.util.NumberUtil
 import org.bitcoins.testkit.core.gen.NumberGenerator
 import org.bitcoins.testkit.util.BitcoinSUnitTest
 import org.scalacheck.Gen
-import scodec.bits.BitVector
+import scodec.bits.{BitVector, ByteVector}
 
 class GCSTest extends BitcoinSUnitTest {
   behavior of "GCS"
@@ -232,5 +232,50 @@ class GCSTest extends BitcoinSUnitTest {
 
         assert(decodedSet == sorted)
     }
+  }
+
+  it must "encode and decode arbitrary ByteVectors for arbitrary p" in {
+
+    /**
+      * Bit parameter for GCS, cannot be more than 32 as we will
+      * have a number too large for a uint64.
+      * [[https://github.com/Roasbeef/btcutil/blob/b5d74480bb5b02a15a9266cbeae37ecf9dd6ffca/gcs/gcs.go#L67]]
+      */
+    def genP: Gen[UInt8] = {
+      // We have 8 has a lower bound since N in hashToRange is in the order of 1000
+      Gen.choose(8, 32).map(UInt8(_))
+    }
+
+    def genPM: Gen[(UInt8, UInt64)] = genP.flatMap { p =>
+      // If hash's quotient when divided by 2^p is too large, we hang converting to unary
+      val upperBound: Long = p.toInt * 1000
+
+      val mGen = Gen
+        .chooseNum(0L, upperBound)
+        .map(num => UInt64(BigInt(num)))
+
+      mGen.map(m => (p, m))
+    }
+
+    def genItems: Gen[Vector[ByteVector]] = {
+      Gen.choose(1, 1000).flatMap { size =>
+        Gen.listOfN(size, NumberGenerator.bytevector).map(_.toVector)
+      }
+    }
+
+    def genKey: Gen[ByteVector] =
+      Gen.listOfN(16, NumberGenerator.byte).map(ByteVector(_))
+
+    forAll(genPM, genItems, genKey) {
+      case ((p, m), items, k) =>
+        val hashes = GCS.hashedSetConstruct(items, k, m)
+        val sortedHashes = hashes.sortWith(_ < _)
+
+        val codedSet = GCS.buildGCS(items, k, p, m)
+        val decodedSet = GCS.golombDecodeSet(codedSet, p)
+
+        assert(decodedSet == sortedHashes)
+    }
+
   }
 }

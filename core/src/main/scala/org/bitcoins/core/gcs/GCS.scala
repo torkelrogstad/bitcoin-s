@@ -60,7 +60,7 @@ object GCS {
     UInt64(bigInt)
   }
 
-  private def hashedSetConstruct(
+  def hashedSetConstruct(
       rawItems: Vector[ByteVector],
       key: ByteVector,
       m: UInt64): Vector[UInt64] = {
@@ -165,7 +165,6 @@ object GCS {
       case ((accum, lastHash), hash) =>
         val delta = hash - lastHash
         val encoded = golombEncode(delta, p)
-        // TODO: is this order right? I think my encoding and decoding are backwards
         (accum ++ encoded, hash)
     }
 
