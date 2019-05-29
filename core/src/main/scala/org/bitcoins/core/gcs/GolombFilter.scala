@@ -1,6 +1,14 @@
 package org.bitcoins.core.gcs
 
 import org.bitcoins.core.number.{UInt64, UInt8}
+import org.bitcoins.core.protocol.blockchain.Block
+import org.bitcoins.core.protocol.transaction.{
+  Transaction,
+  TransactionInput,
+  TransactionOutPoint,
+  TransactionOutput
+}
+import org.bitcoins.core.script.control.OP_RETURN
 import scodec.bits.{BitVector, ByteVector}
 
 import scala.annotation.tailrec
@@ -43,5 +51,32 @@ case class GolombFilter(
     val hash = GCS.hashToRange(data, f, key)
 
     binarySearch(from = 0, to = n - 1, hash, decodedHashes)
+  }
+}
+
+object BlockFilter {
+
+  def apply(block: Block): GolombFilter = {
+    val key = block.blockHeader.hash.bytes.take(16)
+
+    val transactions: Vector[Transaction] = block.transactions.toVector
+
+    val noCoinbase: Vector[Transaction] = transactions.tail
+    val newOutputs: Vector[TransactionOutput] = transactions.flatMap(_.outputs)
+    val newScriptPubKeys: Vector[ByteVector] = newOutputs.flatMap { output =>
+      if (output.scriptPubKey.asm.contains(OP_RETURN)) {
+        None
+      } else {
+        Some(output.scriptPubKey.asmBytes)
+      }
+    }
+
+    val inputs: Vector[TransactionInput] = noCoinbase.flatMap(tx => tx.inputs)
+    val outputsSpent: Vector[TransactionOutPoint] = inputs.map { input =>
+      input.previousOutput
+    }
+    val prevOutputScripts: Vector[ByteVector] = outputsSpent.map(_.bytes)
+
+    GCS.buildBasicBlockFilter(prevOutputScripts ++ newScriptPubKeys, key)
   }
 }
