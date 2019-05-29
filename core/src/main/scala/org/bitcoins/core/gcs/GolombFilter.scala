@@ -56,7 +56,15 @@ case class GolombFilter(
 
 object BlockFilter {
 
-  def apply(block: Block): GolombFilter = {
+  /**
+    * Given a Block and access to the UTXO set, constructs a Block Filter
+    * for that block as specified in
+    * [[https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki#block-filters]]
+    * @param block
+    * @param utxoProvider
+    * @return
+    */
+  def apply(block: Block, utxoProvider: TempUtxoProvider): GolombFilter = {
     val key = block.blockHeader.hash.bytes.take(16)
 
     val transactions: Vector[Transaction] = block.transactions.toVector
@@ -72,10 +80,13 @@ object BlockFilter {
     }
 
     val inputs: Vector[TransactionInput] = noCoinbase.flatMap(tx => tx.inputs)
-    val outputsSpent: Vector[TransactionOutPoint] = inputs.map { input =>
+    val outpointsSpent: Vector[TransactionOutPoint] = inputs.map { input =>
       input.previousOutput
     }
-    val prevOutputScripts: Vector[ByteVector] = outputsSpent.map(_.bytes)
+    val prevOutputs: Vector[TransactionOutput] =
+      outpointsSpent.flatMap(utxoProvider.getUtxo)
+    val prevOutputScripts: Vector[ByteVector] =
+      prevOutputs.map(_.scriptPubKey.asmBytes)
 
     GCS.buildBasicBlockFilter(prevOutputScripts ++ newScriptPubKeys, key)
   }
