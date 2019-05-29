@@ -20,9 +20,8 @@ import org.bitcoins.node.versions.ProtocolVersion
 import scodec.bits.ByteVector
 
 /**
-  * Created by chris on 5/31/16.
   * Trait that represents a payload for a message on the Bitcoin p2p network
-  * [[https://bitcoin.org/en/developer-reference#p2p-network]]
+  * @see [[https://bitcoin.org/en/developer-reference#p2p-network]]
   */
 sealed trait NetworkPayload extends NetworkElement {
 
@@ -196,6 +195,9 @@ trait InventoryMessage extends DataPayload {
     */
   def inventories: Seq[Inventory]
 
+  override def toString(): String =
+    s"InventoryMessage(${inventoryCount.toInt}, ${inventories.mkString(", ")})"
+
   override def commandName = NetworkPayload.invCommandName
 
   override def bytes: ByteVector = RawInventoryMessageSerializer.write(this)
@@ -261,7 +263,7 @@ trait TransactionMessage extends DataPayload {
 
 /**
   * Represents a control message on this network
-  * [[https://bitcoin.org/en/developer-reference#control-messages]]
+  * @see [[https://bitcoin.org/en/developer-reference#control-messages]]
   */
 sealed trait ControlPayload extends NetworkPayload
 
