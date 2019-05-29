@@ -206,15 +206,26 @@ class GCSTest extends BitcoinSUnitTest {
       Gen.choose(0, 32).map(UInt8(_))
     }
 
-    def items: Gen[Vector[UInt64]] = {
-      Gen.choose(1, 3).flatMap { size =>
-        Gen.listOfN(size, NumberGenerator.uInt64).map(_.toVector)
+    def items: Gen[(Vector[UInt64], UInt8)] = {
+      genP.flatMap { p =>
+        Gen.choose(1, 1000).flatMap { size =>
+          // If hash's quotient when divided by 2^p is too large, we hang converting to unary
+          val upperBound: Long = 1L << (p.toInt * 1.75).toInt
+
+          val hashGen = Gen
+            .chooseNum(0L, upperBound)
+            .map(num => UInt64(BigInt(num)))
+
+          Gen.listOfN(size, hashGen).map(_.toVector).map { vec =>
+            (vec, p)
+          }
+        }
       }
     }
 
-    forAll(items, genP) {
+    forAll(items) {
       case (items, p) =>
-        val sorted = items.sortWith(_ <= _)
+        val sorted = items.sortWith(_ < _)
 
         val codedSet = GCS.encodeSortedSet(sorted, p)
         val decodedSet = GCS.golombDecodeSet(codedSet, p)

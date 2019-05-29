@@ -16,7 +16,7 @@ object GCS {
       p: UInt8,
       m: UInt64): BitVector = {
     val hashedValues = hashedSetConstruct(data, key, m)
-    val sortedHashedValues = hashedValues.sortWith(_ <= _)
+    val sortedHashedValues = hashedValues.sortWith(_ < _)
     encodeSortedSet(sortedHashedValues, p)
   }
 
@@ -77,17 +77,16 @@ object GCS {
     hashedItemsBuilder.result()
   }
 
-  private def toUnary(num: UInt64): BitVector = {
-    @tailrec
-    def loop(n: UInt64, accum: BitVector): BitVector = {
-      if (n == UInt64.zero) {
-        accum
-      } else {
-        loop(n - UInt64.one, accum.:+(true))
-      }
-    }
+  def toUnary(num: UInt64): BitVector = {
+    if (num == UInt64.zero) {
+      BitVector.bits(Vector(false))
+    } else {
+      val binUnary = (BigInt(1) << num.toInt) - 1
+      val leftPadded = BitVector(binUnary.toByteArray)
+      val noPadding = dropLeftPadding(leftPadded)
 
-    loop(num, BitVector.empty).:+(false)
+      noPadding.:+(false)
+    }
   }
 
   def golombEncode(item: UInt64, p: UInt8): BitVector = {
