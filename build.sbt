@@ -334,6 +334,7 @@ lazy val testkit = project
     bitcoindRpc,
     eclairRpc,
     node,
+    wallet,
     zmq
   ).enablePlugins()
 
