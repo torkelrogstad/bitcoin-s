@@ -2,6 +2,7 @@ package org.bitcoins.core.gcs
 
 import org.bitcoins.core.number.{UInt64, UInt8}
 import org.bitcoins.core.util.NumberUtil
+import org.bitcoins.testkit.core.gen.NumberGenerator
 import org.bitcoins.testkit.util.BitcoinSUnitTest
 import org.scalacheck.Gen
 import scodec.bits.BitVector
@@ -140,7 +141,7 @@ class GCSTest extends BitcoinSUnitTest {
     assert(decode == original)
   }
 
-  it must "encode and decode a golomb set for an arbitrary item and p" in {
+  it must "encode and decode an arbitrary item for an arbitrary p" in {
 
     /**
       * Bit parameter for GCS, cannot be more than 32 as we will
@@ -165,7 +166,7 @@ class GCSTest extends BitcoinSUnitTest {
         val encoded = GCS.golombEncode(item = item, p = p)
         val decode = GCS.golombDecode(codedItem = encoded, p = p)
 
-        decode == item
+        assert(decode == item)
     }
   }
 
@@ -192,5 +193,33 @@ class GCSTest extends BitcoinSUnitTest {
     val decodedSet = GCS.golombDecodeSet(codedSet, p)
 
     assert(decodedSet == sortedItems)
+  }
+
+  it must "encode and decode arbitrary sets of elements for arbitrary p" in {
+
+    /**
+      * Bit parameter for GCS, cannot be more than 32 as we will
+      * have a number too large for a uint64.
+      * [[https://github.com/Roasbeef/btcutil/blob/b5d74480bb5b02a15a9266cbeae37ecf9dd6ffca/gcs/gcs.go#L67]]
+      */
+    def genP: Gen[UInt8] = {
+      Gen.choose(0, 32).map(UInt8(_))
+    }
+
+    def items: Gen[Vector[UInt64]] = {
+      Gen.choose(1, 3).flatMap { size =>
+        Gen.listOfN(size, NumberGenerator.uInt64).map(_.toVector)
+      }
+    }
+
+    forAll(items, genP) {
+      case (items, p) =>
+        val sorted = items.sortWith(_ <= _)
+
+        val codedSet = GCS.encodeSortedSet(sorted, p)
+        val decodedSet = GCS.golombDecodeSet(codedSet, p)
+
+        assert(decodedSet == sorted)
+    }
   }
 }
