@@ -20,6 +20,7 @@ import org.bitcoins.core.protocol.{
   P2PKHAddress,
   P2SHAddress
 }
+import org.bitcoins.core.p2p.ServiceFlags
 import org.bitcoins.core.script.ScriptType
 import org.bitcoins.core.wallet.fee.BitcoinFeeUnit
 import org.bitcoins.rpc.client.common.RpcOpts.AddressType
@@ -29,6 +30,8 @@ import org.bitcoins.rpc.serializers.JsonWriters._
 import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import scodec.bits.ByteVector
+// import org.bitcoins.node.messages.ServiceFlags
 
 object JsonSerializers {
   implicit val bigIntReads: Reads[BigInt] = BigIntReads
@@ -128,6 +131,26 @@ object JsonSerializers {
   implicit val networkReads: Reads[Network] = Json.reads[Network]
   implicit val networkAddressReads: Reads[NetworkAddress] =
     Json.reads[NetworkAddress]
+
+  implicit val serviceFlagsReads: Reads[ServiceFlagsModel] = {
+    for {
+      uint64 <- __.read[UInt64]
+    } yield {
+
+      // import ServiceFlags._
+      // ServiceFlagsModel(
+      //   none = uint64  NODE_NONE.value,
+      //   network = readBits(NODE_NETWORK),
+      //   getUtxo = readBits(NODE_GETUTXO),
+      //   bloom = readBits(NODE_BLOOM),
+      //   witness = readBits(NODE_WITNESS),
+      //   xthin = readBits(NODE_XTHIN),
+      //   networkLimited = readBits(NODE_NETWORK_LIMITED),
+      // )
+      ???
+    }
+  }
+
   implicit val networkInfoReads: Reads[GetNetworkInfoResult] =
     Json.reads[GetNetworkInfoResult]
 

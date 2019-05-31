@@ -31,11 +31,22 @@ case class NetTarget(
     time_left_in_cycle: UInt32)
     extends NetworkResult
 
+// todo(torkelrogstad): unknown flags
+case class ServiceFlagsModel(
+    none: Boolean,
+    network: Boolean,
+    getUtxo: Boolean,
+    bloom: Boolean,
+    witness: Boolean,
+    xthin: Boolean,
+    networkLimited: Boolean)
+    extends NetworkResult
+
 case class GetNetworkInfoResult(
     version: Int,
     subversion: String,
     protocolversion: Int,
-    localservices: String,
+    localservices: ServiceFlagsModel,
     localrelay: Boolean,
     timeoffset: Int,
     networkactive: Boolean,
@@ -79,7 +90,7 @@ case class PeerNetworkInfo(
     addr: URI,
     addrbind: URI,
     addrlocal: Option[URI],
-    services: String,
+    services: ServiceFlagsModel,
     relaytxes: Boolean,
     lastsend: UInt32,
     lastrecv: UInt32,
