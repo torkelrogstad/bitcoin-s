@@ -50,8 +50,7 @@ sealed abstract class LnTaggedFields extends NetworkElement {
     .flatMap(_.get.data)
 
   override def bytes: ByteVector = {
-    val u8s = Bech32.from5bitTo8bit(data)
-    UInt8.toBytes(u8s)
+    UInt5.toBytes(data)
   }
 
   override def toString: String = {

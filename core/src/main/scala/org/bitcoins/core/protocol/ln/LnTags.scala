@@ -243,7 +243,7 @@ object LnTag {
         }
       }
 
-      val bytes = UInt8.toBytes(Bech32.from5bitTo8bit(u5s))
+      val bytes = UInt5.toBytes(u5s)
       val vecRoutes: Vector[LnRoute] = loop(bytes, Vector.empty)
 
       LnTag.RoutingInfo(vecRoutes)
@@ -253,8 +253,7 @@ object LnTag {
 
   def fromLnTagPrefix(prefix: LnTagPrefix, payload: Vector[UInt5]): LnTag = {
 
-    val u8s = Bech32.from5bitTo8bit(payload)
-    val bytes = UInt8.toBytes(u8s)
+    val bytes = UInt5.toBytes(payload)
 
     val tag: LnTag = prefix match {
       case LnTagPrefix.PaymentHash =>
@@ -287,7 +286,7 @@ object LnTag {
       case LnTagPrefix.FallbackAddress =>
         val version = payload.head.toUInt8
         val noVersion = payload.tail
-        val noVersionBytes = UInt8.toBytes(Bech32.from5bitTo8bit(noVersion))
+        val noVersionBytes = UInt5.toBytes(noVersion)
         FallbackAddressV.fromU8(version, noVersionBytes, MainNet)
 
       case LnTagPrefix.RoutingInfo =>

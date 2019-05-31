@@ -65,8 +65,7 @@ object LnInvoiceSignature extends Factory[LnInvoiceSignature] {
   }
 
   def fromU5s(u5s: Vector[UInt5]): LnInvoiceSignature = {
-    val u8s = Bech32.from5bitTo8bit(u5s)
-    val bytes = UInt8.toBytes(u8s)
+    val bytes = UInt5.toBytes(u5s)
     fromBytes(bytes)
   }
 }

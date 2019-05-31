@@ -246,8 +246,7 @@ object LnInvoice extends BitcoinSLogger {
       lnTags: LnTaggedFields): ByteVector = {
     val tsu5 = uInt64ToBase32(timestamp)
     val payloadU5 = tsu5 ++ lnTags.data
-    val payloadU8 = Bech32.from5bitTo8bit(payloadU5)
-    val payload = UInt8.toBytes(payloadU8)
+    val payload = UInt5.toBytes(payloadU5)
     val allBytes = hrp.bytes ++ payload
 
     //for an explanation of why this is needed see

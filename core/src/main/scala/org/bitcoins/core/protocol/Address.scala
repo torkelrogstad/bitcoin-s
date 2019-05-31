@@ -152,9 +152,8 @@ object Bech32Address extends AddressFactory[Bech32Address] {
     decoded.flatMap {
       case bech32Addr =>
         val bytes = bech32Addr.data
-        val (v, _) = (bytes.head, bytes.tail)
-        val convertedProg = NumberUtil.convertUInt5sToUInt8(bytes.tail)
-        val progBytes = UInt8.toBytes(convertedProg)
+        val (v, program) = (bytes.head, bytes.tail)
+        val progBytes = UInt5.toBytes(program)
         val witVersion = WitnessVersion(v.toInt)
         val pushOp = BitcoinScriptUtil.calculatePushOp(progBytes)
         witVersion match {
