@@ -40,8 +40,6 @@ class NodeWithWalletTest extends BitcoinSWalletTest {
 
       val completionP = Promise[Assertion]
 
-      val peer = Peer.fromBitcoind(rpc.instance)
-
       val callbacks = SpvNodeCallbacks(
         onBlockReceived = { block =>
           logger.error(s"Received a block")
@@ -68,6 +66,7 @@ class NodeWithWalletTest extends BitcoinSWalletTest {
         */
       implicit val nodeConfig: NodeAppConfig = config
       implicit val chainConfig: ChainAppConfig = config
+      val peer = Peer.fromBitcoind(rpc.instance)
       val spv =
         SpvNode(peer, chainHandler, callbacks = callbacks)
 
@@ -100,6 +99,10 @@ class NodeWithWalletTest extends BitcoinSWalletTest {
           case None    => fail(s"Wallet had no bloom filter")
         }
 
+        rpcAddress <- rpc.getNewAddress
+        _ <- rpc.generateToAddress(blocks = 1, rpcAddress) // get bitcoind out of IBD
+        _ = logger.info(s"Bitcoind should be out of IBD")
+
         txid <- rpc.sendToAddress(address, 1.bitcoin).map { tx =>
           txidFromBitcoind = Some(tx.flip)
           val delay = 30.seconds
@@ -115,7 +118,6 @@ class NodeWithWalletTest extends BitcoinSWalletTest {
         }
         _ = logger.info(s"bitcoind sent TX $txid")
 
-        rpcAddress <- rpc.getNewAddress
         block +: _ <- rpc.generateToAddress(blocks = 1, rpcAddress)
         _ = logger.info(s"Generated a block")
         txInfo <- rpc.getTransaction(txid)

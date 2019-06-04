@@ -8,16 +8,20 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{5}.%M\(%line\) - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %logger{0} - %msg%n</pattern>
         </encoder>
     </appender>
 
 
 
-    <root level="OFF">
+    <root level="INFO">
         <appender-ref ref="FILE" />
         <appender-ref ref="STDOUT" />
     </root>
+
+
+    <!-- Root logger for Bitcoin-S -->
+    <logger name="org.bitcoins" level="INFO" />
 
     <!-- get rid of "Slf4jLogger started" messages -->
     <logger name="akka.event.slf4j.Slf4jLogger" level="OFF" />

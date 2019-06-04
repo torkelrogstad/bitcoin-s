@@ -22,6 +22,7 @@ class SpvNodeTest extends NodeUnitTest {
       val spvNode = spvNodeConnectedWithBitcoind.spvNode
       val bitcoind = spvNodeConnectedWithBitcoind.bitcoind
 
+      logger.info(s"in here")
       assert(spvNode.isConnected)
 
       assert(spvNode.isInitialized)

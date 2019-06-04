@@ -2,13 +2,14 @@ package org.bitcoins.testkit.fixtures
 
 import akka.actor.ActorSystem
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
+import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.testkit.rpc.BitcoindRpcTestUtil
 import org.scalatest._
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 
-trait BitcoinSFixture extends fixture.AsyncFlatSpec {
+trait BitcoinSFixture extends fixture.AsyncFlatSpec with BitcoinSLogger {
 
   /**
     * Given functions to build and destroy a fixture, returns a OneArgAsyncTest => FutureOutcome
@@ -126,6 +127,7 @@ trait BitcoinSFixture extends fixture.AsyncFlatSpec {
     val instance = BitcoindRpcTestUtil.instance()
     val bitcoind = new BitcoindRpcClient(instance)
 
+    logger.info(s"creating bitcoind with datadir ${instance.datadir}")
     bitcoind.start().map(_ => bitcoind)
   }
 }
