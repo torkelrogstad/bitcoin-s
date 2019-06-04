@@ -1,9 +1,8 @@
-package org.bitcoins.wallet.util
+package org.bitcoins.testkit.wallet
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.bitcoins.core.config.RegTest
-import org.bitcoins.core.crypto.MnemonicCode
 import org.bitcoins.core.protocol.blockchain.ChainParams
 import org.bitcoins.core.util.BitcoinSLogger
 import org.bitcoins.rpc.client.common.BitcoindRpcClient
@@ -30,13 +29,19 @@ trait BitcoinSWalletTest
     with BitcoinSFixture
     with BeforeAndAfterAll
     with BitcoinSLogger {
-  implicit val actorSystem: ActorSystem = ActorSystem(getClass.getSimpleName)
-  implicit val ec: ExecutionContext = actorSystem.dispatcher
+  implicit lazy val actorSystem: ActorSystem = ActorSystem({
+    // Akka doesn't like funky characters like '$' (which the
+    // compiler often generate)
+    val regex = "[a-zA-Z0-9]"
+    getClass.getSimpleName.filter(_.toString.matches(regex))
+  })
+
+  implicit lazy val ec: ExecutionContext = actorSystem.dispatcher
 
   protected lazy val chainParams: ChainParams = WalletTestUtil.chainParams
 
   /** Wallet config with data directory set to user temp directory */
-  protected implicit lazy val config: BitcoinSAppConfig = {
+  implicit protected lazy val config: BitcoinSAppConfig = {
     val tmpDir = Files.createTempDirectory("bitcoin-s-")
     val conf = ConfigFactory.parseString(s"bitcoin-s.datadir = $tmpDir")
     BitcoinSAppConfig(conf)
@@ -75,7 +80,8 @@ trait BitcoinSWalletTest
   }
 
   def withNewWallet(test: OneArgAsyncTest): FutureOutcome =
-    makeDependentFixture(build = createNewWallet, destroy = destroyWallet)(test)
+    makeDependentFixture(build = createNewWallet _, destroy = destroyWallet)(
+      test)
 
   case class WalletWithBitcoind(
       wallet: UnlockedWalletApi,
@@ -100,7 +106,7 @@ trait BitcoinSWalletTest
 
   def withNewWalletAndBitcoind(test: OneArgAsyncTest): FutureOutcome = {
     val builder: () => Future[WalletWithBitcoind] = composeBuildersAndWrap(
-      createNewWallet,
+      createNewWallet _,
       createWalletWithBitcoind,
       (_: UnlockedWalletApi, walletWithBitcoind: WalletWithBitcoind) =>
         walletWithBitcoind
@@ -108,5 +114,14 @@ trait BitcoinSWalletTest
 
     makeDependentFixture(builder, destroy = destroyWalletWithBitcoind)(test)
   }
+}
 
+object BitcoinSWalletTest extends BitcoinSWalletTest {
+
+  // This method has to be here to have this accessible as an object
+  def withFixture(test: OneArgAsyncTest): FutureOutcome = {
+    val msg =
+      s"Someone called BitcoinSWalletTest.withFixture. This is not what's supposed to happen!"
+    throw new RuntimeException(msg)
+  }
 }

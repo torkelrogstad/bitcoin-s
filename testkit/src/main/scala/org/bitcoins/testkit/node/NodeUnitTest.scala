@@ -31,6 +31,7 @@ import org.scalatest.{
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import org.bitcoins.wallet.api._
+import org.bitcoins.testkit.wallet.BitcoinSWalletTest
 
 trait NodeUnitTest
     extends BitcoinSFixture

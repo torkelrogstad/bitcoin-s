@@ -41,7 +41,7 @@ case class ChainAppConfig(val confs: Config*) extends AppConfig {
     * This creates the necessary tables for the chain project
     * and inserts preliminary data like the genesis block header
     * */
-  def initialize(implicit ec: ExecutionContext): Future[Unit] = {
+  override def initialize()(implicit ec: ExecutionContext): Future[Unit] = {
     val blockHeaderDAO = BlockHeaderDAO(this)
     val isInitF = isInitialized()
     isInitF.flatMap { isInit =>
