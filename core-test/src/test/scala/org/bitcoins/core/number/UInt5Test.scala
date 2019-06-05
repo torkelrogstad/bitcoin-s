@@ -50,4 +50,12 @@ class UInt5Test extends FlatSpec with MustMatchers with PropertyChecks {
       u8.toUInt5 == u5
     }
   }
+
+  it must "have Int syntax" in {
+    forAll(NumberGenerator.uInt5) { u5 =>
+      val int = u5.toInt
+      assert(int.uint5 == u5)
+      assert(int.ui5 == u5)
+    }
+  }
 }
