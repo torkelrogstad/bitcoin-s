@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title>Bitcoin-S 0.1.0+23-748ac9d5-SNAPSHOT - org.bitcoins.core.p2p</title>
-          <meta name="description" content="Bitcoin - S 0.1.0 23 - 748ac9d5 - SNAPSHOT - org.bitcoins.core.p2p" />
-          <meta name="keywords" content="Bitcoin S 0.1.0 23 748ac9d5 SNAPSHOT org.bitcoins.core.p2p" />
+          <title>Bitcoin-S 0.1.0+30-1784d801-SNAPSHOT - org.bitcoins.core.p2p</title>
+          <meta name="description" content="Bitcoin - S 0.1.0 30 - 1784d801 - SNAPSHOT - org.bitcoins.core.p2p" />
+          <meta name="keywords" content="Bitcoin S 0.1.0 30 1784d801 SNAPSHOT org.bitcoins.core.p2p" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title">Bitcoin-S<span id="doc-version">0.1.0+23-748ac9d5-SNAPSHOT</span></span>
+        <span id="doc-title">Bitcoin-S<span id="doc-version">0.1.0+30-1784d801-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -250,38 +250,22 @@ key derivation paths.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="org.bitcoins.core">core</a></dd></dl></div>
-    </li><li name="org.bitcoins.core.p2p.serializers" visbl="pub" class="indented5 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="serializers"></a><a id="serializers:serializers"></a>
-      <span class="permalink">
-      <a href="../../../../org/bitcoins/core/p2p/index.html#serializers" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">package</span>
-      </span>
-      <span class="symbol">
-        <a title="" href="serializers/index.html"><span class="name">serializers</span></a>
-      </span>
-      
-      
     </li><li class="current-entities indented4">
                         <a class="object" href="AddrMessage$.html" title="The companion object for an AddrMessage"></a>
                         <a class="trait" href="AddrMessage.html" title="The addr (IP address) message relays connection information for peers on the network."></a>
                         <a href="AddrMessage.html" title="The addr (IP address) message relays connection information for peers on the network.">AddrMessage</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="BlockMessage$.html" title=""></a>
-                        <a class="trait" href="BlockMessage.html" title="The block message transmits a single serialized block https://bitcoin.org/en/developer-reference#block"></a>
-                        <a href="BlockMessage.html" title="The block message transmits a single serialized block https://bitcoin.org/en/developer-reference#block">BlockMessage</a>
+                        <a class="trait" href="BlockMessage.html" title="The block message transmits a single serialized block"></a>
+                        <a href="BlockMessage.html" title="The block message transmits a single serialized block">BlockMessage</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
                         <a class="trait" href="ControlPayload.html" title="Represents a control message on this network https://bitcoin.org/en/developer-reference#control-messages"></a>
                         <a href="ControlPayload.html" title="Represents a control message on this network https://bitcoin.org/en/developer-reference#control-messages">ControlPayload</a>
                       </li><li class="current-entities indented4">
                         <span class="separator"></span>
-                        <a class="trait" href="DataPayload.html" title="Represents a data message inside of bitcoin core https://bitcoin.org/en/developer-reference#data-messages"></a>
-                        <a href="DataPayload.html" title="Represents a data message inside of bitcoin core https://bitcoin.org/en/developer-reference#data-messages">DataPayload</a>
+                        <a class="trait" href="DataPayload.html" title="Represents a data message inside of bitcoin core"></a>
+                        <a href="DataPayload.html" title="Represents a data message inside of bitcoin core">DataPayload</a>
                       </li><li class="current-entities indented4">
                         <a class="object" href="FeeFilterMessage$.html" title=""></a>
                         <a class="trait" href="FeeFilterMessage.html" title="The feefilter message is a request to the receiving peer to not relay any transaction inv messages to the sending peer where the fee rate for the transaction is below the fee rate specified in the feefilter message."></a>
@@ -646,7 +630,7 @@ connection information and then sends that message to its peers unsolicited.
 Some of its peers send that information to their peers (also unsolicited),
 some of which further distribute it, allowing decentralized peer discovery for
 any program already on the network.</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p><a href="https://bitcoin.org/en/developer-reference#addr" target="_blank">https://bitcoin.org/en/developer-reference#addr</a></p></span></dd></dl></div>
-    </li><li name="org.bitcoins.core.p2p.BlockMessage" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="org.bitcoins.core.p2p.BlockMessage" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="BlockMessageextendsNetworkElementwithDataPayload"></a><a id="BlockMessage:BlockMessage"></a>
       <span class="permalink">
       <a href="../../../../org/bitcoins/core/p2p/index.html#BlockMessageextendsNetworkElementwithDataPayload" title="Permalink">
@@ -658,12 +642,12 @@ any program already on the network.</p></div><dl class="attributes block"> <dt>S
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="The block message transmits a single serialized block https://bitcoin.org/en/developer-reference#block" href="BlockMessage.html"><span class="name">BlockMessage</span></a><span class="result"> extends <a href="../protocol/NetworkElement.html" class="extype" name="org.bitcoins.core.protocol.NetworkElement">NetworkElement</a> with <a href="DataPayload.html" class="extype" name="org.bitcoins.core.p2p.DataPayload">DataPayload</a></span>
+        <a title="The block message transmits a single serialized block" href="BlockMessage.html"><span class="name">BlockMessage</span></a><span class="result"> extends <a href="../protocol/NetworkElement.html" class="extype" name="org.bitcoins.core.protocol.NetworkElement">NetworkElement</a> with <a href="DataPayload.html" class="extype" name="org.bitcoins.core.p2p.DataPayload">DataPayload</a></span>
       </span>
       
       <p class="shortcomment cmt">The block message transmits a single serialized block
-<a href="https://bitcoin.org/en/developer-reference#block" target="_blank">https://bitcoin.org/en/developer-reference#block</a>
-</p>
+</p><div class="fullcomment"><div class="comment cmt"><p>The block message transmits a single serialized block
+</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p><a href="https://bitcoin.org/en/developer-reference#block" target="_blank">https://bitcoin.org/en/developer-reference#block</a></p></span></dd></dl></div>
     </li><li name="org.bitcoins.core.p2p.ControlPayload" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
       <a id="ControlPayloadextendsNetworkElementwithNetworkPayload"></a><a id="ControlPayload:ControlPayload"></a>
       <span class="permalink">
@@ -682,7 +666,7 @@ any program already on the network.</p></div><dl class="attributes block"> <dt>S
       <p class="shortcomment cmt">Represents a control message on this network
 <a href="https://bitcoin.org/en/developer-reference#control-messages" target="_blank">https://bitcoin.org/en/developer-reference#control-messages</a>
 </p>
-    </li><li name="org.bitcoins.core.p2p.DataPayload" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="org.bitcoins.core.p2p.DataPayload" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="DataPayloadextendsNetworkElementwithNetworkPayload"></a><a id="DataPayload:DataPayload"></a>
       <span class="permalink">
       <a href="../../../../org/bitcoins/core/p2p/index.html#DataPayloadextendsNetworkElementwithNetworkPayload" title="Permalink">
@@ -694,12 +678,12 @@ any program already on the network.</p></div><dl class="attributes block"> <dt>S
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <a title="Represents a data message inside of bitcoin core https://bitcoin.org/en/developer-reference#data-messages" href="DataPayload.html"><span class="name">DataPayload</span></a><span class="result"> extends <a href="../protocol/NetworkElement.html" class="extype" name="org.bitcoins.core.protocol.NetworkElement">NetworkElement</a> with <a href="NetworkPayload.html" class="extype" name="org.bitcoins.core.p2p.NetworkPayload">NetworkPayload</a></span>
+        <a title="Represents a data message inside of bitcoin core" href="DataPayload.html"><span class="name">DataPayload</span></a><span class="result"> extends <a href="../protocol/NetworkElement.html" class="extype" name="org.bitcoins.core.protocol.NetworkElement">NetworkElement</a> with <a href="NetworkPayload.html" class="extype" name="org.bitcoins.core.p2p.NetworkPayload">NetworkPayload</a></span>
       </span>
       
       <p class="shortcomment cmt">Represents a data message inside of bitcoin core
-<a href="https://bitcoin.org/en/developer-reference#data-messages" target="_blank">https://bitcoin.org/en/developer-reference#data-messages</a>
-</p>
+</p><div class="fullcomment"><div class="comment cmt"><p>Represents a data message inside of bitcoin core
+</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p><a href="https://bitcoin.org/en/developer-reference#data-messages" target="_blank">https://bitcoin.org/en/developer-reference#data-messages</a></p></span></dd></dl></div>
     </li><li name="org.bitcoins.core.p2p.FeeFilterMessage" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="FeeFilterMessageextendsNetworkElementwithControlPayload"></a><a id="FeeFilterMessage:FeeFilterMessage"></a>
       <span class="permalink">
@@ -998,7 +982,8 @@ Represents an entire p2p network message in bitcoins
 node does not have available for relay.</p><div class="fullcomment"><div class="comment cmt"><p>The notfound message is a reply to a getdata message which requested an object the receiving
 node does not have available for relay. (Nodes are not expected to relay historic transactions
 which are no longer in the memory pool or relay set.
-Nodes may also have pruned spent transactions from older blocks, making them unable to send those blocks.)</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p><a href="https://bitcoin.org/en/developer-reference#notfound" target="_blank">https://bitcoin.org/en/developer-reference#notfound</a></p></span></dd></dl></div>
+Nodes may also have pruned spent transactions from older blocks, making them unable to send those blocks.)
+</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p><a href="https://bitcoin.org/en/developer-reference#notfound" target="_blank">https://bitcoin.org/en/developer-reference#notfound</a></p></span></dd></dl></div>
     </li><li name="org.bitcoins.core.p2p.PingMessage" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="PingMessageextendsNetworkElementwithControlPayload"></a><a id="PingMessage:PingMessage"></a>
       <span class="permalink">
@@ -1404,8 +1389,7 @@ as valid but which have not yet appeared in a block.</p><div class="fullcomment"
 as valid but which have not yet appeared in a block.
 That is, transactions which are in the receiving node’s memory pool.
 The response to the mempool message is one or more inv messages containing the TXIDs in the usual inventory format.
-<a href="https://bitcoin.org/en/developer-reference#mempool" target="_blank">https://bitcoin.org/en/developer-reference#mempool</a>
-</p></div></div>
+</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p><a href="https://bitcoin.org/en/developer-reference#mempool" target="_blank">https://bitcoin.org/en/developer-reference#mempool</a></p></span></dd></dl></div>
     </li><li name="org.bitcoins.core.p2p.MerkleBlockMessage" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="MerkleBlockMessage"></a><a id="MerkleBlockMessage:MerkleBlockMessage"></a>
       <span class="permalink">
@@ -1519,7 +1503,9 @@ It should implement all protocol features available in its self-reported protoco
         <a title="The companion object factory used to create NotFoundMessages on the p2p network" href="NotFoundMessage$.html"><span class="name">NotFoundMessage</span></a><span class="result"> extends <a href="../util/Factory.html" class="extype" name="org.bitcoins.core.util.Factory">Factory</a>[<a href="NotFoundMessage.html" class="extype" name="org.bitcoins.core.p2p.NotFoundMessage">NotFoundMessage</a>]</span>
       </span>
       
-      <p class="shortcomment cmt">The companion object factory used to create NotFoundMessages on the p2p network</p><div class="fullcomment"><div class="comment cmt"><p>The companion object factory used to create NotFoundMessages on the p2p network</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p>https://bitcoin.org/en/developer-reference#notfound</p></span></dd></dl></div>
+      <p class="shortcomment cmt">The companion object factory used to create NotFoundMessages on the p2p network
+</p><div class="fullcomment"><div class="comment cmt"><p>The companion object factory used to create NotFoundMessages on the p2p network
+</p></div><dl class="attributes block"> <dt>See also</dt><dd><span class="cmt"><p>https://bitcoin.org/en/developer-reference#notfound</p></span></dd></dl></div>
     </li><li name="org.bitcoins.core.p2p.PingMessage" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="PingMessage"></a><a id="PingMessage:PingMessage"></a>
       <span class="permalink">
