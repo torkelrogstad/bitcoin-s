@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title></title>
-          <meta name="description" content="" />
-          <meta name="keywords" content="" />
+          <title>Bitcoin-S 0.1.0+23-748ac9d5-SNAPSHOT - org.bitcoins.testkit.core.gen.HDGenerators</title>
+          <meta name="description" content="Bitcoin - S 0.1.0 23 - 748ac9d5 - SNAPSHOT - org.bitcoins.testkit.core.gen.HDGenerators" />
+          <meta name="keywords" content="Bitcoin S 0.1.0 23 748ac9d5 SNAPSHOT org.bitcoins.testkit.core.gen.HDGenerators" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title"><span id="doc-version"></span></span>
+        <span id="doc-title">Bitcoin-S<span id="doc-version">0.1.0+23-748ac9d5-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -307,9 +307,9 @@
         <div id="types" class="types members">
               <h3>Type Members</h3>
               <ol><li name="org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="HDPathConstructor=Vector[org.bitcoins.core.hd.BIP32Node]=&gt;scala.util.Try[org.bitcoins.core.hd.HDPath[_]]"></a><a id="HDPathConstructor:HDPathConstructor"></a>
+      <a id="HDPathConstructor=Vector[org.bitcoins.core.hd.BIP32Node]=&gt;scala.util.Try[org.bitcoins.core.hd.HDPath]"></a><a id="HDPathConstructor:HDPathConstructor"></a>
       <span class="permalink">
-      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#HDPathConstructor=Vector[org.bitcoins.core.hd.BIP32Node]=&gt;scala.util.Try[org.bitcoins.core.hd.HDPath[_]]" title="Permalink">
+      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#HDPathConstructor=Vector[org.bitcoins.core.hd.BIP32Node]=&gt;scala.util.Try[org.bitcoins.core.hd.HDPath]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -318,7 +318,7 @@
         <span class="kind">type</span>
       </span>
       <span class="symbol">
-        <span class="name">HDPathConstructor</span><span class="result alias"> = (<span class="extype" name="scala.Vector">Vector</span>[<a href="../../../core/hd/BIP32Node.html" class="extype" name="org.bitcoins.core.hd.BIP32Node">BIP32Node</a>]) ⇒ <a href="http://www.scala-lang.org/api/2.12.8/scala/util/Try.html#scala.util.Try" class="extype" name="scala.util.Try">Try</a>[<span class="extype" name="org.bitcoins.core.hd.HDPath">HDPath</span>[_]]</span>
+        <span class="name">HDPathConstructor</span><span class="result alias"> = (<span class="extype" name="scala.Vector">Vector</span>[<a href="../../../core/hd/BIP32Node.html" class="extype" name="org.bitcoins.core.hd.BIP32Node">BIP32Node</a>]) ⇒ <a href="http://www.scala-lang.org/api/2.12.8/scala/util/Try.html#scala.util.Try" class="extype" name="scala.util.Try">Try</a>[<span class="extype" name="org.bitcoins.core.hd.HDPath">HDPath</span>]</span>
       </span>
       
       
@@ -452,6 +452,24 @@
     </span>)</span>
               
         </dd></dl></div>
+    </li><li name="org.bitcoins.testkit.core.gen.HDGenerators#diffableHDPaths" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="diffableHDPaths:org.scalacheck.Gen[(org.bitcoins.core.hd.BIP32Path,org.bitcoins.core.hd.BIP32Path)]"></a><a id="diffableHDPaths:Gen[(BIP32Path,BIP32Path)]"></a>
+      <span class="permalink">
+      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#diffableHDPaths:org.scalacheck.Gen[(org.bitcoins.core.hd.BIP32Path,org.bitcoins.core.hd.BIP32Path)]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">diffableHDPaths</span><span class="result">: <a href="https://oss.sonatype.org/service/local/repositories/public/archive/org/scalacheck/scalacheck_2.12/1.14.0/scalacheck_2.12-1.14.0-javadoc.jar/!/org/scalacheck/Gen.html#org.scalacheck.Gen" class="extype" name="org.scalacheck.Gen">Gen</a>[(<a href="../../../core/hd/BIP32Path.html" class="extype" name="org.bitcoins.core.hd.BIP32Path">BIP32Path</a>, <a href="../../../core/hd/BIP32Path.html" class="extype" name="org.bitcoins.core.hd.BIP32Path">BIP32Path</a>)]</span>
+      </span>
+      
+      <p class="shortcomment cmt">Generates a pair of paths that can be diffed.</p><div class="fullcomment"><div class="comment cmt"><p>Generates a pair of paths that can be diffed.</p><p>In code, this means that this is always true:</p><pre>diffableHDPaths.map {
+    <span class="kw">case</span> (short. long) <span class="kw">=&gt;</span> short.diff(long).isDefined
+}</pre></div></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -663,9 +681,9 @@
       <p class="shortcomment cmt">Generates a valid HD coin type
 </p>
     </li><li name="org.bitcoins.testkit.core.gen.HDGenerators#hdPath" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hdPath:org.scalacheck.Gen[org.bitcoins.core.hd.HDPath[_]]"></a><a id="hdPath:Gen[HDPath[_]]"></a>
+      <a id="hdPath:org.scalacheck.Gen[org.bitcoins.core.hd.HDPath]"></a><a id="hdPath:Gen[HDPath]"></a>
       <span class="permalink">
-      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#hdPath:org.scalacheck.Gen[org.bitcoins.core.hd.HDPath[_]]" title="Permalink">
+      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#hdPath:org.scalacheck.Gen[org.bitcoins.core.hd.HDPath]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -674,14 +692,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hdPath</span><span class="result">: <a href="https://oss.sonatype.org/service/local/repositories/public/archive/org/scalacheck/scalacheck_2.12/1.14.0/scalacheck_2.12-1.14.0-javadoc.jar/!/org/scalacheck/Gen.html#org.scalacheck.Gen" class="extype" name="org.scalacheck.Gen">Gen</a>[<span class="extype" name="org.bitcoins.core.hd.HDPath">HDPath</span>[_]]</span>
+        <span class="name">hdPath</span><span class="result">: <a href="https://oss.sonatype.org/service/local/repositories/public/archive/org/scalacheck/scalacheck_2.12/1.14.0/scalacheck_2.12-1.14.0-javadoc.jar/!/org/scalacheck/Gen.html#org.scalacheck.Gen" class="extype" name="org.scalacheck.Gen">Gen</a>[<span class="extype" name="org.bitcoins.core.hd.HDPath">HDPath</span>]</span>
       </span>
       
       
     </li><li name="org.bitcoins.testkit.core.gen.HDGenerators#hdPathWithConstructor" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="hdPathWithConstructor:org.scalacheck.Gen[(org.bitcoins.core.hd.HDPath[_],org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor)]"></a><a id="hdPathWithConstructor:Gen[(HDPath[_],HDPathConstructor)]"></a>
+      <a id="hdPathWithConstructor:org.scalacheck.Gen[(org.bitcoins.core.hd.HDPath,org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor)]"></a><a id="hdPathWithConstructor:Gen[(HDPath,HDPathConstructor)]"></a>
       <span class="permalink">
-      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#hdPathWithConstructor:org.scalacheck.Gen[(org.bitcoins.core.hd.HDPath[_],org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor)]" title="Permalink">
+      <a href="../../../../../org/bitcoins/testkit/core/gen/HDGenerators$.html#hdPathWithConstructor:org.scalacheck.Gen[(org.bitcoins.core.hd.HDPath,org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor)]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -690,7 +708,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">hdPathWithConstructor</span><span class="result">: <a href="https://oss.sonatype.org/service/local/repositories/public/archive/org/scalacheck/scalacheck_2.12/1.14.0/scalacheck_2.12-1.14.0-javadoc.jar/!/org/scalacheck/Gen.html#org.scalacheck.Gen" class="extype" name="org.scalacheck.Gen">Gen</a>[(<span class="extype" name="org.bitcoins.core.hd.HDPath">HDPath</span>[_], <a href="#HDPathConstructor=Vector[org.bitcoins.core.hd.BIP32Node]=&gt;scala.util.Try[org.bitcoins.core.hd.HDPath[_]]" class="extmbr" name="org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor">HDPathConstructor</a>)]</span>
+        <span class="name">hdPathWithConstructor</span><span class="result">: <a href="https://oss.sonatype.org/service/local/repositories/public/archive/org/scalacheck/scalacheck_2.12/1.14.0/scalacheck_2.12-1.14.0-javadoc.jar/!/org/scalacheck/Gen.html#org.scalacheck.Gen" class="extype" name="org.scalacheck.Gen">Gen</a>[(<span class="extype" name="org.bitcoins.core.hd.HDPath">HDPath</span>, <a href="#HDPathConstructor=Vector[org.bitcoins.core.hd.BIP32Node]=&gt;scala.util.Try[org.bitcoins.core.hd.HDPath]" class="extmbr" name="org.bitcoins.testkit.core.gen.HDGenerators.HDPathConstructor">HDPathConstructor</a>)]</span>
       </span>
       
       

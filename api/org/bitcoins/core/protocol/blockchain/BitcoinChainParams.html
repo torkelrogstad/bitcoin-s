@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title></title>
-          <meta name="description" content="" />
-          <meta name="keywords" content="" />
+          <title>Bitcoin-S 0.1.0+23-748ac9d5-SNAPSHOT - org.bitcoins.core.protocol.blockchain.BitcoinChainParams</title>
+          <meta name="description" content="Bitcoin - S 0.1.0 23 - 748ac9d5 - SNAPSHOT - org.bitcoins.core.protocol.blockchain.BitcoinChainParams" />
+          <meta name="keywords" content="Bitcoin S 0.1.0 23 748ac9d5 SNAPSHOT org.bitcoins.core.protocol.blockchain.BitcoinChainParams" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title"><span id="doc-version"></span></span>
+        <span id="doc-title">Bitcoin-S<span id="doc-version">0.1.0+23-748ac9d5-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -276,7 +276,7 @@
 
         <div class="values members">
               <h3>Abstract Value Members</h3>
-              <ol><li name="org.bitcoins.core.protocol.blockchain.BitcoinChainParams#allowMinDifficultyBlocks" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+              <ol><li name="org.bitcoins.core.protocol.blockchain.ChainParams#allowMinDifficultyBlocks" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="allowMinDifficultyBlocks:Boolean"></a>
       <span class="permalink">
       <a href="../../../../../org/bitcoins/core/protocol/blockchain/BitcoinChainParams.html#allowMinDifficultyBlocks:Boolean" title="Permalink">
@@ -293,7 +293,9 @@
       
       <p class="shortcomment cmt">Whether we should allow minimum difficulty blocks or not
 As an example you can trivially mine blocks on <a href="RegTestNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.RegTestNetChainParams">RegTestNetChainParams</a> and <a href="TestNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.TestNetChainParams">TestNetChainParams</a>
-but not the <a href="MainNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.MainNetChainParams">MainNetChainParams</a></p>
+but not the <a href="MainNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.MainNetChainParams">MainNetChainParams</a></p><div class="fullcomment"><div class="comment cmt"><p>Whether we should allow minimum difficulty blocks or not
+As an example you can trivially mine blocks on <a href="RegTestNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.RegTestNetChainParams">RegTestNetChainParams</a> and <a href="TestNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.TestNetChainParams">TestNetChainParams</a>
+but not the <a href="MainNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.MainNetChainParams">MainNetChainParams</a></p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ChainParams.html" class="extype" name="org.bitcoins.core.protocol.blockchain.ChainParams">ChainParams</a></dd></dl></div>
     </li><li name="org.bitcoins.core.protocol.blockchain.ChainParams#base58Prefixes" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="base58Prefixes:Map[org.bitcoins.core.protocol.blockchain.Base58Type,scodec.bits.ByteVector]"></a><a id="base58Prefixes:Map[Base58Type,ByteVector]"></a>
       <span class="permalink">
@@ -346,6 +348,24 @@ Base58 prefixes for various keys/hashes on the network.
       </span>
       
       <p class="shortcomment cmt">The best chain should have this amount of work</p>
+    </li><li name="org.bitcoins.core.protocol.blockchain.BitcoinChainParams#network" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
+      <a id="network:org.bitcoins.core.config.BitcoinNetwork"></a><a id="network:BitcoinNetwork"></a>
+      <span class="permalink">
+      <a href="../../../../../org/bitcoins/core/protocol/blockchain/BitcoinChainParams.html#network:org.bitcoins.core.config.BitcoinNetwork" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">network</span><span class="result">: <a href="../../config/BitcoinNetwork.html" class="extype" name="org.bitcoins.core.config.BitcoinNetwork">BitcoinNetwork</a></span>
+      </span>
+      
+      <p class="shortcomment cmt"> The <a href="../../config/BitcoinNetwork.html" class="extype" name="org.bitcoins.core.config.BitcoinNetwork">network</a> that corresponds to this chain param
+</p><div class="fullcomment"><div class="comment cmt"><p> The <a href="../../config/BitcoinNetwork.html" class="extype" name="org.bitcoins.core.config.BitcoinNetwork">network</a> that corresponds to this chain param
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="org.bitcoins.core.protocol.blockchain.BitcoinChainParams">BitcoinChainParams</a> → <a href="ChainParams.html" class="extype" name="org.bitcoins.core.protocol.blockchain.ChainParams">ChainParams</a></dd></dl></div>
     </li><li name="org.bitcoins.core.protocol.blockchain.ChainParams#networkId" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="networkId:String"></a>
       <span class="permalink">
@@ -370,7 +390,7 @@ Base58 prefixes for various keys/hashes on the network.
 <a href="MainNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.MainNetChainParams">TestNetChainParams</a> or
 <a href="MainNetChainParams$.html" class="extype" name="org.bitcoins.core.protocol.blockchain.MainNetChainParams">RegTestNetChainParams</a>.)
 </p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ChainParams.html" class="extype" name="org.bitcoins.core.protocol.blockchain.ChainParams">ChainParams</a></dd><dt>See also</dt><dd><span class="cmt"><p><a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki" target="_blank">BIP70</a></p></span></dd></dl></div>
-    </li><li name="org.bitcoins.core.protocol.blockchain.BitcoinChainParams#noRetargeting" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+    </li><li name="org.bitcoins.core.protocol.blockchain.ChainParams#noRetargeting" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="noRetargeting:Boolean"></a>
       <span class="permalink">
       <a href="../../../../../org/bitcoins/core/protocol/blockchain/BitcoinChainParams.html#noRetargeting:Boolean" title="Permalink">
@@ -386,8 +406,8 @@ Base58 prefixes for various keys/hashes on the network.
       </span>
       
       <p class="shortcomment cmt">Whether this chain supports
-proof of work retargeting or not
-<a href="https://github.com/bitcoin/bitcoin/blob/eb7daf4d600eeb631427c018a984a77a34aca66e/src/consensus/params.h#L72" target="_blank">link</a></p>
+proof of work retargeting or not</p><div class="fullcomment"><div class="comment cmt"><p>Whether this chain supports
+proof of work retargeting or not</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ChainParams.html" class="extype" name="org.bitcoins.core.protocol.blockchain.ChainParams">ChainParams</a></dd><dt>See also</dt><dd><span class="cmt"><p><a href="https://github.com/bitcoin/bitcoin/blob/eb7daf4d600eeb631427c018a984a77a34aca66e/src/consensus/params.h#L72" target="_blank">link</a></p></span></dd></dl></div>
     </li><li name="org.bitcoins.core.protocol.blockchain.ChainParams#powLimit" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
       <a id="powLimit:java.math.BigInteger"></a><a id="powLimit:BigInteger"></a>
       <span class="permalink">

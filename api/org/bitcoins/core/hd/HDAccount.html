@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title></title>
-          <meta name="description" content="" />
-          <meta name="keywords" content="" />
+          <title>Bitcoin-S 0.1.0+23-748ac9d5-SNAPSHOT - org.bitcoins.core.hd.HDAccount</title>
+          <meta name="description" content="Bitcoin - S 0.1.0 23 - 748ac9d5 - SNAPSHOT - org.bitcoins.core.hd.HDAccount" />
+          <meta name="keywords" content="Bitcoin S 0.1.0 23 748ac9d5 SNAPSHOT org.bitcoins.core.hd.HDAccount" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title"><span id="doc-version"></span></span>
+        <span id="doc-title">Bitcoin-S<span id="doc-version">0.1.0+23-748ac9d5-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -408,6 +408,40 @@ account
       </span>
       
       
+    </li><li name="org.bitcoins.core.hd.BIP32Path#diff" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="diff(that:org.bitcoins.core.hd.BIP32Path):Option[org.bitcoins.core.hd.BIP32Path]"></a><a id="diff(BIP32Path):Option[BIP32Path]"></a>
+      <span class="permalink">
+      <a href="../../../../org/bitcoins/core/hd/HDAccount.html#diff(that:org.bitcoins.core.hd.BIP32Path):Option[org.bitcoins.core.hd.BIP32Path]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">diff</span><span class="params">(<span name="that">that: <a href="BIP32Path.html" class="extype" name="org.bitcoins.core.hd.BIP32Path">BIP32Path</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.8/scala/Option.html#scala.Option" class="extype" name="scala.Option">Option</a>[<a href="BIP32Path.html" class="extype" name="org.bitcoins.core.hd.BIP32Path">BIP32Path</a>]</span>
+      </span>
+      
+      <p class="shortcomment cmt">BIP32 paths can be subsets/superset of each other.</p><div class="fullcomment"><div class="comment cmt"><p>BIP32 paths can be subsets/superset of each other.
+If all elements in a path <code>p</code> is included in a path
+<code>P</code>, (i.e. <code>p</code> is a subset of <code>P</code>), <code>p.diff(P)</code>
+is the elements from <code>P</code> that is not in <code>p</code>.
+</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BIP32Path.html" class="extype" name="org.bitcoins.core.hd.BIP32Path">BIP32Path</a></dd><div class="block">Example:
+               <ol><li class="cmt"><p></p><pre> <span class="cmt">// equal paths</span>
+m/<span class="num">44</span><span class="lit">'/1'</span> diff m/<span class="num">44</span><span class="lit">'/1'</span> == <span class="std">Some</span>(BIP32Path.empty)
+
+<span class="cmt">// diffable path</span>
+m/<span class="num">44</span><span class="lit">'/0'</span>/<span class="num">0</span>' diff m/<span class="num">44</span><span class="lit">'/0'</span>/<span class="num">0</span>'/<span class="num">0</span>/<span class="num">2</span> = <span class="std">Some</span>(m/<span class="num">0</span>/<span class="num">2</span>)
+m/<span class="num">44</span><span class="lit">'/0'</span>/<span class="num">0</span>'/<span class="num">1</span> diff m/<span class="num">44</span><span class="lit">'/0'</span>/<span class="num">0</span>'/<span class="num">1</span>/<span class="num">2</span> = <span class="std">Some</span>(m/<span class="num">2</span>)
+
+<span class="cmt">// this is longer than other</span>
+m/<span class="num">44</span><span class="lit">'/1'</span> diff m/<span class="num">44</span>' == <span class="std">None</span>
+
+<span class="cmt">// any fields are unequal along the way</span>
+m/<span class="num">44</span><span class="lit">'/1'</span> diff m/<span class="num">43</span><span class="lit">'/2'</span> == <span class="std">None</span>
+m/<span class="num">44</span><span class="lit">'/1'</span>/<span class="num">0</span> diff m/<span class="num">44</span><span class="lit">'/2'</span>/<span class="num">1</span> == <span class="std">None</span></pre></li></ol>
+            </div></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">

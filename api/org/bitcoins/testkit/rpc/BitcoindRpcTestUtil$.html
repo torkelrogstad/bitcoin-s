@@ -3,9 +3,9 @@
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <title></title>
-          <meta name="description" content="" />
-          <meta name="keywords" content="" />
+          <title>Bitcoin-S 0.1.0+23-748ac9d5-SNAPSHOT - org.bitcoins.testkit.rpc.BitcoindRpcTestUtil</title>
+          <meta name="description" content="Bitcoin - S 0.1.0 23 - 748ac9d5 - SNAPSHOT - org.bitcoins.testkit.rpc.BitcoindRpcTestUtil" />
+          <meta name="keywords" content="Bitcoin S 0.1.0 23 748ac9d5 SNAPSHOT org.bitcoins.testkit.rpc.BitcoindRpcTestUtil" />
           <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
           
       <link href="../../../../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
@@ -28,7 +28,7 @@
         </head>
         <body>
       <div id="search">
-        <span id="doc-title"><span id="doc-version"></span></span>
+        <span id="doc-title">Bitcoin-S<span id="doc-version">0.1.0+23-748ac9d5-SNAPSHOT</span></span>
         <span class="close-results"><span class="left">&lt;</span> Back</span>
         <div id="textfilter">
           <span class="input">
@@ -166,7 +166,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">BitcoindRpcTestUtil</span><span class="result"> extends <a href="../../core/util/BitcoinSLogger.html" class="extype" name="org.bitcoins.core.util.BitcoinSLogger">BitcoinSLogger</a> with <a href="BitcoindRpcTestUtil.html" class="extype" name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil">BitcoindRpcTestUtil</a></span>
+        <span class="name">BitcoindRpcTestUtil</span><span class="result"> extends <a href="BitcoindRpcTestUtil.html" class="extype" name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil">BitcoindRpcTestUtil</a></span>
       </span>
       </h4>
 
@@ -931,7 +931,7 @@ bitcoin address in a version-agnostic manner
     </span>
       <span class="modifier_kind">
         <span class="modifier"></span>
-        <span class="kind">def</span>
+        <span class="kind">lazy val</span>
       </span>
       <span class="symbol">
         <span class="name">logger</span><span class="result">: <a href="https://oss.sonatype.org/service/local/repositories/public/archive/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25-javadoc.jar/!/org/slf4j/Logger.html#org.slf4j.Logger" class="extype" name="org.slf4j.Logger">Logger</a></span>
@@ -1166,6 +1166,22 @@ can be constructed.
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil#tmpDir" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="tmpDir():java.io.File"></a><a id="tmpDir():File"></a>
+      <span class="permalink">
+      <a href="../../../../org/bitcoins/testkit/rpc/BitcoindRpcTestUtil$.html#tmpDir():java.io.File" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tmpDir</span><span class="params">()</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html#java.io.File" class="extype" name="java.io.File">File</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BitcoindRpcTestUtil.html" class="extype" name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil">BitcoindRpcTestUtil</a></dd></dl></div>
     </li><li name="scala.AnyRef#toString" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <span class="permalink">
@@ -1282,25 +1298,6 @@ can be constructed.
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil#writeConfigToFile" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="writeConfigToFile(config:org.bitcoins.rpc.config.BitcoindConfig):java.nio.file.Path"></a><a id="writeConfigToFile(BitcoindConfig):Path"></a>
-      <span class="permalink">
-      <a href="../../../../org/bitcoins/testkit/rpc/BitcoindRpcTestUtil$.html#writeConfigToFile(config:org.bitcoins.rpc.config.BitcoindConfig):java.nio.file.Path" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">writeConfigToFile</span><span class="params">(<span name="config">config: <a href="../../rpc/config/BitcoindConfig.html" class="extype" name="org.bitcoins.rpc.config.BitcoindConfig">BitcoindConfig</a></span>)</span><span class="result">: <a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html#java.nio.file.Path" class="extype" name="java.nio.file.Path">Path</a></span>
-      </span>
-      
-      <p class="shortcomment cmt">Writes the config to the data directory within it, it it doesn't
-exist.</p><div class="fullcomment"><div class="comment cmt"><p>Writes the config to the data directory within it, it it doesn't
-exist. Returns the written file. Assumes the config has a datadir.
-</p></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="BitcoindRpcTestUtil.html" class="extype" name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil">BitcoindRpcTestUtil</a></dd></dl></div>
     </li><li name="org.bitcoins.testkit.rpc.BitcoindRpcTestUtil#writtenConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="writtenConfig(uri:java.net.URI,rpcUri:java.net.URI,zmqPort:Int,pruneMode:Boolean):java.nio.file.Path"></a><a id="writtenConfig(URI,URI,Int,Boolean):Path"></a>
       <span class="permalink">
