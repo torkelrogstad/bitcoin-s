@@ -54,6 +54,9 @@ object Deps {
     val postgres = "org.postgresql" % "postgresql" % V.postgresV
     val uJson = "com.lihaoyi" %% "ujson" % V.uJsonV
 
+    // parsing of CLI opts and args
+    val scopt = "com.github.scopt" %% "scopt" % V.scoptV
+
     val scalacheck = "org.scalacheck" %% "scalacheck" % V.scalacheck withSources () withJavadoc ()
     val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest withSources () withJavadoc ()
   }
@@ -151,6 +154,11 @@ object Deps {
     Compile.sqlite,
     Compile.slickHikari,
     Test.ammonite
+  )
+
+  val cli = List(
+    Test.ammonite,
+    Compile.scopt
   )
 
   val eclairRpc = List(
