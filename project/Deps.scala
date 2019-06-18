@@ -26,6 +26,9 @@ object Deps {
     val slickV = "3.3.1"
     val sqliteV = "3.27.2.1"
     val uJsonV = "0.7.1"
+    val scoptV = "4.0.0-RC2"
+    val uPickleV = "0.7.5"
+    val http4sV = "0.20.3"
   }
 
   object Compile {
@@ -52,10 +55,19 @@ object Deps {
     val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % V.slickV
     val sqlite = "org.xerial" % "sqlite-jdbc" % V.sqliteV
     val postgres = "org.postgresql" % "postgresql" % V.postgresV
+
+    // zero dep json parsing
     val uJson = "com.lihaoyi" %% "ujson" % V.uJsonV
+
+    // low dep serialization/deserialization
+    val uPickle = "com.lihaoyi" %% "upickle" % V.uPickleV
 
     // parsing of CLI opts and args
     val scopt = "com.github.scopt" %% "scopt" % V.scoptV
+
+    // HTTP server for wallet
+    val http4sDsl = "org.http4s" %% "http4s-dsl" % V.http4sV
+    val http4sServer = "org.http4s" %% "http4s-blaze-server" % V.http4sV
 
     val scalacheck = "org.scalacheck" %% "scalacheck" % V.scalacheck withSources () withJavadoc ()
     val scalaTest = "org.scalatest" %% "scalatest" % V.scalaTest withSources () withJavadoc ()
@@ -158,6 +170,7 @@ object Deps {
 
   val cli = List(
     Test.ammonite,
+    Compile.uPickle,
     Compile.scopt
   )
 
@@ -210,7 +223,10 @@ object Deps {
 
   val wallet = List(
     Test.ammonite,
-    Compile.uJson
+    Compile.uJson,
+    Compile.uPickle,
+    Compile.http4sDsl,
+    Compile.http4sServer
   )
 
   val walletTest = List(
