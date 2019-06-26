@@ -11,6 +11,9 @@ import org.bitcoins.core.script.splice.SpliceOperation
 import org.bitcoins.core.script.stack.StackOperation
 import org.bitcoins.core.util.{BitcoinSLogger, BitcoinSUtil}
 import scodec.bits.ByteVector
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 /**
   * Created by chris on 1/8/16.
@@ -52,7 +55,19 @@ trait ScriptOperationFactory[T <: ScriptOperation] extends BitcoinSLogger {
 
   /** Finds a [[org.bitcoins.core.script.ScriptOperation ScriptOperation]] from a given [[scala.Byte Byte]]. */
   def fromByte(byte: Byte): T = {
-    operations.find(_.toByte == byte).get
+    safeFromByte(byte) match {
+      case Failure(exception) => throw exception
+      case Success(value)     => value
+    }
+  }
+
+  def safeFromByte(byte: Byte): Try[T] = {
+    operations.find(_.toByte == byte) match {
+      case None =>
+        Failure(
+          new IllegalArgumentException(s"$byte is not a valid operation!"))
+      case Some(x) => Success(x)
+    }
   }
 
   def fromBytes(bytes: ByteVector): Option[T] = {

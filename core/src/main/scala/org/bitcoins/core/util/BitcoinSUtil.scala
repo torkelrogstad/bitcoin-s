@@ -8,13 +8,16 @@ import scodec.bits.{BitVector, ByteVector}
 
 import scala.math.BigInt
 
-/**
-  * Created by chris on 2/26/16.
-  */
-trait BitcoinSUtil {
+object BitcoinSUtil {
 
   def decodeHex(hex: String): ByteVector = {
-    if (hex.isEmpty) ByteVector.empty else ByteVector.fromHex(hex).get
+    if (hex.isEmpty) ByteVector.empty
+    else
+      ByteVector.fromHex(hex) match {
+        case None =>
+          throw new IllegalArgumentException(s"'$hex' is not valid hex!")
+        case Some(bytes) => bytes
+      }
   }
 
   def encodeHex(bytes: ByteVector): String = bytes.toHex
@@ -109,5 +112,3 @@ trait BitcoinSUtil {
     new InetSocketAddress(uri.getHost, uri.getPort)
   }
 }
-
-object BitcoinSUtil extends BitcoinSUtil
