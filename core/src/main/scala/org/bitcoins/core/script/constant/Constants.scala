@@ -9,9 +9,6 @@ import scodec.bits.ByteVector
 import scala.util.{Failure, Try}
 
 /**
-  * Created by chris on 1/6/16.
-  */
-/**
   * This is the root class of Script. Every element in the Script language is a
   * ScriptToken - think of this the same way you think about Object in Java.
   */
@@ -41,6 +38,8 @@ sealed abstract class ScriptConstant extends ScriptToken {
 
   /** Returns if the [[ScriptConstant]] is encoded in the shortest possible way. */
   def isShortestEncoding: Boolean = BitcoinScriptUtil.isShortestEncoding(this)
+
+  override def toString(): String = s"ScriptConstant(0x$hex)"
 }
 
 /** Represents a [[ScriptNumber]] in the Script language. */
