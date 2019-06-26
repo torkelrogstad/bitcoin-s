@@ -7,10 +7,8 @@ import org.bitcoins.core.serializers.script.ScriptParser
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
-import org.bitcoins.core.script.stack.OP_DUP
 import org.bitcoins.core.protocol.NetworkElement
 import scodec.bits.ByteVector
-import scala.annotation.implicitNotFound
 
 object ScriptInterpolator extends Interpolator {
 

@@ -8,7 +8,7 @@ import org.bitcoins.core.script.crypto.OP_CHECKMULTISIGVERIFY
 import scodec.bits._
 import org.bitcoins.core.crypto.ECPublicKey
 import org.bitcoins.core.script.crypto.OP_HASH160
-import org.bitcoins.core.script.control.OP_IF
+import org.bitcoins.core.script.control._
 import org.bitcoins.core.script.constant.BytesToPushOntoStack
 import org.bitcoins.core.script.constant.ScriptConstant
 import org.bitcoins.core.script.bitwise.OP_EQUALVERIFY
@@ -71,6 +71,27 @@ class ScriptInterpolatorTest extends BitcoinSUnitTest {
                     ScriptConstant("e2e7c1ab3f807151e832dd1accb3d4f5d7d19b4b"),
                     OP_EQUALVERIFY,
                     OP_CHECKSIG))
+  }
+
+  it must "parse scripts with substitutions at the beginning" in {
+    val bytes = hex"1234567"
+    val script = script"$bytes OP_DUP OP_ELSE"
+    assert(
+      script == Seq(BytesToPushOntoStack(bytes.length),
+                    ScriptConstant(bytes),
+                    OP_DUP,
+                    OP_ELSE))
+  }
+
+  it must "parse scripts with substitutions at the end" in {
+    val bytes = hex"1234567"
+    val script = script"OP_DUP OP_ELSE $bytes "
+    assert(
+      script == Seq(OP_DUP,
+                    OP_ELSE,
+                    BytesToPushOntoStack(bytes.length),
+                    ScriptConstant(bytes)))
+
   }
 
   it must "abort parsing strings with embedded strings" in {
