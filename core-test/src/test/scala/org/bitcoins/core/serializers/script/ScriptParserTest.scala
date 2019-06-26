@@ -14,16 +14,14 @@ import org.bitcoins.core.script.reserved.OP_NOP
 import org.bitcoins.core.script.splice.OP_SIZE
 import org.bitcoins.core.script.stack.{OP_DROP, OP_DUP, OP_PICK, OP_SWAP}
 import org.bitcoins.core.util.{BitcoinSUtil, TestUtil}
+import org.bitcoins.testkit.util.BitcoinSUnitTest
 import org.scalatest.{FlatSpec, MustMatchers}
-import scodec.bits.ByteVector
+import scodec.bits._
 
-/**
-  * Created by chris on 1/7/16.
-  */
-class ScriptParserTest extends FlatSpec with MustMatchers {
+class ScriptParserTest extends BitcoinSUnitTest {
 
   "ScriptParser" must "parse 0x00 to a OP_0" in {
-    ScriptParser.fromBytes(ByteVector(List(0.toByte))) must be(List(OP_0))
+    ScriptParser.fromBytes(hex"00") must be(List(OP_0))
   }
 
   it must "parse the number 0 as an OP_0" in {
@@ -296,15 +294,14 @@ class ScriptParserTest extends FlatSpec with MustMatchers {
       OP_DUP,
       OP_HASH160,
       BytesToPushOntoStack(20),
-      ScriptConstant(
-        ByteVector.fromValidHex("14011f7254d96b819c76986c277d115efce6f7b5")),
+      ScriptConstant(hex"14011f7254d96b819c76986c277d115efce6f7b5"),
       OP_EQUAL,
       OP_IF,
       OP_CHECKSIG,
       OP_ELSE,
       BytesToPushOntoStack(33),
-      ScriptConstant(ByteVector.fromValidHex(
-        "0394854aa6eab5b2a8122cc726e9dded053a2184d88256816826d6231c068d4a5b")),
+      ScriptConstant(
+        hex"0394854aa6eab5b2a8122cc726e9dded053a2184d88256816826d6231c068d4a5b"),
       OP_SWAP,
       OP_SIZE,
       BytesToPushOntoStack(1),
@@ -315,15 +312,14 @@ class ScriptParserTest extends FlatSpec with MustMatchers {
       OP_2,
       OP_SWAP,
       BytesToPushOntoStack(33),
-      ScriptConstant(ByteVector.fromValidHex(
-        "030d417a46946384f88d5f3337267c5e579765875dc4daca813e21734b140639e7")),
+      ScriptConstant(
+        hex"030d417a46946384f88d5f3337267c5e579765875dc4daca813e21734b140639e7"),
       OP_2,
       OP_CHECKMULTISIG,
       OP_ELSE,
       OP_HASH160,
       BytesToPushOntoStack(20),
-      ScriptConstant(
-        ByteVector.fromValidHex("b43e1b38138a41b37f7cd9a1d274bc63e3a9b5d1")),
+      ScriptConstant(hex"b43e1b38138a41b37f7cd9a1d274bc63e3a9b5d1"),
       OP_EQUALVERIFY,
       OP_CHECKSIG,
       OP_ENDIF,
@@ -364,37 +360,35 @@ class ScriptParserTest extends FlatSpec with MustMatchers {
         OP_DUP,
         OP_HASH160,
         BytesToPushOntoStack(20),
-        ScriptConstant(
-          ByteVector.fromValidHex("14011f7254d96b819c76986c277d115efce6f7b5")),
+        ScriptConstant(hex"14011f7254d96b819c76986c277d115efce6f7b5"),
         OP_EQUAL,
         OP_IF,
         OP_CHECKSIG,
         OP_ELSE,
         BytesToPushOntoStack(33),
-        ScriptConstant(ByteVector.fromValidHex(
-          "0394854aa6eab5b2a8122cc726e9dded053a2184d88256816826d6231c068d4a5b")),
+        ScriptConstant(
+          hex"0394854aa6eab5b2a8122cc726e9dded053a2184d88256816826d6231c068d4a5b"),
         OP_SWAP,
         OP_SIZE,
         BytesToPushOntoStack(1),
-        ScriptConstant(ByteVector.fromValidHex("20")),
+        ScriptConstant(hex"20"),
         OP_EQUAL,
         OP_IF,
         OP_HASH160,
         BytesToPushOntoStack(20),
-        ScriptConstant(
-          ByteVector.fromValidHex("b8bcb07f6344b42ab04250c86a6e8b75d3fdbbc6")),
+        ScriptConstant(hex"b8bcb07f6344b42ab04250c86a6e8b75d3fdbbc6"),
         OP_EQUALVERIFY,
         OP_2,
         OP_SWAP,
         BytesToPushOntoStack(33),
-        ScriptConstant(ByteVector.fromValidHex(
-          "030d417a46946384f88d5f3337267c5e579765875dc4daca813e21734b140639e7")),
+        ScriptConstant(
+          hex"030d417a46946384f88d5f3337267c5e579765875dc4daca813e21734b140639e7"),
         OP_2,
         OP_CHECKMULTISIG,
         OP_ELSE,
         OP_DROP,
         BytesToPushOntoStack(2),
-        ScriptConstant(ByteVector.fromValidHex("f401")),
+        ScriptConstant(hex"f401"),
         OP_CHECKLOCKTIMEVERIFY,
         OP_DROP,
         OP_CHECKSIG,
