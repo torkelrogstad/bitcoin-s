@@ -257,6 +257,13 @@ lazy val core = project
   )
   .enablePlugins(GitVersioning)
 
+lazy val coreExtra = project
+  .in(file("core-extra"))
+  .settings(commonSettings: _*)
+  .dependsOn(
+    core % testAndCompile
+  )
+
 lazy val coreTest = project
   .in(file("core-test"))
   .settings(commonTestSettings: _*)
@@ -265,6 +272,7 @@ lazy val coreTest = project
   )
   .dependsOn(
     core % testAndCompile,
+    coreExtra,
     testkit
   )
   .enablePlugins()

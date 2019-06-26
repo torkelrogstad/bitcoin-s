@@ -18,6 +18,7 @@ object Deps {
     val nativeLoaderV = "2.3.2"
     val typesafeConfigV = "1.3.4"
     val ammoniteV = "1.6.7"
+    val contextualV = "1.1.0"
 
     val asyncV = "0.9.7"
     val jodaV = "2.10.2"
@@ -40,6 +41,8 @@ object Deps {
     val typesafeConfig = "com.typesafe" % "config" % V.typesafeConfigV withSources () withJavadoc ()
 
     val logback = "ch.qos.logback" % "logback-classic" % V.logback withSources () withJavadoc ()
+
+    val contextual = "com.propensive" %% "contextual" % V.contextualV
 
     //for loading secp256k1 natively
     val nativeLoader = "org.scijava" % "native-lib-loader" % V.nativeLoaderV withSources () withJavadoc ()
@@ -93,6 +96,11 @@ object Deps {
     Compile.bouncycastle,
     Compile.scodec,
     Compile.slf4j,
+    Test.ammonite
+  )
+
+  val coreExtra = List(
+    Compile.contextual,
     Test.ammonite
   )
 
