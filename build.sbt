@@ -344,10 +344,7 @@ lazy val bitcoindRpc = project
 lazy val bitcoindRpcTest = project
   .in(file("bitcoind-rpc-test"))
   .settings(commonTestSettings: _*)
-  .settings(libraryDependencies ++= Deps.bitcoindRpcTest,
-            name := "bitcoin-s-bitcoind-rpc-test")
   .dependsOn(core % testAndCompile, testkit)
-  .enablePlugins()
 
 lazy val bench = project
   .in(file("bench"))
