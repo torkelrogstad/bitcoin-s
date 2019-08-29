@@ -4,12 +4,15 @@ import org.bitcoins.core.crypto.DoubleSha256DigestBE
 import org.bitcoins.core.currency.Bitcoins
 import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.transaction.{Transaction, TransactionInput}
+import org.bitcoins.core.script.crypto.HashType
 import org.bitcoins.rpc.jsonmodels.{
   FundRawTransactionResult,
   GetRawTransactionResult,
-  RpcTransaction
+  RpcTransaction,
+  SignRawTransactionResult
 }
 import org.bitcoins.rpc.serializers.JsonSerializers._
+import org.bitcoins.rpc.serializers.JsonWriters._
 import play.api.libs.json._
 
 import scala.concurrent.Future
@@ -94,4 +97,21 @@ trait RawTransactionRpc { self: Client =>
       "sendrawtransaction",
       List(JsString(transaction.hex), JsBoolean(allowHighFees)))
   }
+
+  /**
+    * $signRawTx
+    *
+    * This RPC call signs the raw transaction with keys found in
+    * the Bitcoin Core wallet.
+    */
+  def signRawTransactionWithWallet(
+      transaction: Transaction,
+      utxoDeps: Vector[RpcOpts.SignRawTransactionOutputParameter] = Vector.empty,
+      sigHash: HashType = HashType.sigHashAll
+  ): Future[SignRawTransactionResult] =
+    bitcoindCall[SignRawTransactionResult]("signrawtransactionwithwallet",
+                                           List(JsString(transaction.hex),
+                                                Json.toJson(utxoDeps),
+                                                Json.toJson(sigHash)))
+
 }

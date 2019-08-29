@@ -2,7 +2,6 @@ package org.bitcoins.rpc.client.v17
 
 import akka.actor.ActorSystem
 import org.bitcoins.core.crypto.ECPrivateKey
-import org.bitcoins.core.protocol.BitcoinAddress
 import org.bitcoins.core.protocol.transaction.Transaction
 import org.bitcoins.core.script.crypto.HashType
 import org.bitcoins.rpc.client.common.{
@@ -12,8 +11,6 @@ import org.bitcoins.rpc.client.common.{
 }
 import org.bitcoins.rpc.config.BitcoindInstance
 import org.bitcoins.rpc.jsonmodels.{
-  AddressInfoResult,
-  CreateWalletResult,
   SignRawTransactionResult,
   TestMempoolAcceptResult
 }
@@ -44,27 +41,6 @@ class BitcoindV17RpcClient(override val instance: BitcoindInstance)(
 
   override def version: BitcoindVersion = BitcoindVersion.V17
 
-  def getAddressInfo(address: BitcoinAddress): Future[AddressInfoResult] = {
-    bitcoindCall[AddressInfoResult]("getaddressinfo",
-                                    List(JsString(address.value)))
-  }
-
-  /**
-    * $signRawTx
-    *
-    * This RPC call signs the raw transaction with keys found in
-    * the Bitcoin Core wallet.
-    */
-  def signRawTransactionWithWallet(
-      transaction: Transaction,
-      utxoDeps: Vector[RpcOpts.SignRawTransactionOutputParameter] = Vector.empty,
-      sigHash: HashType = HashType.sigHashAll
-  ): Future[SignRawTransactionResult] =
-    bitcoindCall[SignRawTransactionResult]("signrawtransactionwithwallet",
-                                           List(JsString(transaction.hex),
-                                                Json.toJson(utxoDeps),
-                                                Json.toJson(sigHash)))
-
   /**
     * $signRawTx
     *
@@ -92,14 +68,6 @@ class BitcoindV17RpcClient(override val instance: BitcoindInstance)(
       "testmempoolaccept",
       List(JsArray(Vector(Json.toJson(transaction))), JsBoolean(allowHighFees)))
       .map(_.head)
-  }
-
-  def createWallet(
-      walletName: String,
-      disablePrivateKeys: Boolean = false): Future[CreateWalletResult] = {
-    bitcoindCall[CreateWalletResult](
-      "createwallet",
-      List(JsString(walletName), Json.toJson(disablePrivateKeys)))
   }
 }
 
